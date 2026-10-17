@@ -1,0 +1,711 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Лимонный Икс</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@600;800&family=Onest:wght@400;500;700&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: липкая шапка со счётом и общим иксом; слева огромный лимон, справа магазин (на телефоне всё в одну колонку). */
+:root {
+  --font-display: "Unbounded", "Arial Black", system-ui, sans-serif;
+  --font-body: "Onest", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+
+  --bg: #EDF3E4;
+  --surface: #F9FCF3;
+  --line: #C5D3B3;
+  --fg: #14210F;
+  --muted: #4F6244;
+  --leaf: #2C7A3A;
+  --lemon: #F7D81F;
+  --lemon-hi: #FFF07A;
+  --lemon-lo: #D4A800;
+  --on-lemon: #14210F;
+  --can-bg: #FBF2A8;
+  --glow: rgba(247, 216, 31, 0.38);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0E1710;
+    --surface: #16231A;
+    --line: #2B402F;
+    --fg: #EEF5E1;
+    --muted: #A3BBA2;
+    --leaf: #6CCB78;
+    --lemon: #F7D81F;
+    --lemon-hi: #FFF07A;
+    --lemon-lo: #D4A800;
+    --on-lemon: #14210F;
+    --can-bg: #3B3B14;
+    --glow: rgba(247, 216, 31, 0.16);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0E1710;
+  --surface: #16231A;
+  --line: #2B402F;
+  --fg: #EEF5E1;
+  --muted: #A3BBA2;
+  --leaf: #6CCB78;
+  --lemon: #F7D81F;
+  --lemon-hi: #FFF07A;
+  --lemon-lo: #D4A800;
+  --on-lemon: #14210F;
+  --can-bg: #3B3B14;
+  --glow: rgba(247, 216, 31, 0.16);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.45;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 0 40px;
+}
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0 0 auto;
+  height: env(safe-area-inset-top, 0px);
+  z-index: 10;
+  background: var(--bg);
+}
+.app { max-width: 1040px; margin: 0 auto; }
+
+button { font: inherit; color: inherit; }
+button:focus-visible { outline: 3px solid var(--leaf); outline-offset: 2px; }
+.mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+
+.back { font-family: var(--font-mono); font-weight: 700; font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--leaf); text-decoration: none; white-space: nowrap; }
+.back:hover { text-decoration: underline; }
+.titlebox { display: flex; align-items: baseline; gap: 12px; min-width: 0; flex-wrap: wrap; }
+.who { font-family: var(--font-mono); font-size: 0.72rem; color: var(--muted); }
+
+/* ---------- Шапка ---------- */
+.top {
+  position: sticky;
+  top: env(safe-area-inset-top, 0px);
+  z-index: 5;
+  background: var(--bg);
+  border-bottom: 1px solid var(--line);
+  padding-block: 10px 12px;
+  display: grid;
+  gap: 2px;
+}
+.top-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+h1 {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.xbadge {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  background: var(--lemon);
+  color: var(--on-lemon);
+  border-radius: 999px;
+  padding: 4px 14px;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1.05rem;
+  max-width: 62%;
+}
+.xbadge small {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 0.66rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.xbadge b { overflow-wrap: anywhere; font-weight: 800; }
+.bank { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; min-width: 0; }
+.count {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(2rem, 9vw, 3.2rem);
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+.rate { font-family: var(--font-mono); font-weight: 500; font-size: 0.9rem; color: var(--muted); }
+
+/* ---------- Сетка ---------- */
+.grid { display: grid; gap: 28px; padding-top: 18px; }
+@media (min-width: 860px) {
+  .grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); gap: 40px; align-items: start; }
+  .stage { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 130px); }
+}
+
+/* ---------- Сцена с лимоном ---------- */
+.stage {
+  position: relative;
+  overflow: clip;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-block: 18px 8px;
+  background: radial-gradient(closest-side at 50% 44%, var(--glow), transparent);
+  min-width: 0;
+}
+.lemon-wrap { width: min(72vw, 320px); animation: bob 5s ease-in-out infinite; }
+.lemon {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  border-radius: 50%;
+}
+.lemon svg { display: block; width: 100%; height: 100%; filter: drop-shadow(0 14px 14px rgba(0, 0, 0, 0.22)); pointer-events: none; }
+.ground { width: 52%; height: 16px; border-radius: 50%; background: var(--fg); opacity: 0.13; filter: blur(7px); margin-top: -2px; }
+.click-info { margin: 14px 0 0; font-size: 1rem; }
+.click-info strong { font-family: var(--font-display); font-weight: 800; font-size: 1.25rem; }
+.hint { margin: 4px 0 0; color: var(--muted); font-size: 0.9rem; text-align: center; max-width: 30ch; }
+.float {
+  position: absolute;
+  z-index: 3;
+  pointer-events: none;
+  background: var(--fg);
+  color: var(--bg);
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 0.9rem;
+  padding: 2px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+  transform: translate(-50%, -50%);
+  animation: rise 0.85s ease-out forwards;
+}
+@keyframes rise {
+  from { opacity: 1; transform: translate(-50%, -50%); }
+  to { opacity: 0; transform: translate(-50%, -210%); }
+}
+@keyframes bob {
+  50% { transform: translateY(-6px) rotate(1.2deg); }
+}
+
+/* ---------- Магазин ---------- */
+.shop { display: flex; flex-direction: column; gap: 30px; min-width: 0; }
+.block { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+h2 { margin: 0; font-family: var(--font-display); font-weight: 600; font-size: 1.1rem; }
+.sub { margin: -6px 0 0; color: var(--muted); font-size: 0.9rem; }
+
+.tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.tile {
+  display: grid;
+  place-items: center;
+  gap: 2px;
+  min-height: 74px;
+  padding: 10px 4px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--fg);
+  cursor: pointer;
+  min-width: 0;
+}
+.tile .x { font-family: var(--font-display); font-weight: 800; font-size: clamp(1.05rem, 5vw, 1.5rem); line-height: 1.1; }
+.tile .c { font-family: var(--font-mono); font-weight: 500; font-size: 0.78rem; color: var(--muted); }
+.tile:disabled { cursor: default; color: var(--muted); }
+.tile:disabled .x { color: var(--muted); }
+.tile.can { background: var(--can-bg); border-color: var(--lemon-lo); color: var(--fg); cursor: pointer; }
+.tile.can .x { color: var(--fg); }
+.tile.owned, .tile.owned:disabled { background: var(--lemon); border-color: var(--lemon-lo); color: var(--on-lemon); }
+.tile.owned .x, .tile.owned:disabled .x, .tile.owned .c { color: var(--on-lemon); }
+
+.list { display: flex; flex-direction: column; gap: 8px; }
+.item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 2px 14px;
+  align-items: baseline;
+  width: 100%;
+  min-height: 62px;
+  padding: 11px 14px;
+  text-align: left;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--fg);
+  cursor: pointer;
+}
+.item:disabled { cursor: default; color: var(--muted); }
+.item.can { background: var(--can-bg); border-color: var(--lemon-lo); color: var(--fg); }
+.item .n { font-weight: 700; }
+.item .d { font-size: 0.85rem; color: var(--muted); }
+.item .cost { font-family: var(--font-mono); font-weight: 700; justify-self: end; white-space: nowrap; }
+.item .cost::before {
+  content: "";
+  display: inline-block;
+  width: 0.95em;
+  height: 0.66em;
+  margin-right: 0.45em;
+  border-radius: 50%;
+  background: var(--lemon);
+  border: 1px solid var(--lemon-lo);
+  transform: rotate(-18deg);
+}
+.item .own { font-family: var(--font-mono); font-size: 0.8rem; color: var(--muted); justify-self: end; white-space: nowrap; }
+.item .cost.text::before { display: none; }
+.tile:active:not(:disabled), .item:active:not(:disabled) { transform: translateY(1px); }
+
+.foot { margin-top: 8px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; color: var(--muted); font-size: 0.85rem; }
+.reset {
+  border: 1px solid var(--line);
+  background: transparent;
+  border-radius: 8px;
+  padding: 6px 12px;
+  cursor: pointer;
+  color: var(--fg);
+}
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  transform: translateX(-50%);
+  z-index: 20;
+  max-width: calc(100vw - 32px);
+  background: var(--fg);
+  color: var(--bg);
+  border-radius: 10px;
+  padding: 10px 16px;
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+</style>
+
+<style>
+:root { color-scheme: light; padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+body { margin: 0; }
+img { max-width: 100%; }
+[hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <div class="top-row">
+      <div class="titlebox"><a class="back" href="./">← Claudix</a><h1>Лимонный Икс</h1><span class="who" id="who"></span></div>
+      <div class="xbadge" title="Общий мультипликатор"><small>икс</small><b id="xtotal">×1</b></div>
+    </div>
+    <div class="bank">
+      <div class="count" id="count">0</div>
+      <div class="rate"><span id="ps">0</span>/сек</div>
+    </div>
+  </header>
+
+  <div class="grid">
+    <section class="stage" id="stage" aria-label="Лимон">
+      <div class="lemon-wrap">
+        <button class="lemon" id="lemon" type="button" aria-label="Лимон. Жми, чтобы собирать лимоны">
+          <svg viewBox="0 0 240 240" aria-hidden="true">
+            <defs>
+              <radialGradient id="lg" cx="38%" cy="32%" r="78%">
+                <stop offset="0" style="stop-color:var(--lemon-hi)"></stop>
+                <stop offset="0.55" style="stop-color:var(--lemon)"></stop>
+                <stop offset="1" style="stop-color:var(--lemon-lo)"></stop>
+              </radialGradient>
+            </defs>
+            <g transform="rotate(-18 120 128)">
+              <path d="M26 128 C26 128 34 118 46 116 C58 70 92 50 120 50 C148 50 182 70 194 116 C206 118 214 128 214 128 C214 128 206 138 194 140 C182 186 148 206 120 206 C92 206 58 186 46 140 C34 138 26 128 26 128 Z" fill="url(#lg)" style="stroke:var(--lemon-lo)" stroke-width="3" stroke-linejoin="round"></path>
+              <ellipse cx="88" cy="90" rx="28" ry="14" transform="rotate(-35 88 90)" fill="#ffffff" opacity="0.35"></ellipse>
+              <circle cx="150" cy="150" r="2.4" style="fill:var(--lemon-lo)" opacity="0.5"></circle>
+              <circle cx="164" cy="132" r="2" style="fill:var(--lemon-lo)" opacity="0.5"></circle>
+              <circle cx="132" cy="168" r="2" style="fill:var(--lemon-lo)" opacity="0.5"></circle>
+              <circle cx="100" cy="160" r="2.2" style="fill:var(--lemon-lo)" opacity="0.5"></circle>
+              <circle cx="84" cy="130" r="1.8" style="fill:var(--lemon-lo)" opacity="0.5"></circle>
+              <path d="M122 52 C130 28 160 18 184 24 C180 50 152 64 124 56 Z" style="fill:var(--leaf)"></path>
+              <path d="M126 53 C144 42 160 34 178 28" fill="none" stroke="#ffffff" stroke-width="1.6" opacity="0.4" stroke-linecap="round"></path>
+            </g>
+          </svg>
+        </button>
+      </div>
+      <div class="ground"></div>
+      <p class="click-info"><strong id="pc">+1</strong> за клик</p>
+      <p class="hint">Общий икс множит и клики, и всё, что растёт само.</p>
+    </section>
+
+    <section class="shop">
+      <div class="block">
+        <h2>Иксы</h2>
+        <p class="sub">Покупаешь один раз, и всё умножается. Иксы перемножаются между собой.</p>
+        <div class="tiles" id="tiles"></div>
+        <div class="list" id="inf"></div>
+      </div>
+      <div class="block">
+        <h2>Автокликер</h2>
+        <p class="sub">Сам жмёт на лимон. Каждый тап считается как твой клик, вместе с иксами.</p>
+        <div class="list" id="auto"></div>
+      </div>
+      <div class="block">
+        <h2>Добыча</h2>
+        <p class="sub">Цифры указаны до иксов.</p>
+        <div class="list" id="items"></div>
+      </div>
+      <div class="foot">
+        <button class="reset" id="reset" type="button">Начать заново</button>
+        <span>Прогресс сохраняется в этом браузере.</span>
+      </div>
+    </section>
+  </div>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+<script>
+(function () {
+  "use strict";
+
+  var SESSION = (function () { try { var s = JSON.parse(localStorage.getItem("claudix-session") || "null"); return s && typeof s.user === "string" && s.user ? s : null; } catch (e) { return null; } })();
+  var SAVE_KEY = "limonny-iks-v1" + (SESSION ? ":" + SESSION.user : "");
+  (function () { var w = document.getElementById("who"); if (w) w.textContent = SESSION ? "· " + SESSION.name : "· гость"; })();
+  var SUF = ["", "K", "M", "B", "T", "Qa", "Qi", "Sx", "Sp", "Oc", "No", "Dc"];
+  var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  // [множитель, цена]
+  var TIERS = [
+    [2, 150], [3, 1500], [5, 20000], [10, 300000], [20, 5e6],
+    [50, 1e8], [100, 2e9], [300, 5e10], [1000, 1e12]
+  ];
+  var GENS = [
+    { name: "Лимонное дерево", desc: "Растёт само. +1/сек", base: 50, rate: 1, g: 1.15 },
+    { name: "Плантация", desc: "Целая роща без выходных. +14/сек", base: 650, rate: 14, g: 1.15 },
+    { name: "Лимонадный завод", desc: "Давит всё подряд. +170/сек", base: 9000, rate: 170, g: 1.15 }
+  ];
+  var INF_BASE = 1e13, INF_G = 8;
+  var AUTO_COST = 5000;
+  var SPEED_BASE = 40000, SPEED_G = 5.5, SPEED_MAX = 15;
+
+  function fresh() {
+    return {
+      lemons: 0,
+      clickLvl: 0,
+      gens: GENS.map(function () { return 0; }),
+      tiers: TIERS.map(function () { return false; }),
+      inf: 0,
+      auto: false,
+      autoLvl: 0,
+      t: Date.now()
+    };
+  }
+  var s = fresh();
+
+  function num(v) { return typeof v === "number" && isFinite(v) && v > 0 ? v : 0; }
+  function int(v) { return Math.floor(num(v)); }
+
+  function load() {
+    try {
+      var raw = localStorage.getItem(SAVE_KEY);
+      if (!raw) return;
+      var d = JSON.parse(raw);
+      if (!d || typeof d !== "object") return;
+      s.lemons = num(d.lemons);
+      s.clickLvl = int(d.clickLvl);
+      s.gens = GENS.map(function (_, i) { return int(d.gens && d.gens[i]); });
+      s.tiers = TIERS.map(function (_, i) { return !!(d.tiers && d.tiers[i]); });
+      s.inf = int(d.inf);
+      s.auto = !!d.auto;
+      s.autoLvl = Math.min(int(d.autoLvl), SPEED_MAX);
+      s.t = num(d.t) || Date.now();
+    } catch (e) { /* хранилище недоступно, играем без сохранения */ }
+  }
+  function save() {
+    s.t = Date.now();
+    try { localStorage.setItem(SAVE_KEY, JSON.stringify(s)); } catch (e) { /* ничего */ }
+  }
+
+  // ---------- формулы ----------
+  function mult() {
+    var m = 1;
+    for (var i = 0; i < TIERS.length; i++) if (s.tiers[i]) m *= TIERS[i][0];
+    return m * Math.pow(2, s.inf);
+  }
+  function perClick() { return (1 + s.clickLvl) * mult(); }
+  function autoRate() { return s.auto ? 1 + s.autoLvl : 0; }
+  function perSec() {
+    var base = 0;
+    for (var i = 0; i < GENS.length; i++) base += s.gens[i] * GENS[i].rate;
+    return base * mult() + autoRate() * perClick();
+  }
+
+  // ---------- форматирование ----------
+  function fmt(n) {
+    if (!isFinite(n)) return "∞";
+    if (n < 1e6) return Math.floor(n).toLocaleString("ru-RU");
+    var e = Math.floor(Math.log10(n) / 3);
+    if (e >= SUF.length) return n.toExponential(2).replace("e+", "e").replace(".", ",");
+    var v = n / Math.pow(10, e * 3);
+    var d = v < 10 ? 2 : v < 100 ? 1 : 0;
+    if (+v.toFixed(d) >= 1000 && e < SUF.length - 1) { e++; v = n / Math.pow(10, e * 3); d = 2; }
+    return v.toFixed(d).replace(".", ",") + SUF[e];
+  }
+
+  // ---------- DOM ----------
+  function $(id) { return document.getElementById(id); }
+  var countEl = $("count"), psEl = $("ps"), xEl = $("xtotal"), pcEl = $("pc");
+  var stage = $("stage"), lemon = $("lemon"), toastEl = $("toast");
+
+  var items = [
+    {
+      name: "Сила клика", desc: "+1 лимон за клик",
+      cost: function () { return Math.floor(15 * Math.pow(1.18, s.clickLvl)); },
+      own: function () { return "ур. " + s.clickLvl; },
+      buy: function () { s.clickLvl++; }
+    }
+  ].concat(GENS.map(function (g, i) {
+    return {
+      name: g.name, desc: g.desc,
+      cost: function () { return Math.floor(g.base * Math.pow(g.g, s.gens[i])); },
+      own: function () { return s.gens[i] + " шт"; },
+      buy: function () { s.gens[i]++; }
+    };
+  }));
+  var infItem = {
+    name: "Икс без конца", desc: "Каждая покупка удваивает всё",
+    cost: function () { return INF_BASE * Math.pow(INF_G, s.inf); },
+    own: function () { return "×2 · куплено " + s.inf; },
+    buy: function () { s.inf++; }
+  };
+
+  var autoItem = {
+    name: "Автокликер", desc: "Сам тапает по лимону. 1 тап/сек",
+    cost: function () { return AUTO_COST; },
+    ok: function () { return !s.auto; },
+    label: function () { return s.auto ? "куплено" : null; },
+    own: function () { return s.auto ? "работает" : "выкл"; },
+    buy: function () { s.auto = true; }
+  };
+  var speedItem = {
+    name: "Ускорение автокликера", desc: "+1 тап/сек. Дорого, зато быстро",
+    cost: function () { return s.autoLvl >= SPEED_MAX ? Infinity : SPEED_BASE * Math.pow(SPEED_G, s.autoLvl); },
+    ok: function () { return s.auto && s.autoLvl < SPEED_MAX; },
+    label: function () { return s.autoLvl >= SPEED_MAX ? "максимум" : null; },
+    own: function () { return s.auto ? (1 + s.autoLvl) + " тап/сек" : "нужен автокликер"; },
+    buy: function () { s.autoLvl++; }
+  };
+
+  function makeItem(it, host) {
+    var b = document.createElement("button");
+    b.type = "button";
+    b.className = "item";
+    b.innerHTML = '<span class="n"></span><span class="cost"></span><span class="d"></span><span class="own"></span>';
+    b.querySelector(".n").textContent = it.name;
+    b.querySelector(".d").textContent = it.desc;
+    b.addEventListener("click", function () { buyItem(it); });
+    host.appendChild(b);
+    it.el = b;
+    it.costEl = b.querySelector(".cost");
+    it.ownEl = b.querySelector(".own");
+  }
+  items.forEach(function (it) { makeItem(it, $("items")); });
+  makeItem(infItem, $("inf"));
+  makeItem(autoItem, $("auto"));
+  makeItem(speedItem, $("auto"));
+
+  var tileEls = TIERS.map(function (t, i) {
+    var b = document.createElement("button");
+    b.type = "button";
+    b.className = "tile";
+    b.innerHTML = '<span class="x"></span><span class="c"></span>';
+    b.querySelector(".x").textContent = "×" + t[0];
+    b.addEventListener("click", function () { buyTier(i); });
+    $("tiles").appendChild(b);
+    return b;
+  });
+
+  // ---------- покупки ----------
+  function buyItem(it) {
+    var c = it.cost();
+    if ((it.ok && !it.ok()) || s.lemons < c) return;
+    s.lemons -= c;
+    it.buy();
+    if (it === infItem) pop(xEl.parentNode);
+    updateAll();
+    save();
+  }
+  function buyTier(i) {
+    if (s.tiers[i]) return;
+    var c = TIERS[i][1];
+    if (s.lemons < c) return;
+    s.lemons -= c;
+    s.tiers[i] = true;
+    pop(xEl.parentNode);
+    updateAll();
+    save();
+  }
+
+  // ---------- анимации ----------
+  function pop(node) {
+    if (reduce || !node.animate) return;
+    node.animate(
+      [{ transform: "scale(1)" }, { transform: "scale(1.25)" }, { transform: "scale(1)" }],
+      { duration: 280, easing: "ease-out" }
+    );
+  }
+  function squish() {
+    if (reduce || !lemon.animate) return;
+    lemon.animate(
+      [{ transform: "scale(1)" }, { transform: "scale(0.92) rotate(-2deg)" }, { transform: "scale(1)" }],
+      { duration: 130, easing: "ease-out" }
+    );
+  }
+  function floatNum(x, y, text) {
+    if (reduce) return;
+    var r = stage.getBoundingClientRect();
+    var f = document.createElement("span");
+    f.className = "float";
+    f.textContent = "+" + text;
+    f.style.left = (x - r.left + (Math.random() * 28 - 14)) + "px";
+    f.style.top = (y - r.top) + "px";
+    f.addEventListener("animationend", function () { f.remove(); });
+    stage.appendChild(f);
+    var all = stage.querySelectorAll(".float");
+    for (var i = 0; i < all.length - 14; i++) all[i].remove();
+  }
+  var toastTimer;
+  function toast(msg) {
+    toastEl.textContent = msg;
+    toastEl.hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { toastEl.hidden = true; }, 3500);
+  }
+
+  // ---------- клик ----------
+  function tap(x, y) {
+    var v = perClick();
+    s.lemons += v;
+    floatNum(x, y, fmt(v));
+    squish();
+  }
+  lemon.addEventListener("pointerdown", function (e) {
+    if (e.pointerType === "mouse" && e.button !== 0) return;
+    tap(e.clientX, e.clientY);
+  });
+  lemon.addEventListener("click", function (e) {
+    if (e.detail !== 0) return; // мышь и тач уже обработаны в pointerdown
+    var r = lemon.getBoundingClientRect();
+    tap(r.left + r.width / 2, r.top + r.height / 2);
+  });
+
+  // ---------- отрисовка ----------
+  var lastCount = "";
+  function paintCount() {
+    var t = fmt(s.lemons);
+    if (t !== lastCount) { countEl.textContent = t; lastCount = t; }
+  }
+  function updateShop() {
+    var all = items.concat([infItem, autoItem, speedItem]);
+    for (var i = 0; i < all.length; i++) {
+      var it = all[i], c = it.cost(), can = (!it.ok || it.ok()) && s.lemons >= c;
+      var lab = it.label ? it.label() : null;
+      it.costEl.textContent = lab || fmt(c);
+      it.costEl.classList.toggle("text", !!lab);
+      it.ownEl.textContent = it.own();
+      it.el.classList.toggle("can", can);
+      it.el.disabled = !can;
+    }
+    for (var j = 0; j < TIERS.length; j++) {
+      var b = tileEls[j], owned = s.tiers[j], ok = !owned && s.lemons >= TIERS[j][1];
+      b.classList.toggle("owned", owned);
+      b.classList.toggle("can", ok);
+      b.disabled = owned || !ok;
+      b.querySelector(".c").textContent = owned ? "куплено" : fmt(TIERS[j][1]);
+    }
+  }
+  function updateHeader() {
+    psEl.textContent = fmt(perSec());
+    xEl.textContent = "×" + fmt(mult());
+    pcEl.textContent = "+" + fmt(perClick());
+  }
+  function updateAll() { paintCount(); updateHeader(); updateShop(); }
+
+  // ---------- главный цикл ----------
+  var last = performance.now(), acc = 0, tapAcc = 0;
+  function autoTap() {
+    var r = lemon.getBoundingClientRect();
+    floatNum(r.left + r.width * (0.3 + Math.random() * 0.4), r.top + r.height * (0.25 + Math.random() * 0.4), fmt(perClick()));
+    squish();
+  }
+  function frame(now) {
+    var dt = (now - last) / 1000;
+    last = now;
+    if (dt > 0) {
+      var p = perSec();
+      var eff = Math.min(dt, 1800);
+      if (p > 0) {
+        s.lemons += p * eff;
+        if (dt > 5) toast("Пока тебя не было: +" + fmt(p * eff) + " лимонов");
+      }
+    }
+    var ar = autoRate();
+    if (ar > 0 && dt < 1) {
+      tapAcc += ar * dt;
+      if (tapAcc >= 1) { tapAcc = Math.min(tapAcc - 1, 1); autoTap(); }
+    }
+    paintCount();
+    acc += dt;
+    if (acc > 0.2) { acc = 0; updateShop(); }
+    requestAnimationFrame(frame);
+  }
+
+  // ---------- сброс ----------
+  var resetBtn = $("reset"), armed = false, armTimer;
+  resetBtn.addEventListener("click", function () {
+    if (!armed) {
+      armed = true;
+      resetBtn.textContent = "Точно? Тапни ещё раз";
+      clearTimeout(armTimer);
+      armTimer = setTimeout(function () { armed = false; resetBtn.textContent = "Начать заново"; }, 3500);
+      return;
+    }
+    clearTimeout(armTimer);
+    armed = false;
+    resetBtn.textContent = "Начать заново";
+    s = fresh();
+    save();
+    updateAll();
+    toast("Всё с нуля. Погнали.");
+  });
+
+  // ---------- старт ----------
+  load();
+  var away = Math.min((Date.now() - s.t) / 1000, 1800);
+  var p0 = perSec();
+  if (away > 5 && p0 > 0) {
+    s.lemons += p0 * away;
+    toast("Пока тебя не было: +" + fmt(p0 * away) + " лимонов");
+  }
+  updateAll();
+  setInterval(save, 4000);
+  document.addEventListener("visibilitychange", function () { if (document.hidden) save(); });
+  window.addEventListener("pagehide", save);
+  requestAnimationFrame(function (t) { last = t; requestAnimationFrame(frame); });
+})();
+</script>
+
+</body>
+</html>
