@@ -1,0 +1,478 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Claudix</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@600;800&family=Onest:wght@400;500;700&display=swap">
+<style>
+/* Layout: шапка с логотипом и ником, короткое вступление, сетка карточек игр с обложками, ниже профиль и планы. Одна смелая деталь: розовый X в логотипе, он же акцент кнопок. */
+:root {
+  --font-display: "Unbounded", "Arial Black", system-ui, sans-serif;
+  --font-body: "Onest", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --bg: #07181d;
+  --surface: #0e272e;
+  --surface-2: #143640;
+  --line: rgba(255, 255, 255, 0.11);
+  --fg: #eef6f7;
+  --muted: #94b0b6;
+  --accent: #ff5a8c;
+  --on-accent: #1d0610;
+  --cool: #58d6ff;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.5;
+}
+a { color: inherit; }
+a:focus-visible, button:focus-visible, input:focus-visible { outline: 3px solid var(--cool); outline-offset: 3px; }
+.wrap {
+  max-width: 1040px;
+  margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 18px 48px;
+  display: grid;
+  gap: 40px;
+}
+
+/* ---------- Шапка ---------- */
+header { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.wm { font-family: var(--font-display); font-weight: 800; font-size: 1.5rem; letter-spacing: -0.01em; display: inline-flex; align-items: center; line-height: 1; }
+.wm svg { width: 0.9em; height: 0.9em; margin-left: 0.04em; }
+.alpha {
+  font-family: var(--font-display); font-weight: 600; font-size: 0.62rem; letter-spacing: 0.12em;
+  padding: 4px 9px; border-radius: 999px; border: 1px solid var(--accent); color: var(--accent);
+}
+.chip { cursor: pointer; font: inherit; color: inherit; display: flex; align-items: center; gap: 10px; padding: 5px 14px 5px 5px; border-radius: 999px; background: var(--surface); border: 1px solid var(--line); max-width: 100%; }
+.avatar {
+  width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; flex: none;
+  background: var(--accent); color: var(--on-accent); font-family: var(--font-display); font-weight: 800; font-size: 0.95rem;
+}
+.chip span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; }
+
+/* ---------- Вступление ---------- */
+.intro h1 { margin: 0; font-family: var(--font-display); font-weight: 800; font-size: clamp(1.9rem, 6.4vw, 3.3rem); line-height: 1.08; letter-spacing: -0.02em; text-wrap: balance; max-width: 16ch; }
+.intro p { margin: 12px 0 0; color: var(--muted); max-width: 52ch; font-size: 1.05rem; }
+
+h2 { margin: 0; font-family: var(--font-display); font-weight: 600; font-size: 1.15rem; }
+.sec { display: grid; gap: 16px; }
+
+/* ---------- Игры ---------- */
+.games { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 18px; }
+.game { display: flex; flex-direction: column; min-width: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 18px; overflow: hidden; }
+.cover { display: block; width: 100%; aspect-ratio: 16 / 9; max-width: 100%; text-decoration: none; background: var(--surface-2); }
+.cover svg { display: block; width: 100%; height: 100%; }
+.gbody { display: flex; flex-direction: column; gap: 10px; padding: 16px; flex: 1; min-width: 0; }
+.tags { display: flex; gap: 6px; flex-wrap: wrap; }
+.tag { font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--cool); border: 1px solid rgba(88, 214, 255, 0.4); border-radius: 6px; padding: 2px 8px; }
+.game h3 { margin: 0; font-family: var(--font-display); font-weight: 800; font-size: 1.35rem; letter-spacing: -0.01em; }
+.game p { margin: 0; color: var(--muted); font-size: 0.95rem; }
+.stat { margin-top: auto; padding: 10px 12px; border-radius: 10px; background: rgba(0, 0, 0, 0.25); font-size: 0.85rem; color: var(--fg); font-variant-numeric: tabular-nums; }
+.stat b { font-weight: 700; }
+.play {
+  display: block; text-align: center; text-decoration: none; padding: 13px; border-radius: 12px;
+  font-family: var(--font-display); font-weight: 800; font-size: 1rem; letter-spacing: 0.03em;
+  background: var(--accent); color: var(--on-accent); box-shadow: 0 4px 0 #b5305a;
+}
+.play:active { transform: translateY(3px); box-shadow: 0 1px 0 #b5305a; }
+.soon { border-style: dashed; background: transparent; justify-content: center; align-items: center; text-align: center; min-height: 220px; padding: 24px; gap: 8px; display: flex; flex-direction: column; }
+.soon h3 { font-size: 1.1rem; color: var(--muted); }
+
+/* ---------- Аккаунт ---------- */
+.tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px; border-radius: 12px; background: var(--bg); border: 1px solid var(--line); }
+.tab { border: 0; border-radius: 9px; padding: 9px; background: transparent; color: var(--muted); font: inherit; font-weight: 700; cursor: pointer; }
+.tab[aria-selected="true"] { background: var(--surface-2); color: var(--fg); }
+.field { display: grid; gap: 6px; }
+.row { display: flex; align-items: center; gap: 10px; font-size: 0.9rem; color: var(--muted); }
+.row input { width: 20px; height: 20px; accent-color: var(--accent); flex: none; }
+.msg { margin: 0; min-height: 1.3em; font-size: 0.88rem; }
+.msg.bad { color: #ff8da8; }
+.msg.ok { color: #7ff0b4; }
+.btn2 { padding: 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface-2); color: var(--fg); font: inherit; font-weight: 700; cursor: pointer; }
+.btn2.danger { color: #ff8da8; }
+.stack { display: grid; gap: 10px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.uchip { border: 1px solid var(--line); background: var(--bg); color: var(--fg); border-radius: 999px; padding: 4px 12px; font: inherit; font-size: 0.85rem; cursor: pointer; }
+.big-name { font-family: var(--font-display); font-weight: 800; font-size: 1.3rem; overflow-wrap: anywhere; }
+.go2 { padding: 13px; border-radius: 12px; border: 0; cursor: pointer; font-family: var(--font-display); font-weight: 800; font-size: 1rem; background: var(--accent); color: var(--on-accent); box-shadow: 0 4px 0 #b5305a; }
+.go2:active { transform: translateY(3px); box-shadow: 0 1px 0 #b5305a; }
+.go2:disabled { opacity: 0.6; cursor: default; }
+
+/* ---------- Профиль и планы ---------- */
+.two { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 18px; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 18px; display: grid; gap: 12px; align-content: start; min-width: 0; }
+label { font-size: 0.85rem; color: var(--muted); }
+input[type="text"], input[type="password"] {
+  width: 100%; padding: 12px 14px; border-radius: 10px; border: 1px solid var(--line);
+  background: var(--bg); color: var(--fg); font: inherit; font-size: 1rem;
+}
+.hint { margin: 0; font-size: 0.82rem; color: var(--muted); }
+.road { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.road li { display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: start; }
+.road i { width: 10px; height: 10px; border-radius: 50%; border: 2px solid var(--cool); margin-top: 7px; }
+.road b { display: block; font-weight: 700; }
+.road span { color: var(--muted); font-size: 0.9rem; }
+footer { color: var(--muted); font-size: 0.82rem; }
+
+.game { transition: transform 0.15s; }
+.game:hover { transform: translateY(-3px); }
+@media (prefers-reduced-motion: reduce) { .game { transition: none; } .game:hover { transform: none; } }
+</style>
+
+<style>
+:root { color-scheme: dark; padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+body { margin: 0; }
+img { max-width: 100%; }
+[hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <div class="wm" aria-label="Claudix">Claudi<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4 L20 20 M20 4 L4 20" stroke="#ff5a8c" stroke-width="5" stroke-linecap="round" fill="none"/></svg></div>
+      <span class="alpha">АЛЬФА 0.1</span>
+    </div>
+    <button class="chip" id="chip" type="button" aria-label="Аккаунт"><div class="avatar" id="avatar">Г</div><span id="chipName">Гость</span></button>
+  </header>
+
+  <section class="intro">
+    <h1>Выбери игру и погнали</h1>
+    <p>Это альфа-версия площадки. Пока на ней две игры, остальные в пути. Создай аккаунт, и у тебя будет свой прогресс.</p>
+  </section>
+
+  <section class="sec" aria-labelledby="gh">
+    <h2 id="gh">Игры</h2>
+    <div class="games">
+
+      <article class="game">
+        <a class="cover" href="lemon.html" tabindex="-1" aria-hidden="true">
+          <svg viewBox="0 0 320 180" preserveAspectRatio="xMidYMid slice">
+            <defs>
+              <radialGradient id="bgL" cx="50%" cy="50%" r="75%"><stop offset="0" stop-color="#4a8f2c"/><stop offset="1" stop-color="#0d2a15"/></radialGradient>
+              <radialGradient id="lemG" cx="38%" cy="30%" r="80%"><stop offset="0" stop-color="#fff07a"/><stop offset="0.55" stop-color="#f7d81f"/><stop offset="1" stop-color="#d4a800"/></radialGradient>
+            </defs>
+            <rect width="320" height="180" fill="url(#bgL)"/>
+            <g stroke="#fff3a0" stroke-width="3" opacity="0.16" stroke-linecap="round">
+              <path d="M160 92 L-20 -10 M160 92 L90 -30 M160 92 L230 -30 M160 92 L340 -10 M160 92 L-30 120 M160 92 L350 120 M160 92 L60 220 M160 92 L260 220"/>
+            </g>
+            <g font-family="Unbounded, Arial Black, sans-serif" font-weight="800" fill="#fff07a">
+              <text x="20" y="52" font-size="26" opacity="0.9" transform="rotate(-8 20 52)">×2</text>
+              <text x="236" y="46" font-size="22" opacity="0.8" transform="rotate(7 236 46)">×10</text>
+              <text x="18" y="160" font-size="20" opacity="0.7" transform="rotate(6 18 160)">×50</text>
+              <text x="212" y="158" font-size="30" opacity="0.95" transform="rotate(-6 212 158)">×1000</text>
+            </g>
+            <g transform="translate(160 92) rotate(-18) scale(0.62) translate(-120 -128)">
+              <path d="M26 128 C26 128 34 118 46 116 C58 70 92 50 120 50 C148 50 182 70 194 116 C206 118 214 128 214 128 C214 128 206 138 194 140 C182 186 148 206 120 206 C92 206 58 186 46 140 C34 138 26 128 26 128 Z" fill="url(#lemG)" stroke="#d4a800" stroke-width="3" stroke-linejoin="round"/>
+              <ellipse cx="88" cy="90" rx="28" ry="14" transform="rotate(-35 88 90)" fill="#fff" opacity="0.35"/>
+              <path d="M122 52 C130 28 160 18 184 24 C180 50 152 64 124 56 Z" fill="#2c7a3a"/>
+            </g>
+          </svg>
+        </a>
+        <div class="gbody">
+          <div class="tags"><span class="tag">Кликер</span><span class="tag">Иксы</span></div>
+          <h3>Лимонный Икс</h3>
+          <p>Жми на лимон, копи и покупай иксы, которые множат всё. Есть автокликер и очень дорогое ускорение.</p>
+          <div class="stat" id="statLemon">Ты ещё не играл. Начни с первого лимона.</div>
+          <a class="play" href="lemon.html">Играть</a>
+        </div>
+      </article>
+
+      <article class="game">
+        <a class="cover" href="liga.html" tabindex="-1" aria-hidden="true">
+          <svg viewBox="0 0 320 180" preserveAspectRatio="xMidYMid slice">
+            <defs>
+              <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1a2566"/><stop offset="0.6" stop-color="#b24f7a"/><stop offset="1" stop-color="#f29a5a"/></linearGradient>
+              <pattern id="win" width="9" height="11" patternUnits="userSpaceOnUse"><rect x="2.5" y="2.5" width="3.5" height="4.5" fill="#ffd978" opacity="0.85"/></pattern>
+            </defs>
+            <rect width="320" height="180" fill="url(#sky)"/>
+            <circle cx="262" cy="100" r="34" fill="#ffd9a6" opacity="0.75"/>
+            <g fill="#131737">
+              <rect x="0" y="96" width="44" height="90"/><rect x="44" y="118" width="34" height="70"/><rect x="78" y="84" width="40" height="100"/>
+              <rect x="118" y="150" width="140" height="40"/><rect x="258" y="108" width="30" height="80"/><rect x="288" y="78" width="40" height="110"/>
+            </g>
+            <g fill="url(#win)">
+              <rect x="0" y="96" width="44" height="90"/><rect x="44" y="118" width="34" height="70"/><rect x="78" y="84" width="40" height="100"/>
+              <rect x="258" y="108" width="30" height="80"/><rect x="288" y="78" width="40" height="110"/>
+            </g>
+            <polyline points="196,6 182,48 198,48 178,96" fill="none" stroke="#58d6ff" stroke-width="4" stroke-linejoin="round" stroke-linecap="round" opacity="0.9"/>
+            <g transform="translate(120 36) scale(2.25)">
+              <path d="M10 20 L2 52 L38 52 L30 20Z" fill="#ffc933" opacity="0.9"/>
+              <rect x="12" y="34" width="6" height="18" fill="#1f5fe0"/><rect x="22" y="34" width="6" height="18" fill="#1f5fe0"/>
+              <rect x="10" y="18" width="20" height="18" fill="#1f5fe0"/><rect x="5" y="19" width="6" height="16" fill="#1f5fe0"/><rect x="29" y="19" width="6" height="16" fill="#1f5fe0"/>
+              <rect x="16" y="23" width="8" height="8" fill="#ffc933"/><rect x="13" y="5" width="14" height="14" fill="#e8b48a"/><rect x="13" y="5" width="14" height="6" fill="#1f5fe0"/><rect x="13" y="9" width="14" height="3" fill="#ffc933"/>
+            </g>
+          </svg>
+        </a>
+        <div class="gbody">
+          <div class="tags"><span class="tag">3D-экшен</span><span class="tag">Герои</span></div>
+          <h3>Лига Улиц</h3>
+          <p>Бей волны преступников, зарабатывай монеты и покупай шесть героев с разными способностями. Управление пальцами.</p>
+          <div class="stat" id="statLiga">Ты ещё не играл. Первый герой уже ждёт.</div>
+          <a class="play" href="liga.html">Играть</a>
+        </div>
+      </article>
+
+      <article class="game soon">
+        <h3>Следующая игра</h3>
+        <p>Здесь будет новая игра. Какая, решим вместе.</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="two">
+    <div class="panel" id="acctPanel">
+      <h2>Аккаунт</h2>
+
+      <div class="stack" id="viewGuest">
+        <div class="tabs" role="tablist" aria-label="Вход или регистрация">
+          <button class="tab" id="tabLogin" role="tab" type="button" aria-selected="true">Войти</button>
+          <button class="tab" id="tabReg" role="tab" type="button" aria-selected="false">Создать аккаунт</button>
+        </div>
+        <form class="stack" id="authForm" novalidate>
+          <div class="field"><label for="au">Ник</label><input type="text" id="au" maxlength="16" autocomplete="username" autocapitalize="off" spellcheck="false" placeholder="от 3 до 16 символов"></div>
+          <p class="msg" id="uhint" aria-live="polite"></p>
+          <div class="field"><label for="ap">Пароль</label><input type="password" id="ap" maxlength="64" autocomplete="current-password" placeholder="от 4 символов"></div>
+          <div class="field" id="rowP2" hidden><label for="ap2">Пароль ещё раз</label><input type="password" id="ap2" maxlength="64" autocomplete="new-password"></div>
+          <label class="row" id="rowTransfer" for="atr" hidden><input type="checkbox" id="atr" checked><span>Забрать в аккаунт прогресс, который уже есть на этом устройстве</span></label>
+          <p class="msg" id="aerr" role="alert"></p>
+          <button class="go2" id="asubmit" type="submit">Войти</button>
+        </form>
+        <div id="devUsers" hidden><p class="hint">Аккаунты на этом устройстве:</p><div class="chips" id="devChips"></div></div>
+        <p class="hint">Аккаунты пока живут только на этом устройстве. Пароль хранится в зашифрованном виде и забытый не восстанавливается. Не используй пароль от почты или других сайтов.</p>
+      </div>
+
+      <div class="stack" id="viewIn" hidden>
+        <div><p class="hint" style="margin:0">Ты вошёл как</p><div class="big-name" id="inName"></div></div>
+        <p class="hint">Прогресс в играх сохраняется в этом аккаунте.</p>
+        <button class="btn2" id="logout" type="button">Выйти</button>
+        <button class="btn2 danger" id="delStart" type="button">Удалить аккаунт</button>
+        <div class="stack" id="delBox" hidden>
+          <label for="dp">Введи пароль, чтобы удалить аккаунт вместе с прогрессом</label>
+          <input type="password" id="dp" maxlength="64" autocomplete="current-password">
+          <p class="msg" id="derr" role="alert"></p>
+          <button class="btn2 danger" id="delGo" type="button">Удалить навсегда</button>
+          <button class="btn2" id="delCancel" type="button">Отмена</button>
+        </div>
+      </div>
+    </div>
+    <div class="panel">
+      <h2>В планах</h2>
+      <ul class="road">
+        <li><i></i><div><b>Больше игр</b><span>Новые игры будут появляться на площадке.</span></div></li>
+        <li><i></i><div><b>Свои игры</b><span>Конструктор, в котором можно собрать игру и выложить её сюда.</span></div></li>
+        <li><i></i><div><b>Друзья и рекорды</b><span>Общие таблицы рекордов и профили друзей.</span></div></li>
+      </ul>
+    </div>
+  </section>
+
+  <footer>Claudix · альфа 0.1 · аккаунты пока живут только на этом устройстве.</footer>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  var $ = function (id) { return document.getElementById(id); };
+  var SUF = ["", "K", "M", "B", "T", "Qa", "Qi", "Sx", "Sp", "Oc", "No", "Dc"];
+  var TIERS = [2, 3, 5, 10, 20, 50, 100, 300, 1000];
+  var ACC_KEY = "claudix-accounts-v1", SES_KEY = "claudix-session";
+  var LEMON = "limonny-iks-v1", LIGA = "liga-ulic-v1";
+  var NAME_RE = /^[A-Za-zА-Яа-яЁё0-9_\-]{3,16}$/;
+
+  // ---------- хранилище ----------
+  function read(key) {
+    try { var d = JSON.parse(localStorage.getItem(key) || "null"); return d && typeof d === "object" ? d : null; }
+    catch (e) { return null; }
+  }
+  function write(key, val) {
+    try { localStorage.setItem(key, JSON.stringify(val)); return true; } catch (e) { return false; }
+  }
+  function drop(key) { try { localStorage.removeItem(key); } catch (e) { /* ничего */ } }
+  function storageOk() {
+    try { localStorage.setItem("claudix-probe", "1"); localStorage.removeItem("claudix-probe"); return true; } catch (e) { return false; }
+  }
+  function accounts() { var a = read(ACC_KEY); return a && a.users && typeof a.users === "object" ? a : { users: {} }; }
+  function session() { var s = read(SES_KEY); return s && typeof s.user === "string" && s.user ? s : null; }
+
+  // ---------- пароли ----------
+  function b64e(buf) { var s = ""; buf.forEach(function (b) { s += String.fromCharCode(b); }); return btoa(s); }
+  function b64d(str) { var s = atob(str), a = new Uint8Array(s.length); for (var i = 0; i < s.length; i++) a[i] = s.charCodeAt(i); return a; }
+  function newSalt() {
+    var a = new Uint8Array(16);
+    if (window.crypto && crypto.getRandomValues) crypto.getRandomValues(a); else for (var i = 0; i < 16; i++) a[i] = Math.floor(Math.random() * 256);
+    return b64e(a);
+  }
+  function weakHash(str) {
+    var h1 = 0xdeadbeef, h2 = 0x41c6ce57;
+    for (var i = 0; i < str.length; i++) { var c = str.charCodeAt(i); h1 = Math.imul(h1 ^ c, 2654435761); h2 = Math.imul(h2 ^ c, 1597334677); }
+    h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+    h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+    return "w1:" + (h2 >>> 0).toString(16) + (h1 >>> 0).toString(16);
+  }
+  function hashPw(pw, salt) {
+    if (window.crypto && crypto.subtle && window.TextEncoder) {
+      var enc = new TextEncoder();
+      return crypto.subtle.importKey("raw", enc.encode(pw), "PBKDF2", false, ["deriveBits"]).then(function (key) {
+        return crypto.subtle.deriveBits({ name: "PBKDF2", salt: b64d(salt), iterations: 100000, hash: "SHA-256" }, key, 256);
+      }).then(function (bits) { return "p1:" + b64e(new Uint8Array(bits)); });
+    }
+    return Promise.resolve(weakHash(pw + salt));
+  }
+
+  // ---------- числа ----------
+  function big(n) {
+    if (!isFinite(n)) return "∞";
+    n = Math.max(0, n);
+    if (n < 1e6) return Math.floor(n).toLocaleString("ru-RU");
+    var e = Math.floor(Math.log10(n) / 3);
+    if (e >= SUF.length) return n.toExponential(2).replace("e+", "e").replace(".", ",");
+    var v = n / Math.pow(10, e * 3), d = v < 10 ? 2 : v < 100 ? 1 : 0;
+    return v.toFixed(d).replace(".", ",") + SUF[e];
+  }
+
+  // ---------- статистика текущего аккаунта ----------
+  function saveKey(base, user) { return user ? base + ":" + user : base; }
+  function hasProgress(user) {
+    var L = read(saveKey(LEMON, user)), G = read(saveKey(LIGA, user));
+    return !!((L && (L.lemons > 0 || L.clickLvl > 0)) || (G && (G.best > 0 || G.money > 0 || (G.owned && G.owned.length > 1))));
+  }
+  function paintStats() {
+    var s = session(), u = s ? s.user : "";
+    $("statLemon").textContent = "Ты ещё не играл. Начни с первого лимона.";
+    $("statLiga").textContent = "Ты ещё не играл. Первый герой уже ждёт.";
+    var L = read(saveKey(LEMON, u));
+    if (L && (L.lemons > 0 || L.clickLvl > 0 || (L.gens && L.gens.some(function (g) { return g > 0; })))) {
+      var mult = 1;
+      for (var i = 0; i < TIERS.length; i++) if (L.tiers && L.tiers[i]) mult *= TIERS[i];
+      mult *= Math.pow(2, Math.max(0, Math.floor(+L.inf || 0)));
+      $("statLemon").innerHTML = "Лимонов: <b>" + big(+L.lemons || 0) + "</b> · общий икс <b>×" + big(mult) + "</b>";
+    }
+    var G = read(saveKey(LIGA, u));
+    if (G && (G.best > 0 || G.money > 0 || (G.owned && G.owned.length > 1))) {
+      var owned = Array.isArray(G.owned) ? G.owned.length : 1;
+      $("statLiga").innerHTML = "Монет: <b>" + big(+G.money || 0) + "</b> · героев <b>" + owned + " из 6</b> · лучшая волна <b>" + Math.floor(+G.best || 0) + "</b>";
+    }
+  }
+
+  // ---------- интерфейс аккаунта ----------
+  var mode = "login";
+  function setMsg(el, text, kind) { el.textContent = text || ""; el.className = "msg" + (kind ? " " + kind : ""); }
+  function paintChip() {
+    var s = session(), name = s ? s.name : "Гость";
+    $("chipName").textContent = name;
+    $("avatar").textContent = name.charAt(0).toUpperCase();
+  }
+  function paintDevUsers() {
+    var users = accounts().users, ids = Object.keys(users), box = $("devChips");
+    box.innerHTML = "";
+    ids.forEach(function (id) {
+      var b = document.createElement("button");
+      b.type = "button"; b.className = "uchip"; b.textContent = users[id].name;
+      b.addEventListener("click", function () { setMode("login"); $("au").value = users[id].name; $("ap").focus(); checkName(); });
+      box.appendChild(b);
+    });
+    $("devUsers").hidden = ids.length === 0;
+  }
+  function paintView() {
+    var s = session();
+    $("viewGuest").hidden = !!s; $("viewIn").hidden = !s;
+    if (s) { $("inName").textContent = s.name; $("delBox").hidden = true; $("delStart").hidden = false; }
+    else { paintDevUsers(); setMode(mode); }
+    paintChip(); paintStats();
+  }
+  function setMode(m) {
+    mode = m;
+    var reg = m === "reg";
+    $("tabLogin").setAttribute("aria-selected", reg ? "false" : "true");
+    $("tabReg").setAttribute("aria-selected", reg ? "true" : "false");
+    $("rowP2").hidden = !reg;
+    $("rowTransfer").hidden = !(reg && hasProgress(""));
+    $("ap").setAttribute("autocomplete", reg ? "new-password" : "current-password");
+    $("asubmit").textContent = reg ? "Создать аккаунт" : "Войти";
+    setMsg($("aerr"), "");
+    checkName();
+  }
+  function checkName() {
+    var hint = $("uhint"), v = $("au").value.trim();
+    if (mode !== "reg" || !v) { setMsg(hint, ""); return; }
+    if (!NAME_RE.test(v)) { setMsg(hint, "Нужно от 3 до 16 символов: буквы, цифры, _ и -", "bad"); return; }
+    if (accounts().users[v.toLowerCase()]) setMsg(hint, "Это имя уже занято. Придумай другое.", "bad");
+    else setMsg(hint, "Имя свободно", "ok");
+  }
+  $("tabLogin").addEventListener("click", function () { setMode("login"); });
+  $("tabReg").addEventListener("click", function () { setMode("reg"); });
+  $("au").addEventListener("input", checkName);
+  $("chip").addEventListener("click", function () {
+    var p = $("acctPanel"); p.scrollIntoView({ behavior: "smooth", block: "center" });
+    var f = session() ? $("logout") : $("au"); setTimeout(function () { f.focus({ preventScroll: true }); }, 350);
+  });
+
+  var busy = false;
+  $("authForm").addEventListener("submit", function (e) {
+    e.preventDefault();
+    if (busy) return;
+    var err = $("aerr"), name = $("au").value.trim(), pw = $("ap").value;
+    if (!storageOk()) { setMsg(err, "Браузер не даёт сохранять данные. Включи хранилище сайта или открой страницу в обычном окне.", "bad"); return; }
+    if (!NAME_RE.test(name)) { setMsg(err, "Ник: от 3 до 16 символов, буквы, цифры, _ и -", "bad"); return; }
+    if (pw.length < 4) { setMsg(err, "Пароль слишком короткий, нужно хотя бы 4 символа.", "bad"); return; }
+    var uid = name.toLowerCase(), acc = accounts();
+    busy = true; $("asubmit").disabled = true;
+    function done() { busy = false; $("asubmit").disabled = false; }
+    if (mode === "reg") {
+      if (pw !== $("ap2").value) { setMsg(err, "Пароли не совпадают.", "bad"); done(); return; }
+      if (acc.users[uid]) { setMsg(err, "Это имя уже занято. Придумай другое.", "bad"); done(); return; }
+      var salt = newSalt();
+      hashPw(pw, salt).then(function (hash) {
+        var fresh = accounts();
+        if (fresh.users[uid]) { setMsg(err, "Это имя уже занято. Придумай другое.", "bad"); return; }
+        fresh.users[uid] = { name: name, salt: salt, hash: hash, created: Date.now() };
+        if (!write(ACC_KEY, fresh)) { setMsg(err, "Не получилось сохранить аккаунт.", "bad"); return; }
+        if ($("atr").checked && !$("rowTransfer").hidden) {
+          [LEMON, LIGA].forEach(function (base) { var g = read(base); if (g) write(base + ":" + uid, g); });
+        }
+        write(SES_KEY, { user: uid, name: name });
+        $("ap").value = ""; $("ap2").value = ""; $("au").value = "";
+        paintView();
+      }).then(done, done);
+    } else {
+      var u = acc.users[uid];
+      var fail = function () { setMsg(err, "Неверный ник или пароль.", "bad"); };
+      if (!u) { hashPw(pw, newSalt()).then(function () { fail(); }).then(done, done); return; }
+      hashPw(pw, u.salt).then(function (hash) {
+        if (hash !== u.hash) { fail(); return; }
+        write(SES_KEY, { user: uid, name: u.name });
+        $("ap").value = ""; $("au").value = "";
+        paintView();
+      }).then(done, done);
+    }
+  });
+  $("logout").addEventListener("click", function () { drop(SES_KEY); mode = "login"; paintView(); });
+  $("delStart").addEventListener("click", function () { $("delBox").hidden = false; $("delStart").hidden = true; setMsg($("derr"), ""); $("dp").value = ""; $("dp").focus(); });
+  $("delCancel").addEventListener("click", function () { $("delBox").hidden = true; $("delStart").hidden = false; });
+  $("delGo").addEventListener("click", function () {
+    var s = session(), acc = accounts(), u = s && acc.users[s.user];
+    if (!u) { drop(SES_KEY); paintView(); return; }
+    hashPw($("dp").value, u.salt).then(function (hash) {
+      if (hash !== u.hash) { setMsg($("derr"), "Пароль не подходит.", "bad"); return; }
+      delete acc.users[s.user]; write(ACC_KEY, acc);
+      drop(saveKey(LEMON, s.user)); drop(saveKey(LIGA, s.user)); drop(SES_KEY);
+      mode = "login"; paintView();
+    });
+  });
+
+  if (!storageOk()) setMsg($("aerr"), "Браузер не даёт сохранять данные, аккаунты работать не будут.", "bad");
+  paintView();
+})();
+</script>
+
+</body>
+</html>
