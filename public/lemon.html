@@ -376,11 +376,12 @@ img { max-width: 100%; }
 </div>
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
+<script src="claudix.js"></script>
 <script>
-(function () {
+Claudix.ready(function () {
   "use strict";
 
-  var SESSION = (function () { try { var s = JSON.parse(localStorage.getItem("claudix-session") || "null"); return s && typeof s.user === "string" && s.user ? s : null; } catch (e) { return null; } })();
+  var SESSION = Claudix.session();
   var SAVE_KEY = "limonny-iks-v1" + (SESSION ? ":" + SESSION.user : "");
   (function () { var w = document.getElementById("who"); if (w) w.textContent = SESSION ? "· " + SESSION.name : "· гость"; })();
   var SUF = ["", "K", "M", "B", "T", "Qa", "Qi", "Sx", "Sp", "Oc", "No", "Dc"];
@@ -436,6 +437,7 @@ img { max-width: 100%; }
   function save() {
     s.t = Date.now();
     try { localStorage.setItem(SAVE_KEY, JSON.stringify(s)); } catch (e) { /* ничего */ }
+    if (SESSION) Claudix.push("lemon");
   }
 
   // ---------- формулы ----------
@@ -704,7 +706,7 @@ img { max-width: 100%; }
   document.addEventListener("visibilitychange", function () { if (document.hidden) save(); });
   window.addEventListener("pagehide", save);
   requestAnimationFrame(function (t) { last = t; requestAnimationFrame(frame); });
-})();
+});
 </script>
 
 </body>

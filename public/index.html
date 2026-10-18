@@ -247,8 +247,7 @@ img { max-width: 100%; }
           <p class="msg" id="aerr" role="alert"></p>
           <button class="go2" id="asubmit" type="submit">Войти</button>
         </form>
-        <div id="devUsers" hidden><p class="hint">Аккаунты на этом устройстве:</p><div class="chips" id="devChips"></div></div>
-        <p class="hint">Аккаунты пока живут только на этом устройстве. Пароль хранится в зашифрованном виде и забытый не восстанавливается. Не используй пароль от почты или других сайтов.</p>
+        <p class="hint">Аккаунт общий: заходи с любого устройства, прогресс подтянется сам. Пароль хранится в зашифрованном виде и забытый не восстанавливается. Не используй пароль от почты или других сайтов.</p>
       </div>
 
       <div class="stack" id="viewIn" hidden>
@@ -275,58 +274,29 @@ img { max-width: 100%; }
     </div>
   </section>
 
-  <footer>Claudix · альфа 0.1 · аккаунты пока живут только на этом устройстве.</footer>
+  <footer>Claudix · альфа 0.2 · общие аккаунты и облачные сохранения.</footer>
 </div>
 
+<script src="claudix.js"></script>
 <script>
 (function () {
   "use strict";
   var $ = function (id) { return document.getElementById(id); };
+  var C = window.Claudix;
   var SUF = ["", "K", "M", "B", "T", "Qa", "Qi", "Sx", "Sp", "Oc", "No", "Dc"];
   var TIERS = [2, 3, 5, 10, 20, 50, 100, 300, 1000];
-  var ACC_KEY = "claudix-accounts-v1", SES_KEY = "claudix-session";
   var LEMON = "limonny-iks-v1", LIGA = "liga-ulic-v1";
   var NAME_RE = /^[A-Za-zА-Яа-яЁё0-9_\-]{3,16}$/;
 
-  // ---------- хранилище ----------
+  // ---------- хранилище (только для статистики) ----------
   function read(key) {
     try { var d = JSON.parse(localStorage.getItem(key) || "null"); return d && typeof d === "object" ? d : null; }
     catch (e) { return null; }
   }
-  function write(key, val) {
-    try { localStorage.setItem(key, JSON.stringify(val)); return true; } catch (e) { return false; }
-  }
-  function drop(key) { try { localStorage.removeItem(key); } catch (e) { /* ничего */ } }
   function storageOk() {
     try { localStorage.setItem("claudix-probe", "1"); localStorage.removeItem("claudix-probe"); return true; } catch (e) { return false; }
   }
-  function accounts() { var a = read(ACC_KEY); return a && a.users && typeof a.users === "object" ? a : { users: {} }; }
-  function session() { var s = read(SES_KEY); return s && typeof s.user === "string" && s.user ? s : null; }
-
-  // ---------- пароли ----------
-  function b64e(buf) { var s = ""; buf.forEach(function (b) { s += String.fromCharCode(b); }); return btoa(s); }
-  function b64d(str) { var s = atob(str), a = new Uint8Array(s.length); for (var i = 0; i < s.length; i++) a[i] = s.charCodeAt(i); return a; }
-  function newSalt() {
-    var a = new Uint8Array(16);
-    if (window.crypto && crypto.getRandomValues) crypto.getRandomValues(a); else for (var i = 0; i < 16; i++) a[i] = Math.floor(Math.random() * 256);
-    return b64e(a);
-  }
-  function weakHash(str) {
-    var h1 = 0xdeadbeef, h2 = 0x41c6ce57;
-    for (var i = 0; i < str.length; i++) { var c = str.charCodeAt(i); h1 = Math.imul(h1 ^ c, 2654435761); h2 = Math.imul(h2 ^ c, 1597334677); }
-    h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
-    h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
-    return "w1:" + (h2 >>> 0).toString(16) + (h1 >>> 0).toString(16);
-  }
-  function hashPw(pw, salt) {
-    if (window.crypto && crypto.subtle && window.TextEncoder) {
-      var enc = new TextEncoder();
-      return crypto.subtle.importKey("raw", enc.encode(pw), "PBKDF2", false, ["deriveBits"]).then(function (key) {
-        return crypto.subtle.deriveBits({ name: "PBKDF2", salt: b64d(salt), iterations: 100000, hash: "SHA-256" }, key, 256);
-      }).then(function (bits) { return "p1:" + b64e(new Uint8Array(bits)); });
-    }
-    return Promise.resolve(weakHash(pw + salt));
-  }
+  function session() { return C.session(); }
 
   // ---------- числа ----------
   function big(n) {
@@ -365,28 +335,27 @@ img { max-width: 100%; }
 
   // ---------- интерфейс аккаунта ----------
   var mode = "login";
+  var ERR = {
+    taken: "Это имя уже занято. Придумай другое.",
+    bad_login: "Неверный ник или пароль.",
+    bad_name: "Ник: от 3 до 16 символов, буквы, цифры, _ и -",
+    bad_password: "Пароль: от 4 до 64 символов.",
+    slow_down: "Слишком много попыток. Подожди несколько минут.",
+    network: "Нет связи с сервером. Проверь интернет и попробуй ещё раз.",
+    server: "Сервер сейчас не отвечает. Попробуй чуть позже."
+  };
+  function errText(res) { return ERR[res.code] || ERR.server; }
   function setMsg(el, text, kind) { el.textContent = text || ""; el.className = "msg" + (kind ? " " + kind : ""); }
   function paintChip() {
     var s = session(), name = s ? s.name : "Гость";
     $("chipName").textContent = name;
     $("avatar").textContent = name.charAt(0).toUpperCase();
   }
-  function paintDevUsers() {
-    var users = accounts().users, ids = Object.keys(users), box = $("devChips");
-    box.innerHTML = "";
-    ids.forEach(function (id) {
-      var b = document.createElement("button");
-      b.type = "button"; b.className = "uchip"; b.textContent = users[id].name;
-      b.addEventListener("click", function () { setMode("login"); $("au").value = users[id].name; $("ap").focus(); checkName(); });
-      box.appendChild(b);
-    });
-    $("devUsers").hidden = ids.length === 0;
-  }
   function paintView() {
     var s = session();
     $("viewGuest").hidden = !!s; $("viewIn").hidden = !s;
     if (s) { $("inName").textContent = s.name; $("delBox").hidden = true; $("delStart").hidden = false; }
-    else { paintDevUsers(); setMode(mode); }
+    else setMode(mode);
     paintChip(); paintStats();
   }
   function setMode(m) {
@@ -401,12 +370,25 @@ img { max-width: 100%; }
     setMsg($("aerr"), "");
     checkName();
   }
+
+  var nameTimer = null, nameSeq = 0;
   function checkName() {
     var hint = $("uhint"), v = $("au").value.trim();
+    clearTimeout(nameTimer);
+    nameSeq++;
     if (mode !== "reg" || !v) { setMsg(hint, ""); return; }
     if (!NAME_RE.test(v)) { setMsg(hint, "Нужно от 3 до 16 символов: буквы, цифры, _ и -", "bad"); return; }
-    if (accounts().users[v.toLowerCase()]) setMsg(hint, "Это имя уже занято. Придумай другое.", "bad");
-    else setMsg(hint, "Имя свободно", "ok");
+    setMsg(hint, "Проверяю имя…");
+    var my = nameSeq;
+    nameTimer = setTimeout(function () {
+      C.nameFree(v).then(function (r) {
+        if (my !== nameSeq) return;
+        if (!r) setMsg(hint, "Не получилось проверить имя, нет связи с сервером.", "bad");
+        else if (!r.valid) setMsg(hint, "Нужно от 3 до 16 символов: буквы, цифры, _ и -", "bad");
+        else if (!r.free) setMsg(hint, "Это имя уже занято. Придумай другое.", "bad");
+        else setMsg(hint, "Имя свободно", "ok");
+      });
+    }, 300);
   }
   $("tabLogin").addEventListener("click", function () { setMode("login"); });
   $("tabReg").addEventListener("click", function () { setMode("reg"); });
@@ -422,55 +404,38 @@ img { max-width: 100%; }
     if (busy) return;
     var err = $("aerr"), name = $("au").value.trim(), pw = $("ap").value;
     if (!storageOk()) { setMsg(err, "Браузер не даёт сохранять данные. Включи хранилище сайта или открой страницу в обычном окне.", "bad"); return; }
-    if (!NAME_RE.test(name)) { setMsg(err, "Ник: от 3 до 16 символов, буквы, цифры, _ и -", "bad"); return; }
+    if (!NAME_RE.test(name)) { setMsg(err, ERR.bad_name, "bad"); return; }
     if (pw.length < 4) { setMsg(err, "Пароль слишком короткий, нужно хотя бы 4 символа.", "bad"); return; }
-    var uid = name.toLowerCase(), acc = accounts();
-    busy = true; $("asubmit").disabled = true;
-    function done() { busy = false; $("asubmit").disabled = false; }
-    if (mode === "reg") {
-      if (pw !== $("ap2").value) { setMsg(err, "Пароли не совпадают.", "bad"); done(); return; }
-      if (acc.users[uid]) { setMsg(err, "Это имя уже занято. Придумай другое.", "bad"); done(); return; }
-      var salt = newSalt();
-      hashPw(pw, salt).then(function (hash) {
-        var fresh = accounts();
-        if (fresh.users[uid]) { setMsg(err, "Это имя уже занято. Придумай другое.", "bad"); return; }
-        fresh.users[uid] = { name: name, salt: salt, hash: hash, created: Date.now() };
-        if (!write(ACC_KEY, fresh)) { setMsg(err, "Не получилось сохранить аккаунт.", "bad"); return; }
-        if ($("atr").checked && !$("rowTransfer").hidden) {
-          [LEMON, LIGA].forEach(function (base) { var g = read(base); if (g) write(base + ":" + uid, g); });
-        }
-        write(SES_KEY, { user: uid, name: name });
-        $("ap").value = ""; $("ap2").value = ""; $("au").value = "";
-        paintView();
-      }).then(done, done);
-    } else {
-      var u = acc.users[uid];
-      var fail = function () { setMsg(err, "Неверный ник или пароль.", "bad"); };
-      if (!u) { hashPw(pw, newSalt()).then(function () { fail(); }).then(done, done); return; }
-      hashPw(pw, u.salt).then(function (hash) {
-        if (hash !== u.hash) { fail(); return; }
-        write(SES_KEY, { user: uid, name: u.name });
-        $("ap").value = ""; $("au").value = "";
-        paintView();
-      }).then(done, done);
-    }
+    var reg = mode === "reg";
+    if (reg && pw !== $("ap2").value) { setMsg(err, "Пароли не совпадают.", "bad"); return; }
+    busy = true; $("asubmit").disabled = true; setMsg(err, reg ? "Создаю аккаунт…" : "Вхожу…");
+    var job = reg ? C.register(name, pw, $("atr").checked && !$("rowTransfer").hidden) : C.login(name, pw);
+    job.then(function (res) {
+      if (!res.ok) { setMsg(err, errText(res), "bad"); return; }
+      $("ap").value = ""; $("ap2").value = ""; $("au").value = "";
+      setMsg(err, "");
+      paintView();
+    }).then(function () { busy = false; $("asubmit").disabled = false; });
   });
-  $("logout").addEventListener("click", function () { drop(SES_KEY); mode = "login"; paintView(); });
+  $("logout").addEventListener("click", function () {
+    $("logout").disabled = true;
+    C.logout().then(function () { $("logout").disabled = false; mode = "login"; paintView(); });
+  });
   $("delStart").addEventListener("click", function () { $("delBox").hidden = false; $("delStart").hidden = true; setMsg($("derr"), ""); $("dp").value = ""; $("dp").focus(); });
   $("delCancel").addEventListener("click", function () { $("delBox").hidden = true; $("delStart").hidden = false; });
   $("delGo").addEventListener("click", function () {
-    var s = session(), acc = accounts(), u = s && acc.users[s.user];
-    if (!u) { drop(SES_KEY); paintView(); return; }
-    hashPw($("dp").value, u.salt).then(function (hash) {
-      if (hash !== u.hash) { setMsg($("derr"), "Пароль не подходит.", "bad"); return; }
-      delete acc.users[s.user]; write(ACC_KEY, acc);
-      drop(saveKey(LEMON, s.user)); drop(saveKey(LIGA, s.user)); drop(SES_KEY);
+    $("delGo").disabled = true;
+    C.deleteAccount($("dp").value).then(function (res) {
+      $("delGo").disabled = false;
+      if (!res.ok) { setMsg($("derr"), res.code === "bad_login" ? "Пароль не подходит." : errText(res), "bad"); return; }
       mode = "login"; paintView();
     });
   });
 
   if (!storageOk()) setMsg($("aerr"), "Браузер не даёт сохранять данные, аккаунты работать не будут.", "bad");
   paintView();
+  // проверяем сессию на сервере и подтягиваем свежие сохранения с других устройств
+  if (session()) C.validate().then(function (ok) { return ok ? C.pullAll() : false; }).then(paintView);
 })();
 </script>
 

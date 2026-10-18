@@ -266,8 +266,9 @@ img { max-width: 100%; }
 <div id="fail" hidden><div>Не удалось запустить 3D. Открой страницу в обычном браузере с включённым WebGL и интернетом.</div></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="claudix.js"></script>
 <script>
-(function () {
+Claudix.ready(function () {
   "use strict";
   var $ = function (id) { return document.getElementById(id); };
   if (typeof THREE === "undefined") { $("fail").hidden = false; return; }
@@ -302,7 +303,7 @@ img { max-width: 100%; }
   };
 
   // ---------- сохранение ----------
-  var SESSION = (function () { try { var s = JSON.parse(localStorage.getItem("claudix-session") || "null"); return s && typeof s.user === "string" && s.user ? s : null; } catch (e) { return null; } })();
+  var SESSION = Claudix.session();
   var SAVE_KEY = "liga-ulic-v1" + (SESSION ? ":" + SESSION.user : "");
   $("who").textContent = SESSION ? "· " + SESSION.name : "· гость";
   var save = { money: 0, owned: ["cobalt"], sel: "cobalt", best: 0 };
@@ -318,7 +319,7 @@ img { max-width: 100%; }
       }
     } catch (e) { /* хранилище недоступно */ }
   }
-  function persist() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); } catch (e) { /* ничего */ } }
+  function persist() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); } catch (e) { /* ничего */ } if (SESSION) Claudix.push("liga"); }
   function fmt(n) { return Math.floor(n).toLocaleString("ru-RU"); }
   function rnd(a, b) { return a + Math.random() * (b - a); }
   function hex(n) { return "#" + n.toString(16).padStart(6, "0"); }
@@ -1419,7 +1420,7 @@ img { max-width: 100%; }
   window.addEventListener("resize", resizeIfNeeded);
   showMenu();
   requestAnimationFrame(function (t) { lastT = t; requestAnimationFrame(loop); });
-})();
+});
 </script>
 
 </body>
