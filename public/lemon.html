@@ -347,7 +347,7 @@ img { max-width: 100%; }
       </div>
       <div class="ground"></div>
       <p class="click-info"><strong id="pc">+1</strong> за клик</p>
-      <p class="hint">Общий икс множит и клики, и всё, что растёт само.</p>
+      <p class="hint">Общий икс множит и клики, и всё, что растёт само. На клавиатуре клик — клавиша E.</p>
     </section>
 
     <section class="shop">
@@ -609,6 +609,14 @@ Claudix.ready(function () {
   });
   lemon.addEventListener("click", function (e) {
     if (e.detail !== 0) return; // мышь и тач уже обработаны в pointerdown
+    var r = lemon.getBoundingClientRect();
+    tap(r.left + r.width / 2, r.top + r.height / 2);
+  });
+  // клавиша E (и «У» в русской раскладке) тоже кликает по лимону
+  document.addEventListener("keydown", function (e) {
+    if (e.code !== "KeyE" || e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
+    var t = e.target && e.target.tagName;
+    if (t === "INPUT" || t === "TEXTAREA" || t === "SELECT") return;
     var r = lemon.getBoundingClientRect();
     tap(r.left + r.width / 2, r.top + r.height / 2);
   });
