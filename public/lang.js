@@ -6,7 +6,7 @@
   var EN = {
 "3D-экшен": "3D action",
 "Claudix · альфа 0.2 · общие аккаунты и облачные сохранения.": "Claudix · alpha 0.2 · shared accounts and cloud saves.",
-"АЛЬФА 0.1": "ALPHA 0.1",
+"АЛЬФА 0.2": "ALPHA 0.2",
 "Аккаунт": "Account",
 "Аккаунт общий: заходи с любого устройства, прогресс подтянется сам. Пароль хранится в зашифрованном виде и забытый не восстанавливается. Не используй пароль от почты или других сайтов.": "One account for every device: sign in anywhere and your progress follows you. Your password is stored encrypted and a forgotten one can't be recovered. Don't reuse your email or other site passwords.",
 "Бей волны преступников, зарабатывай монеты и покупай шесть героев с разными способностями. Управление пальцами.": "Fight waves of criminals, earn coins and buy six heroes with different powers. Touch controls.",
