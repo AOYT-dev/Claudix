@@ -12,4 +12,4 @@ run_worker_first = ["/api/*"]
 [[d1_databases]]
 binding = "DB"
 database_name = "claudix-db"
-database_id = "ВСТАВЬ-СЮДА-DATABASE-ID"
+database_id = "ee60de13-17c9-4dcf-b68e-483dc9121fbf"
