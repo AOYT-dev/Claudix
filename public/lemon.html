@@ -310,7 +310,7 @@ img { max-width: 100%; }
 <div class="app">
   <header class="top">
     <div class="top-row">
-      <div class="titlebox"><a class="back" href="./">← Claudix</a><h1>Лимонный Икс</h1><span class="who" id="who"></span></div>
+      <div class="titlebox"><a class="back" href="./">← Claudix</a><h1>Лимонный Икс</h1><span class="who" id="who"></span> <span class="cx-lang-slot"></span></div>
       <div class="xbadge" title="Общий мультипликатор"><small>икс</small><b id="xtotal">×1</b></div>
     </div>
     <div class="bank">
@@ -376,14 +376,15 @@ img { max-width: 100%; }
 </div>
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
+<script src="lang.js"></script>
 <script src="claudix.js"></script>
-<script>
+<script>/*i18n*/
 Claudix.ready(function () {
   "use strict";
 
   var SESSION = Claudix.session();
   var SAVE_KEY = "limonny-iks-v1" + (SESSION ? ":" + SESSION.user : "");
-  (function () { var w = document.getElementById("who"); if (w) w.textContent = SESSION ? "· " + SESSION.name : "· гость"; })();
+  (function () { var w = document.getElementById("who"); if (w) w.textContent = SESSION ? "· " + SESSION.name : TR("· гость"); })();
   var SUF = ["", "K", "M", "B", "T", "Qa", "Qi", "Sx", "Sp", "Oc", "No", "Dc"];
   var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -393,9 +394,9 @@ Claudix.ready(function () {
     [50, 1e8], [100, 2e9], [300, 5e10], [1000, 1e12]
   ];
   var GENS = [
-    { name: "Лимонное дерево", desc: "Растёт само. +1/сек", base: 50, rate: 1, g: 1.15 },
-    { name: "Плантация", desc: "Целая роща без выходных. +14/сек", base: 650, rate: 14, g: 1.15 },
-    { name: "Лимонадный завод", desc: "Давит всё подряд. +170/сек", base: 9000, rate: 170, g: 1.15 }
+    { name: TR("Лимонное дерево"), desc: TR("Растёт само. +1/сек"), base: 50, rate: 1, g: 1.15 },
+    { name: TR("Плантация"), desc: TR("Целая роща без выходных. +14/сек"), base: 650, rate: 14, g: 1.15 },
+    { name: TR("Лимонадный завод"), desc: TR("Давит всё подряд. +170/сек"), base: 9000, rate: 170, g: 1.15 }
   ];
   var INF_BASE = 1e13, INF_G = 8;
   var AUTO_COST = 5000;
@@ -457,13 +458,13 @@ Claudix.ready(function () {
   // ---------- форматирование ----------
   function fmt(n) {
     if (!isFinite(n)) return "∞";
-    if (n < 1e6) return Math.floor(n).toLocaleString("ru-RU");
+    if (n < 1e6) return Math.floor(n).toLocaleString(CLX.LOCALE);
     var e = Math.floor(Math.log10(n) / 3);
-    if (e >= SUF.length) return n.toExponential(2).replace("e+", "e").replace(".", ",");
+    if (e >= SUF.length) return n.toExponential(2).replace("e+", "e").replace(".", CLX.DEC);
     var v = n / Math.pow(10, e * 3);
     var d = v < 10 ? 2 : v < 100 ? 1 : 0;
     if (+v.toFixed(d) >= 1000 && e < SUF.length - 1) { e++; v = n / Math.pow(10, e * 3); d = 2; }
-    return v.toFixed(d).replace(".", ",") + SUF[e];
+    return v.toFixed(d).replace(".", CLX.DEC) + SUF[e];
   }
 
   // ---------- DOM ----------
@@ -473,40 +474,40 @@ Claudix.ready(function () {
 
   var items = [
     {
-      name: "Сила клика", desc: "+1 лимон за клик",
+      name: TR("Сила клика"), desc: TR("+1 лимон за клик"),
       cost: function () { return Math.floor(15 * Math.pow(1.18, s.clickLvl)); },
-      own: function () { return "ур. " + s.clickLvl; },
+      own: function () { return TR("ур. ") + s.clickLvl; },
       buy: function () { s.clickLvl++; }
     }
   ].concat(GENS.map(function (g, i) {
     return {
       name: g.name, desc: g.desc,
       cost: function () { return Math.floor(g.base * Math.pow(g.g, s.gens[i])); },
-      own: function () { return s.gens[i] + " шт"; },
+      own: function () { return s.gens[i] + TR(" шт"); },
       buy: function () { s.gens[i]++; }
     };
   }));
   var infItem = {
-    name: "Икс без конца", desc: "Каждая покупка удваивает всё",
+    name: TR("Икс без конца"), desc: TR("Каждая покупка удваивает всё"),
     cost: function () { return INF_BASE * Math.pow(INF_G, s.inf); },
-    own: function () { return "×2 · куплено " + s.inf; },
+    own: function () { return TR("×2 · куплено ") + s.inf; },
     buy: function () { s.inf++; }
   };
 
   var autoItem = {
-    name: "Автокликер", desc: "Сам тапает по лимону. 1 тап/сек",
+    name: TR("Автокликер"), desc: TR("Сам тапает по лимону. 1 тап/сек"),
     cost: function () { return AUTO_COST; },
     ok: function () { return !s.auto; },
-    label: function () { return s.auto ? "куплено" : null; },
-    own: function () { return s.auto ? "работает" : "выкл"; },
+    label: function () { return s.auto ? TR("куплено") : null; },
+    own: function () { return s.auto ? TR("работает") : TR("выкл"); },
     buy: function () { s.auto = true; }
   };
   var speedItem = {
-    name: "Ускорение автокликера", desc: "+1 тап/сек. Дорого, зато быстро",
+    name: TR("Ускорение автокликера"), desc: TR("+1 тап/сек. Дорого, зато быстро"),
     cost: function () { return s.autoLvl >= SPEED_MAX ? Infinity : SPEED_BASE * Math.pow(SPEED_G, s.autoLvl); },
     ok: function () { return s.auto && s.autoLvl < SPEED_MAX; },
-    label: function () { return s.autoLvl >= SPEED_MAX ? "максимум" : null; },
-    own: function () { return s.auto ? (1 + s.autoLvl) + " тап/сек" : "нужен автокликер"; },
+    label: function () { return s.autoLvl >= SPEED_MAX ? TR("максимум") : null; },
+    own: function () { return s.auto ? (1 + s.autoLvl) + TR(" тап/сек") : TR("нужен автокликер"); },
     buy: function () { s.autoLvl++; }
   };
 
@@ -643,7 +644,7 @@ Claudix.ready(function () {
       b.classList.toggle("owned", owned);
       b.classList.toggle("can", ok);
       b.disabled = owned || !ok;
-      b.querySelector(".c").textContent = owned ? "куплено" : fmt(TIERS[j][1]);
+      b.querySelector(".c").textContent = owned ? TR("куплено") : fmt(TIERS[j][1]);
     }
   }
   function updateHeader() {
@@ -668,7 +669,7 @@ Claudix.ready(function () {
       var eff = Math.min(dt, 1800);
       if (p > 0) {
         s.lemons += p * eff;
-        if (dt > 5) toast("Пока тебя не было: +" + fmt(p * eff) + " лимонов");
+        if (dt > 5) toast(TR("Пока тебя не было: +") + fmt(p * eff) + TR(" лимонов"));
       }
     }
     var ar = autoRate();
@@ -687,18 +688,18 @@ Claudix.ready(function () {
   resetBtn.addEventListener("click", function () {
     if (!armed) {
       armed = true;
-      resetBtn.textContent = "Точно? Тапни ещё раз";
+      resetBtn.textContent = TR("Точно? Тапни ещё раз");
       clearTimeout(armTimer);
-      armTimer = setTimeout(function () { armed = false; resetBtn.textContent = "Начать заново"; }, 3500);
+      armTimer = setTimeout(function () { armed = false; resetBtn.textContent = TR("Начать заново"); }, 3500);
       return;
     }
     clearTimeout(armTimer);
     armed = false;
-    resetBtn.textContent = "Начать заново";
+    resetBtn.textContent = TR("Начать заново");
     s = fresh();
     save();
     updateAll();
-    toast("Всё с нуля. Погнали.");
+    toast(TR("Всё с нуля. Погнали."));
   });
 
   // ---------- старт ----------
@@ -707,7 +708,7 @@ Claudix.ready(function () {
   var p0 = perSec();
   if (away > 5 && p0 > 0) {
     s.lemons += p0 * away;
-    toast("Пока тебя не было: +" + fmt(p0 * away) + " лимонов");
+    toast(TR("Пока тебя не было: +") + fmt(p0 * away) + TR(" лимонов"));
   }
   updateAll();
   setInterval(save, 4000);

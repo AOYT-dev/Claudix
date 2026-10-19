@@ -230,7 +230,7 @@ img { max-width: 100%; }
 <div class="layer" id="menu">
   <div class="mtop">
     <div>
-      <a class="back" href="./">← Claudix</a><span class="who" id="who"></span>
+      <a class="back" href="./">← Claudix</a><span class="who" id="who"></span> <span class="cx-lang-slot"></span>
       <h1 class="logo">ЛИГА <span>УЛИЦ</span></h1>
       <div class="tag">Бей преступников. Покупай героев.</div>
     </div>
@@ -266,8 +266,9 @@ img { max-width: 100%; }
 <div id="fail" hidden><div>Не удалось запустить 3D. Открой страницу в обычном браузере с включённым WebGL и интернетом.</div></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="lang.js"></script>
 <script src="claudix.js"></script>
-<script>
+<script>/*i18n*/
 Claudix.ready(function () {
   "use strict";
   var $ = function (id) { return document.getElementById(id); };
@@ -279,18 +280,18 @@ Claudix.ready(function () {
 
   // ---------- герои ----------
   var HEROES = [
-    { id: "cobalt", name: "Кобальт", price: 0, suit: 0x1f5fe0, accent: 0xffc933, skin: 0xe8b48a, hp: 130, speed: 7.4, cd: 3.5, atkCd: 0.38,
-      role: "Тяжёлый боец", atk: "Серия мощных ударов по всем рядом", abil: "Рывок: пролетает сквозь толпу и сбивает всех на пути", abilName: "Рывок" },
-    { id: "storm", name: "Шторм-Джей", price: 400, suit: 0xf5c518, accent: 0x35e0ff, skin: 0xd9a27a, hp: 100, speed: 7.0, cd: 6, atkCd: 0.4,
-      role: "Повелитель молний", atk: "Молния бьёт врага и перескакивает ещё на двоих", abil: "Гроза: молнии с неба по всем вокруг и оглушение", abilName: "Гроза" },
-    { id: "shade", name: "Тень-9", price: 1200, suit: 0x2b2540, accent: 0x9b6bff, skin: 0xc9936c, hp: 85, speed: 8.6, cd: 8, atkCd: 0.26,
-      role: "Охотник из тени", atk: "Быстрые удары, со спины в 2,2 раза больнее", abil: "Невидимость: враги теряют тебя, первый удар в 3 раза сильнее", abilName: "Тень" },
-    { id: "graviton", name: "Гравитон", price: 3000, suit: 0x13897f, accent: 0xc79bff, skin: 0xe0b08a, hp: 120, speed: 7.0, cd: 8, atkCd: 0.6,
-      role: "Хозяин гравитации", atk: "Толчок: отбрасывает всех перед собой", abil: "Подъём: поднимает врагов в воздух и швыряет об землю", abilName: "Подъём" },
-    { id: "flame", name: "Пламень", price: 7000, suit: 0xd9381e, accent: 0xffb02e, skin: 0xe6b38e, hp: 105, speed: 7.2, cd: 7, atkCd: 0.55,
-      role: "Огненный маг", atk: "Огненный шар взрывается и поджигает", abil: "Огненная волна: пылающее кольцо по большой площади", abilName: "Волна" },
-    { id: "abyss", name: "Бездна", price: 15000, suit: 0x14101f, accent: 0x8a2be2, skin: 0x3a3347, hp: 150, speed: 7.4, cd: 12, atkCd: 0.7,
-      role: "Властелин пустоты", atk: "Тёмный снаряд пробивает врагов насквозь", abil: "Чёрная дыра: затягивает всех и дробит", abilName: "Дыра" }
+    { id: "cobalt", name: TR("Кобальт"), price: 0, suit: 0x1f5fe0, accent: 0xffc933, skin: 0xe8b48a, hp: 130, speed: 7.4, cd: 3.5, atkCd: 0.38,
+      role: TR("Тяжёлый боец"), atk: TR("Серия мощных ударов по всем рядом"), abil: TR("Рывок: пролетает сквозь толпу и сбивает всех на пути"), abilName: TR("Рывок") },
+    { id: "storm", name: TR("Шторм-Джей"), price: 400, suit: 0xf5c518, accent: 0x35e0ff, skin: 0xd9a27a, hp: 100, speed: 7.0, cd: 6, atkCd: 0.4,
+      role: TR("Повелитель молний"), atk: TR("Молния бьёт врага и перескакивает ещё на двоих"), abil: TR("Гроза: молнии с неба по всем вокруг и оглушение"), abilName: TR("Гроза") },
+    { id: "shade", name: TR("Тень-9"), price: 1200, suit: 0x2b2540, accent: 0x9b6bff, skin: 0xc9936c, hp: 85, speed: 8.6, cd: 8, atkCd: 0.26,
+      role: TR("Охотник из тени"), atk: TR("Быстрые удары, со спины в 2,2 раза больнее"), abil: TR("Невидимость: враги теряют тебя, первый удар в 3 раза сильнее"), abilName: TR("Тень") },
+    { id: "graviton", name: TR("Гравитон"), price: 3000, suit: 0x13897f, accent: 0xc79bff, skin: 0xe0b08a, hp: 120, speed: 7.0, cd: 8, atkCd: 0.6,
+      role: TR("Хозяин гравитации"), atk: TR("Толчок: отбрасывает всех перед собой"), abil: TR("Подъём: поднимает врагов в воздух и швыряет об землю"), abilName: TR("Подъём") },
+    { id: "flame", name: TR("Пламень"), price: 7000, suit: 0xd9381e, accent: 0xffb02e, skin: 0xe6b38e, hp: 105, speed: 7.2, cd: 7, atkCd: 0.55,
+      role: TR("Огненный маг"), atk: TR("Огненный шар взрывается и поджигает"), abil: TR("Огненная волна: пылающее кольцо по большой площади"), abilName: TR("Волна") },
+    { id: "abyss", name: TR("Бездна"), price: 15000, suit: 0x14101f, accent: 0x8a2be2, skin: 0x3a3347, hp: 150, speed: 7.4, cd: 12, atkCd: 0.7,
+      role: TR("Властелин пустоты"), atk: TR("Тёмный снаряд пробивает врагов насквозь"), abil: TR("Чёрная дыра: затягивает всех и дробит"), abilName: TR("Дыра") }
   ];
   var HERO_BY_ID = {};
   HEROES.forEach(function (h) { HERO_BY_ID[h.id] = h; });
@@ -305,7 +306,7 @@ Claudix.ready(function () {
   // ---------- сохранение ----------
   var SESSION = Claudix.session();
   var SAVE_KEY = "liga-ulic-v1" + (SESSION ? ":" + SESSION.user : "");
-  $("who").textContent = SESSION ? "· " + SESSION.name : "· гость";
+  $("who").textContent = SESSION ? "· " + SESSION.name : TR("· гость");
   var save = { money: 0, owned: ["cobalt"], sel: "cobalt", best: 0 };
   function loadSave() {
     try {
@@ -320,7 +321,7 @@ Claudix.ready(function () {
     } catch (e) { /* хранилище недоступно */ }
   }
   function persist() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); } catch (e) { /* ничего */ } if (SESSION) Claudix.push("liga"); }
-  function fmt(n) { return Math.floor(n).toLocaleString("ru-RU"); }
+  function fmt(n) { return Math.floor(n).toLocaleString(CLX.LOCALE); }
   function rnd(a, b) { return a + Math.random() * (b - a); }
   function hex(n) { return "#" + n.toString(16).padStart(6, "0"); }
 
@@ -1156,14 +1157,14 @@ Claudix.ready(function () {
     var boss = w % 5 === 0;
     if (boss) q.splice(Math.floor(q.length / 2), 0, "boss");
     r.queue = q; r.spawnT = 0.3; r.state = "fight"; r.cap = 8 + Math.min(w, 8);
-    banner(boss ? "БОСС" : "Волна " + w, boss ? "Король улиц вышел на разборки" : (w === 1 ? "Покажи, кто тут герой" : "Их стало больше"));
+    banner(boss ? TR("БОСС") : TR("Волна ") + w, boss ? TR("Король улиц вышел на разборки") : (w === 1 ? TR("Покажи, кто тут герой") : TR("Их стало больше")));
   }
   function waveClear() {
     var r = run, bonus = Math.round(30 * r.wave * (1 + 0.15 * r.wave));
     r.earn += bonus;
     var p = player; p.hp = Math.min(p.maxHp, p.hp + p.maxHp * 0.3);
     popText(p.pos.x, 3.6, p.pos.z, "+" + bonus, "#ffc933", true);
-    banner("Волна " + r.wave + " пройдена", "+" + bonus + " монет и немного здоровья");
+    banner(TR("Волна ") + r.wave + TR(" пройдена"), "+" + bonus + TR(" монет и немного здоровья"));
     r.state = "break"; r.timer = 3.4;
   }
   function updateRun(dt) {
@@ -1191,8 +1192,8 @@ Claudix.ready(function () {
     hpFill.classList.toggle("low", r < 0.3);
     hpTxt.textContent = Math.ceil(p.hp) + " / " + p.maxHp;
     earnEl.textContent = fmt(run.earn);
-    waveEl.textContent = run.state === "break" && run.wave === 0 ? "Старт" : "Волна " + run.wave;
-    foeEl.textContent = run.state === "fight" ? "Врагов: " + (aliveCount() + run.queue.length) : "Передышка";
+    waveEl.textContent = run.state === "break" && run.wave === 0 ? TR("Старт") : TR("Волна ") + run.wave;
+    foeEl.textContent = run.state === "fight" ? TR("Врагов: ") + (aliveCount() + run.queue.length) : TR("Передышка");
     var cd = Math.max(0, p.abilT) / p.def.cd;
     cdFill.style.transform = "scaleY(" + cd.toFixed(3) + ")";
     btnAbil.classList.toggle("ready", p.abilT <= 0);
@@ -1209,16 +1210,16 @@ Claudix.ready(function () {
     var host = $("cards"), html = "";
     HEROES.forEach(function (d) {
       var owned = save.owned.indexOf(d.id) >= 0, sel = save.sel === d.id, btn;
-      if (owned) btn = '<button class="act' + (sel ? " sec" : "") + '" data-do="pick" type="button"' + (sel ? " disabled" : "") + ">" + (sel ? "Выбран" : "Выбрать") + "</button>";
-      else btn = '<button class="act" data-do="buy" type="button"' + (save.money < d.price ? " disabled" : "") + ">" + (save.money < d.price ? "Нужно " + fmt(d.price) : "Купить за " + fmt(d.price)) + "</button>";
+      if (owned) btn = '<button class="act' + (sel ? " sec" : "") + '" data-do="pick" type="button"' + (sel ? " disabled" : "") + ">" + (sel ? TR("Выбран") : TR("Выбрать")) + "</button>";
+      else btn = '<button class="act" data-do="buy" type="button"' + (save.money < d.price ? " disabled" : "") + ">" + (save.money < d.price ? TR("Нужно ") + fmt(d.price) : TR("Купить за ") + fmt(d.price)) + "</button>";
       html += '<article class="card' + (sel ? " sel" : "") + (previewId === d.id ? " look" : "") + '" data-id="' + d.id + '" style="--hc:' + hex(d.accent) + '">' +
         '<div class="chead">' + figSvg(d) + "<div><h3>" + d.name + "</h3><p>" + d.role + "</p></div></div>" +
-        "<dl><dt>Атака</dt><dd>" + d.atk + "</dd><dt>Способность: " + d.abilName + "</dt><dd>" + d.abil + "</dd></dl>" +
-        '<div class="stats mono">Здоровье ' + d.hp + " · скорость " + d.speed + " · перезарядка " + d.cd + " с</div>" + btn + "</article>";
+        TR("<dl><dt>Атака</dt><dd>") + d.atk + TR("</dd><dt>Способность: ") + d.abilName + "</dt><dd>" + d.abil + "</dd></dl>" +
+        TR('<div class="stats mono">Здоровье ') + d.hp + TR(" · скорость ") + d.speed + TR(" · перезарядка ") + d.cd + TR(" с</div>") + btn + "</article>";
     });
     host.innerHTML = html;
     var d0 = HERO_BY_ID[save.sel];
-    $("goSub").textContent = "играть за героя: " + d0.name;
+    $("goSub").textContent = TR("играть за героя: ") + d0.name;
     renderMoney();
   }
   function setPreview(id) {
@@ -1280,7 +1281,7 @@ Claudix.ready(function () {
     $("menu").hidden = true; $("hud").hidden = false; $("resultOv").hidden = true; $("pauseOv").hidden = true;
     resetJoy();
     snapCamera();
-    banner("Лига Улиц", "Город ждёт героя");
+    banner(TR("Лига Улиц"), TR("Город ждёт героя"));
     updateHud();
   }
   function showResult() {

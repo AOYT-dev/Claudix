@@ -149,7 +149,7 @@ img { max-width: 100%; }
       <div class="wm" aria-label="Claudix">Claudi<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4 L20 20 M20 4 L4 20" stroke="#ff5a8c" stroke-width="5" stroke-linecap="round" fill="none"/></svg></div>
       <span class="alpha">АЛЬФА 0.1</span>
     </div>
-    <button class="chip" id="chip" type="button" aria-label="Аккаунт"><div class="avatar" id="avatar">Г</div><span id="chipName">Гость</span></button>
+    <div style="display:flex;align-items:center;gap:10px"><span class="cx-lang-slot"></span><button class="chip" id="chip" type="button" aria-label="Аккаунт"><div class="avatar" id="avatar">Г</div><span id="chipName">Гость</span></button></div>
   </header>
 
   <section class="intro">
@@ -297,8 +297,9 @@ img { max-width: 100%; }
   <footer>Claudix · альфа 0.2 · общие аккаунты и облачные сохранения.</footer>
 </div>
 
+<script src="lang.js"></script>
 <script src="claudix.js"></script>
-<script>
+<script>/*i18n*/
 (function () {
   "use strict";
   var $ = function (id) { return document.getElementById(id); };
@@ -322,11 +323,11 @@ img { max-width: 100%; }
   function big(n) {
     if (!isFinite(n)) return "∞";
     n = Math.max(0, n);
-    if (n < 1e6) return Math.floor(n).toLocaleString("ru-RU");
+    if (n < 1e6) return Math.floor(n).toLocaleString(CLX.LOCALE);
     var e = Math.floor(Math.log10(n) / 3);
-    if (e >= SUF.length) return n.toExponential(2).replace("e+", "e").replace(".", ",");
+    if (e >= SUF.length) return n.toExponential(2).replace("e+", "e").replace(".", CLX.DEC);
     var v = n / Math.pow(10, e * 3), d = v < 10 ? 2 : v < 100 ? 1 : 0;
-    return v.toFixed(d).replace(".", ",") + SUF[e];
+    return v.toFixed(d).replace(".", CLX.DEC) + SUF[e];
   }
 
   // ---------- статистика текущего аккаунта ----------
@@ -337,37 +338,37 @@ img { max-width: 100%; }
   }
   function paintStats() {
     var s = session(), u = s ? s.user : "";
-    $("statLemon").textContent = "Ты ещё не играл. Начни с первого лимона.";
-    $("statLiga").textContent = "Ты ещё не играл. Первый герой уже ждёт.";
+    $("statLemon").textContent = TR("Ты ещё не играл. Начни с первого лимона.");
+    $("statLiga").textContent = TR("Ты ещё не играл. Первый герой уже ждёт.");
     var L = read(saveKey(LEMON, u));
     if (L && (L.lemons > 0 || L.clickLvl > 0 || (L.gens && L.gens.some(function (g) { return g > 0; })))) {
       var mult = 1;
       for (var i = 0; i < TIERS.length; i++) if (L.tiers && L.tiers[i]) mult *= TIERS[i];
       mult *= Math.pow(2, Math.max(0, Math.floor(+L.inf || 0)));
-      $("statLemon").innerHTML = "Лимонов: <b>" + big(+L.lemons || 0) + "</b> · общий икс <b>×" + big(mult) + "</b>";
+      $("statLemon").innerHTML = TR("Лимонов: <b>") + big(+L.lemons || 0) + TR("</b> · общий икс <b>×") + big(mult) + "</b>";
     }
     var G = read(saveKey(LIGA, u));
     if (G && (G.best > 0 || G.money > 0 || (G.owned && G.owned.length > 1))) {
       var owned = Array.isArray(G.owned) ? G.owned.length : 1;
-      $("statLiga").innerHTML = "Монет: <b>" + big(+G.money || 0) + "</b> · героев <b>" + owned + " из 6</b> · лучшая волна <b>" + Math.floor(+G.best || 0) + "</b>";
+      $("statLiga").innerHTML = TR("Монет: <b>") + big(+G.money || 0) + TR("</b> · героев <b>") + owned + TR(" из 6</b> · лучшая волна <b>") + Math.floor(+G.best || 0) + "</b>";
     }
   }
 
   // ---------- интерфейс аккаунта ----------
   var mode = "login";
   var ERR = {
-    taken: "Это имя уже занято. Придумай другое.",
-    bad_login: "Неверный ник или пароль.",
-    bad_name: "Ник: от 3 до 16 символов, буквы, цифры, _ и -",
-    bad_password: "Пароль: от 4 до 64 символов.",
-    slow_down: "Слишком много попыток. Подожди несколько минут.",
-    network: "Нет связи с сервером. Проверь интернет и попробуй ещё раз.",
-    server: "Сервер сейчас не отвечает. Попробуй чуть позже."
+    taken: TR("Это имя уже занято. Придумай другое."),
+    bad_login: TR("Неверный ник или пароль."),
+    bad_name: TR("Ник: от 3 до 16 символов, буквы, цифры, _ и -"),
+    bad_password: TR("Пароль: от 4 до 64 символов."),
+    slow_down: TR("Слишком много попыток. Подожди несколько минут."),
+    network: TR("Нет связи с сервером. Проверь интернет и попробуй ещё раз."),
+    server: TR("Сервер сейчас не отвечает. Попробуй чуть позже.")
   };
   function errText(res) { return ERR[res.code] || ERR.server; }
   function setMsg(el, text, kind) { el.textContent = text || ""; el.className = "msg" + (kind ? " " + kind : ""); }
   function paintChip() {
-    var s = session(), name = s ? s.name : "Гость";
+    var s = session(), name = s ? s.name : TR("Гость");
     $("chipName").textContent = name;
     $("avatar").textContent = name.charAt(0).toUpperCase();
   }
@@ -387,7 +388,7 @@ img { max-width: 100%; }
     $("rowP2").hidden = !reg;
     $("rowTransfer").hidden = !(reg && hasProgress(""));
     $("ap").setAttribute("autocomplete", reg ? "new-password" : "current-password");
-    $("asubmit").textContent = reg ? "Создать аккаунт" : "Войти";
+    $("asubmit").textContent = reg ? TR("Создать аккаунт") : TR("Войти");
     setMsg($("aerr"), "");
     checkName();
   }
@@ -398,16 +399,16 @@ img { max-width: 100%; }
     clearTimeout(nameTimer);
     nameSeq++;
     if (mode !== "reg" || !v) { setMsg(hint, ""); return; }
-    if (!NAME_RE.test(v)) { setMsg(hint, "Нужно от 3 до 16 символов: буквы, цифры, _ и -", "bad"); return; }
-    setMsg(hint, "Проверяю имя…");
+    if (!NAME_RE.test(v)) { setMsg(hint, TR("Нужно от 3 до 16 символов: буквы, цифры, _ и -"), "bad"); return; }
+    setMsg(hint, TR("Проверяю имя…"));
     var my = nameSeq;
     nameTimer = setTimeout(function () {
       C.nameFree(v).then(function (r) {
         if (my !== nameSeq) return;
-        if (!r) setMsg(hint, "Не получилось проверить имя, нет связи с сервером.", "bad");
-        else if (!r.valid) setMsg(hint, "Нужно от 3 до 16 символов: буквы, цифры, _ и -", "bad");
-        else if (!r.free) setMsg(hint, "Это имя уже занято. Придумай другое.", "bad");
-        else setMsg(hint, "Имя свободно", "ok");
+        if (!r) setMsg(hint, TR("Не получилось проверить имя, нет связи с сервером."), "bad");
+        else if (!r.valid) setMsg(hint, TR("Нужно от 3 до 16 символов: буквы, цифры, _ и -"), "bad");
+        else if (!r.free) setMsg(hint, TR("Это имя уже занято. Придумай другое."), "bad");
+        else setMsg(hint, TR("Имя свободно"), "ok");
       });
     }, 300);
   }
@@ -424,12 +425,12 @@ img { max-width: 100%; }
     e.preventDefault();
     if (busy) return;
     var err = $("aerr"), name = $("au").value.trim(), pw = $("ap").value;
-    if (!storageOk()) { setMsg(err, "Браузер не даёт сохранять данные. Включи хранилище сайта или открой страницу в обычном окне.", "bad"); return; }
+    if (!storageOk()) { setMsg(err, TR("Браузер не даёт сохранять данные. Включи хранилище сайта или открой страницу в обычном окне."), "bad"); return; }
     if (!NAME_RE.test(name)) { setMsg(err, ERR.bad_name, "bad"); return; }
-    if (pw.length < 4) { setMsg(err, "Пароль слишком короткий, нужно хотя бы 4 символа.", "bad"); return; }
+    if (pw.length < 4) { setMsg(err, TR("Пароль слишком короткий, нужно хотя бы 4 символа."), "bad"); return; }
     var reg = mode === "reg";
-    if (reg && pw !== $("ap2").value) { setMsg(err, "Пароли не совпадают.", "bad"); return; }
-    busy = true; $("asubmit").disabled = true; setMsg(err, reg ? "Создаю аккаунт…" : "Вхожу…");
+    if (reg && pw !== $("ap2").value) { setMsg(err, TR("Пароли не совпадают."), "bad"); return; }
+    busy = true; $("asubmit").disabled = true; setMsg(err, reg ? TR("Создаю аккаунт…") : TR("Вхожу…"));
     var job = reg ? C.register(name, pw, $("atr").checked && !$("rowTransfer").hidden) : C.login(name, pw);
     job.then(function (res) {
       if (!res.ok) { setMsg(err, errText(res), "bad"); return; }
@@ -448,22 +449,22 @@ img { max-width: 100%; }
     $("delGo").disabled = true;
     C.deleteAccount($("dp").value).then(function (res) {
       $("delGo").disabled = false;
-      if (!res.ok) { setMsg($("derr"), res.code === "bad_login" ? "Пароль не подходит." : errText(res), "bad"); return; }
+      if (!res.ok) { setMsg($("derr"), res.code === "bad_login" ? TR("Пароль не подходит.") : errText(res), "bad"); return; }
       mode = "login"; paintView();
     });
   });
 
   // ---------- таблица лидеров ----------
   var boardGame = "lemon";
-  function fmtScore(game, v) { return game === "lemon" ? "×" + big(v) : "волна " + Math.floor(v); }
+  function fmtScore(game, v) { return game === "lemon" ? "×" + big(v) : TR("волна ") + Math.floor(v); }
   function paintBoard() {
     var game = boardGame, list = $("board"), me = $("boardMe");
-    $("boardNote").textContent = game === "lemon" ? "Лимонный Икс: у кого больше общий икс." : "Лига Улиц: у кого дальше волна.";
+    $("boardNote").textContent = game === "lemon" ? TR("Лимонный Икс: у кого больше общий икс.") : TR("Лига Улиц: у кого дальше волна.");
     C.top(game).then(function (r) {
       if (game !== boardGame) return;
       list.innerHTML = ""; me.textContent = "";
-      if (!r) { me.textContent = "Не получилось загрузить таблицу, нет связи с сервером."; return; }
-      if (!r.top.length) { me.textContent = "Пока никого нет. Сыграй и стань первым."; return; }
+      if (!r) { me.textContent = TR("Не получилось загрузить таблицу, нет связи с сервером."); return; }
+      if (!r.top.length) { me.textContent = TR("Пока никого нет. Сыграй и стань первым."); return; }
       var myUid = r.me ? r.me.uid : "";
       r.top.forEach(function (row, i) {
         var li = document.createElement("li");
@@ -473,9 +474,9 @@ img { max-width: 100%; }
         var c = document.createElement("span"); c.className = "sc"; c.textContent = fmtScore(game, row.score);
         li.appendChild(a); li.appendChild(b); li.appendChild(c); list.appendChild(li);
       });
-      if (r.me && r.me.rank > r.top.length) me.textContent = "Ты на " + r.me.rank + " месте: " + fmtScore(game, r.me.score);
-      else if (session() && !r.me) me.textContent = "Сыграй, и ты появишься в таблице.";
-      else if (!session()) me.textContent = "Войди в аккаунт, чтобы попасть в таблицу.";
+      if (r.me && r.me.rank > r.top.length) me.textContent = TR("Ты на ") + r.me.rank + TR(" месте: ") + fmtScore(game, r.me.score);
+      else if (session() && !r.me) me.textContent = TR("Сыграй, и ты появишься в таблице.");
+      else if (!session()) me.textContent = TR("Войди в аккаунт, чтобы попасть в таблицу.");
     });
   }
   function setBoard(g) {
@@ -487,7 +488,7 @@ img { max-width: 100%; }
   $("tbLemon").addEventListener("click", function () { setBoard("lemon"); });
   $("tbLiga").addEventListener("click", function () { setBoard("liga"); });
 
-  if (!storageOk()) setMsg($("aerr"), "Браузер не даёт сохранять данные, аккаунты работать не будут.", "bad");
+  if (!storageOk()) setMsg($("aerr"), TR("Браузер не даёт сохранять данные, аккаунты работать не будут."), "bad");
   window.__boardReady = true;
   setBoard("lemon");
   paintView();
