@@ -11,15 +11,25 @@ const SCHEMA = [
   "CREATE TABLE IF NOT EXISTS users (uid TEXT PRIMARY KEY, name TEXT NOT NULL, salt TEXT NOT NULL, hash TEXT NOT NULL, created INTEGER NOT NULL)",
   "CREATE TABLE IF NOT EXISTS sessions (th TEXT PRIMARY KEY, uid TEXT NOT NULL, exp INTEGER NOT NULL)",
   "CREATE TABLE IF NOT EXISTS saves (uid TEXT NOT NULL, game TEXT NOT NULL, data TEXT NOT NULL, updated INTEGER NOT NULL, score REAL NOT NULL DEFAULT 0, PRIMARY KEY (uid, game))",
-  "CREATE INDEX IF NOT EXISTS saves_top ON saves (game, score DESC)",
   "CREATE TABLE IF NOT EXISTS fails (k TEXT PRIMARY KEY, n INTEGER NOT NULL, t INTEGER NOT NULL)",
 ];
 
 let ready = null;
-function init(env) {
-  if (!ready) {
-    ready = env.DB.batch(SCHEMA.map((q) => env.DB.prepare(q))).catch((e) => { ready = null; throw e; });
+async function migrate(env) {
+  await env.DB.batch(SCHEMA.map((q) => env.DB.prepare(q)));
+  // База могла быть создана до таблицы лидеров: докидываем колонку score и считаем очки для старых сохранений.
+  const cols = await env.DB.prepare("PRAGMA table_info(saves)").all();
+  if (!(cols.results || []).some((c) => c.name === "score")) {
+    await env.DB.prepare("ALTER TABLE saves ADD COLUMN score REAL NOT NULL DEFAULT 0").run();
+    const rows = await env.DB.prepare("SELECT uid, game, data FROM saves").all();
+    for (const r of rows.results || []) {
+      await env.DB.prepare("UPDATE saves SET score = ?3 WHERE uid = ?1 AND game = ?2").bind(r.uid, r.game, scoreOf(r.game, r.data)).run();
+    }
   }
+  await env.DB.prepare("CREATE INDEX IF NOT EXISTS saves_top ON saves (game, score DESC)").run();
+}
+function init(env) {
+  if (!ready) ready = migrate(env).catch((e) => { ready = null; throw e; });
   return ready;
 }
 
