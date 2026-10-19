@@ -142,6 +142,9 @@
       return r.status === 200;
     }, function () { return true; }); // нет сети: остаёмся «вошедшими»
   }
+  function top(game) {
+    return api("/api/top/" + game).then(function (r) { return r.status === 200 ? r.data : null; }, function () { return null; });
+  }
   function logout() {
     var s = session();
     var done = s ? Promise.all(Object.keys(GAMES).map(function (g) { return flush(g); })) : Promise.resolve();
@@ -170,7 +173,7 @@
     ready: ready, pullAll: pullAll, push: push, flushAll: flushAll,
     register: function (name, pw, withGuest) { return authCall("/api/register", name, pw, withGuest ? { saves: guestSaves() } : null); },
     login: function (name, pw) { return authCall("/api/login", name, pw); },
-    logout: logout, deleteAccount: deleteAccount, nameFree: nameFree, validate: validate,
+    top: top, logout: logout, deleteAccount: deleteAccount, nameFree: nameFree, validate: validate,
     onConflict: function (fn) { conflictCb = fn; }
   };
 })();

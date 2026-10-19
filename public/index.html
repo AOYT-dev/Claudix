@@ -123,6 +123,13 @@ input[type="text"], input[type="password"] {
 .road span { color: var(--muted); font-size: 0.9rem; }
 footer { color: var(--muted); font-size: 0.82rem; }
 
+.board { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; counter-reset: pos; }
+.board li { display: grid; grid-template-columns: 2.2em 1fr auto; gap: 10px; align-items: center; padding: 9px 12px; border-radius: 10px; background: rgba(0, 0, 0, 0.22); font-variant-numeric: tabular-nums; }
+.board li.me { background: rgba(255, 90, 140, 0.16); outline: 1px solid rgba(255, 90, 140, 0.55); }
+.board .pos { font-family: var(--font-display); font-weight: 800; color: var(--muted); }
+.board li:nth-child(1) .pos { color: #ffd23f; } .board li:nth-child(2) .pos { color: #cfd8dc; } .board li:nth-child(3) .pos { color: #e0a070; }
+.board .nm { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; }
+.board .sc { font-weight: 700; }
 .game { transition: transform 0.15s; }
 .game:hover { transform: translateY(-3px); }
 @media (prefers-reduced-motion: reduce) { .game { transition: none; } .game:hover { transform: none; } }
@@ -229,6 +236,19 @@ img { max-width: 100%; }
     </div>
   </section>
 
+  <section class="sec">
+    <h2>Таблица лидеров</h2>
+    <div class="panel">
+      <div class="tabs" role="tablist" aria-label="Игра">
+        <button class="tab" id="tbLemon" role="tab" type="button" aria-selected="true">Лимонный Икс</button>
+        <button class="tab" id="tbLiga" role="tab" type="button" aria-selected="false">Лига Улиц</button>
+      </div>
+      <p class="hint" id="boardNote">Лимонный Икс: у кого больше общий икс.</p>
+      <ol class="board" id="board" aria-live="polite"></ol>
+      <p class="hint" id="boardMe"></p>
+    </div>
+  </section>
+
   <section class="two">
     <div class="panel" id="acctPanel">
       <h2>Аккаунт</h2>
@@ -269,7 +289,7 @@ img { max-width: 100%; }
       <ul class="road">
         <li><i></i><div><b>Больше игр</b><span>Новые игры будут появляться на площадке.</span></div></li>
         <li><i></i><div><b>Свои игры</b><span>Конструктор, в котором можно собрать игру и выложить её сюда.</span></div></li>
-        <li><i></i><div><b>Друзья и рекорды</b><span>Общие таблицы рекордов и профили друзей.</span></div></li>
+        <li><i></i><div><b>Друзья</b><span>Профили друзей и вызовы на рекорд.</span></div></li>
       </ul>
     </div>
   </section>
@@ -357,6 +377,7 @@ img { max-width: 100%; }
     if (s) { $("inName").textContent = s.name; $("delBox").hidden = true; $("delStart").hidden = false; }
     else setMode(mode);
     paintChip(); paintStats();
+    if (window.__boardReady) paintBoard();
   }
   function setMode(m) {
     mode = m;
@@ -432,7 +453,43 @@ img { max-width: 100%; }
     });
   });
 
+  // ---------- таблица лидеров ----------
+  var boardGame = "lemon";
+  function fmtScore(game, v) { return game === "lemon" ? "×" + big(v) : "волна " + Math.floor(v); }
+  function paintBoard() {
+    var game = boardGame, list = $("board"), me = $("boardMe");
+    $("boardNote").textContent = game === "lemon" ? "Лимонный Икс: у кого больше общий икс." : "Лига Улиц: у кого дальше волна.";
+    C.top(game).then(function (r) {
+      if (game !== boardGame) return;
+      list.innerHTML = ""; me.textContent = "";
+      if (!r) { me.textContent = "Не получилось загрузить таблицу, нет связи с сервером."; return; }
+      if (!r.top.length) { me.textContent = "Пока никого нет. Сыграй и стань первым."; return; }
+      var myUid = r.me ? r.me.uid : "";
+      r.top.forEach(function (row, i) {
+        var li = document.createElement("li");
+        if (row.uid === myUid) li.className = "me";
+        var a = document.createElement("span"); a.className = "pos"; a.textContent = i + 1;
+        var b = document.createElement("span"); b.className = "nm"; b.textContent = row.name;
+        var c = document.createElement("span"); c.className = "sc"; c.textContent = fmtScore(game, row.score);
+        li.appendChild(a); li.appendChild(b); li.appendChild(c); list.appendChild(li);
+      });
+      if (r.me && r.me.rank > r.top.length) me.textContent = "Ты на " + r.me.rank + " месте: " + fmtScore(game, r.me.score);
+      else if (session() && !r.me) me.textContent = "Сыграй, и ты появишься в таблице.";
+      else if (!session()) me.textContent = "Войди в аккаунт, чтобы попасть в таблицу.";
+    });
+  }
+  function setBoard(g) {
+    boardGame = g;
+    $("tbLemon").setAttribute("aria-selected", g === "lemon" ? "true" : "false");
+    $("tbLiga").setAttribute("aria-selected", g === "liga" ? "true" : "false");
+    paintBoard();
+  }
+  $("tbLemon").addEventListener("click", function () { setBoard("lemon"); });
+  $("tbLiga").addEventListener("click", function () { setBoard("liga"); });
+
   if (!storageOk()) setMsg($("aerr"), "Браузер не даёт сохранять данные, аккаунты работать не будут.", "bad");
+  window.__boardReady = true;
+  setBoard("lemon");
   paintView();
   // проверяем сессию на сервере и подтягиваем свежие сохранения с других устройств
   if (session()) C.validate().then(function (ok) { return ok ? C.pullAll() : false; }).then(paintView);

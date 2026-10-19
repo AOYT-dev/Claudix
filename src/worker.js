@@ -10,7 +10,8 @@ const PBKDF2_ITER = 100000; // максимум, который разрешае
 const SCHEMA = [
   "CREATE TABLE IF NOT EXISTS users (uid TEXT PRIMARY KEY, name TEXT NOT NULL, salt TEXT NOT NULL, hash TEXT NOT NULL, created INTEGER NOT NULL)",
   "CREATE TABLE IF NOT EXISTS sessions (th TEXT PRIMARY KEY, uid TEXT NOT NULL, exp INTEGER NOT NULL)",
-  "CREATE TABLE IF NOT EXISTS saves (uid TEXT NOT NULL, game TEXT NOT NULL, data TEXT NOT NULL, updated INTEGER NOT NULL, PRIMARY KEY (uid, game))",
+  "CREATE TABLE IF NOT EXISTS saves (uid TEXT NOT NULL, game TEXT NOT NULL, data TEXT NOT NULL, updated INTEGER NOT NULL, score REAL NOT NULL DEFAULT 0, PRIMARY KEY (uid, game))",
+  "CREATE INDEX IF NOT EXISTS saves_top ON saves (game, score DESC)",
   "CREATE TABLE IF NOT EXISTS fails (k TEXT PRIMARY KEY, n INTEGER NOT NULL, t INTEGER NOT NULL)",
 ];
 
@@ -81,6 +82,22 @@ async function auth(env, req) {
   if (row.exp < Date.now()) { await env.DB.prepare("DELETE FROM sessions WHERE th = ?1").bind(th).run(); return null; }
   return { uid: row.uid, name: row.name, th };
 }
+// Очки для таблицы лидеров: Лимонный Икс считается по общему иксу, Лига Улиц по лучшей волне.
+// Данные приходят с устройства игрока, так что это честная игра без защиты от подделки.
+const LEMON_TIERS = [2, 3, 5, 10, 20, 50, 100, 300, 1000];
+function scoreOf(game, str) {
+  try {
+    const o = JSON.parse(str);
+    if (game === "lemon") {
+      let m = 1;
+      LEMON_TIERS.forEach((t, i) => { if (Array.isArray(o.tiers) && o.tiers[i]) m *= t; });
+      m *= Math.pow(2, Math.min(Math.max(0, Math.floor(+o.inf || 0)), 900));
+      return m <= 1 ? 0 : (Number.isFinite(m) ? m : 1e300); // без иксов в таблицу не попадаешь
+    }
+    if (game === "liga") return Math.min(Math.max(0, Math.floor(+o.best || 0)), 1e6);
+  } catch (e) { /* ниже */ }
+  return 0;
+}
 function validSave(str) {
   if (typeof str !== "string" || str.length > MAX_SAVE) return false;
   try { const o = JSON.parse(str); return !!o && typeof o === "object" && !Array.isArray(o); } catch (e) { return false; }
@@ -97,6 +114,25 @@ async function route(req, env) {
     if (!NAME_RE.test(n)) return json({ valid: false, free: false });
     const r = await env.DB.prepare("SELECT 1 AS x FROM users WHERE uid = ?1").bind(n.toLowerCase()).first();
     return json({ valid: true, free: !r });
+  }
+
+  const mt = /^\/api\/top\/([a-z]+)$/.exec(path);
+  if (req.method === "GET" && mt) {
+    const game = mt[1];
+    if (!GAMES.includes(game)) return fail("bad_game", 404);
+    const rows = await env.DB.prepare(
+      "SELECT u.name AS name, s.uid AS uid, s.score AS score FROM saves s JOIN users u ON u.uid = s.uid WHERE s.game = ?1 AND s.score > 0 ORDER BY s.score DESC, s.updated ASC LIMIT 20"
+    ).bind(game).all();
+    const out = { top: (rows.results || []).map((r) => ({ name: r.name, uid: r.uid, score: r.score })), me: null };
+    const who = await auth(env, req);
+    if (who) {
+      const mine = await env.DB.prepare("SELECT score FROM saves WHERE uid = ?1 AND game = ?2").bind(who.uid, game).first();
+      if (mine && mine.score > 0) {
+        const ahead = await env.DB.prepare("SELECT COUNT(*) AS n FROM saves WHERE game = ?1 AND score > ?2").bind(game, mine.score).first();
+        out.me = { uid: who.uid, score: mine.score, rank: (ahead ? ahead.n : 0) + 1 };
+      }
+    }
+    return json(out);
   }
 
   if (req.method === "POST" && path === "/api/register") {
@@ -119,7 +155,7 @@ async function route(req, env) {
     }
     const saves = b.saves && typeof b.saves === "object" ? b.saves : {};
     for (const g of GAMES) {
-      if (validSave(saves[g])) await env.DB.prepare("INSERT OR IGNORE INTO saves (uid, game, data, updated) VALUES (?1, ?2, ?3, ?4)").bind(uid, g, saves[g], now).run();
+      if (validSave(saves[g])) await env.DB.prepare("INSERT OR IGNORE INTO saves (uid, game, data, updated, score) VALUES (?1, ?2, ?3, ?4, ?5)").bind(uid, g, saves[g], now, scoreOf(g, saves[g])).run();
     }
     await bump(env, "r:" + ip, 3600e3);
     return json({ token: await startSession(env, uid), user: uid, name });
@@ -170,10 +206,10 @@ async function route(req, env) {
     const now = Math.max(Date.now(), base + 1);
     let changed;
     if (base > 0) {
-      const r = await env.DB.prepare("UPDATE saves SET data = ?3, updated = ?4 WHERE uid = ?1 AND game = ?2 AND updated = ?5").bind(me.uid, game, b.data, now, base).run();
+      const r = await env.DB.prepare("UPDATE saves SET data = ?3, updated = ?4, score = ?6 WHERE uid = ?1 AND game = ?2 AND updated = ?5").bind(me.uid, game, b.data, now, base, scoreOf(game, b.data)).run();
       changed = r.meta.changes === 1;
     } else {
-      const r = await env.DB.prepare("INSERT OR IGNORE INTO saves (uid, game, data, updated) VALUES (?1, ?2, ?3, ?4)").bind(me.uid, game, b.data, now).run();
+      const r = await env.DB.prepare("INSERT OR IGNORE INTO saves (uid, game, data, updated, score) VALUES (?1, ?2, ?3, ?4, ?5)").bind(me.uid, game, b.data, now, scoreOf(game, b.data)).run();
       changed = r.meta.changes === 1;
     }
     if (!changed) return fail("conflict", 409); // прогресс успели изменить с другого устройства
