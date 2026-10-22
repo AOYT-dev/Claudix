@@ -176,6 +176,32 @@ button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 .go:active { transform: translateY(3px); box-shadow: 0 2px 0 #b98a00; }
 .go small { display: block; font-family: var(--font-body); font-size: 0.75rem; font-weight: 500; opacity: 0.8; letter-spacing: 0; }
 
+/* ---------- Лобби ---------- */
+#hud.lobby > .top, #hud.lobby > .btn { display: none; }
+.slabels { position: absolute; inset: 0; z-index: 2; pointer-events: none; overflow: hidden; }
+.slabel {
+  position: absolute; left: 0; top: 0; will-change: transform; white-space: nowrap;
+  font-family: var(--font-display); font-size: 0.95rem; padding: 3px 11px; border-radius: 999px;
+  background: rgba(10, 16, 34, 0.72); border: 2px solid var(--hc, var(--line)); text-shadow: 0 2px 0 rgba(0,0,0,.6);
+}
+#lobby { padding-block: 12px; }
+#lobby > .mtop { pointer-events: none; display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.lpanel {
+  position: absolute; right: var(--gutter-r); bottom: max(14px, env(safe-area-inset-bottom, 0px));
+  width: min(calc(100% - var(--gutter) - var(--gutter-r)), 340px);
+  background: var(--panel); border: 2px solid var(--line); border-top: 5px solid var(--hc, var(--accent)); border-radius: 14px;
+  padding: 12px 14px 14px; display: flex; flex-direction: column; gap: 7px;
+}
+.lpanel h3 { margin: 0; font-family: var(--font-display); font-weight: 400; font-size: 1.25rem; }
+.lpanel p { margin: 0; color: var(--muted); font-size: 0.85rem; }
+.lpanel .lv { display: flex; justify-content: space-between; gap: 10px; font-size: 0.9rem; }
+.lpanel .lv b { font-family: var(--font-display); font-weight: 400; color: var(--accent); }
+.lpanel .meter { height: 8px; border-radius: 4px; background: rgba(255,255,255,.12); overflow: hidden; }
+.lpanel .meter i { display: block; height: 100%; background: var(--hc, var(--accent)); }
+.lpanel .act { margin-top: 4px; }
+#heroOv { padding-block: 12px; }
+.hdlg { width: 100%; max-width: 920px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+
 /* ---------- Оверлеи ---------- */
 .scrim { z-index: 6; display: grid; place-items: center; background: rgba(4, 8, 20, 0.66); pointer-events: auto; }
 .scrim[hidden] { display: none; }
@@ -227,18 +253,30 @@ img { max-width: 100%; }
 
 <div id="banner"><b id="banMain"></b><span id="banSub"></span></div>
 
-<div class="layer" id="menu">
+<div class="slabels" id="slabels"></div>
+
+<div class="layer" id="lobby">
   <div class="mtop">
     <div>
       <a class="back" href="./">← Claudix</a><span class="who" id="who"></span> <span class="cx-lang-slot"></span>
       <h1 class="logo">ЛИГА <span>УЛИЦ</span></h1>
-      <div class="tag">Бей преступников. Покупай героев.</div>
+      <div class="tag">Качай героя и прыгай в портал.</div>
     </div>
     <div class="money"><span class="mono" id="moneyEl">0</span><span class="coin"></span></div>
   </div>
-  <div class="mbot">
+  <div class="lpanel" id="lpanel" hidden>
+    <h3 id="lpTitle"></h3>
+    <p id="lpDesc"></p>
+    <div class="lv"><span id="lpLvl"></span><b class="mono" id="lpVal"></b></div>
+    <div class="meter"><i id="lpBar"></i></div>
+    <button class="act" id="lpBtn" type="button"></button>
+  </div>
+</div>
+
+<div class="layer scrim" id="heroOv" hidden>
+  <div class="hdlg">
     <div class="cards" id="cards"></div>
-    <button class="go" id="go" type="button">В БОЙ<small id="goSub"></small></button>
+    <button class="act sec" id="heroClose" type="button">Закрыть</button>
   </div>
 </div>
 
@@ -275,6 +313,8 @@ Claudix.ready(function () {
   if (typeof THREE === "undefined") { $("fail").hidden = false; return; }
 
   var ARENA = 36;
+  // прокачка в лобби: сила множит весь урон героя, радиус множит дальность ударов, взрывов и способностей
+  var PWR_MAX = 25, RAD_MAX = 20;
   var CAM_Y = 17, CAM_Z = 13;
   var BAR_PITCH = -Math.atan2(CAM_Y, CAM_Z);
 
@@ -307,7 +347,7 @@ Claudix.ready(function () {
   var SESSION = Claudix.session();
   var SAVE_KEY = "liga-ulic-v1" + (SESSION ? ":" + SESSION.user : "");
   $("who").textContent = SESSION ? "· " + SESSION.name : TR("· гость");
-  var save = { money: 0, owned: ["cobalt"], sel: "cobalt", best: 0 };
+  var save = { money: 0, owned: ["cobalt"], sel: "cobalt", best: 0, pwr: 0, rad: 0 };
   function loadSave() {
     try {
       var d = JSON.parse(localStorage.getItem(SAVE_KEY) || "null");
@@ -317,10 +357,15 @@ Claudix.ready(function () {
         if (save.owned.indexOf("cobalt") < 0) save.owned.unshift("cobalt");
         save.sel = save.owned.indexOf(d.sel) >= 0 ? d.sel : "cobalt";
         save.best = Math.max(0, Math.floor(+d.best || 0));
+        save.pwr = Math.min(PWR_MAX, Math.max(0, Math.floor(+d.pwr || 0)));
+        save.rad = Math.min(RAD_MAX, Math.max(0, Math.floor(+d.rad || 0)));
       }
     } catch (e) { /* хранилище недоступно */ }
   }
   function persist() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); } catch (e) { /* ничего */ } if (SESSION) Claudix.push("liga"); }
+  function pwrMul() { return 1 + 0.1 * save.pwr; }
+  function rm() { return 1 + 0.04 * save.rad; }
+  function upCost(lvl) { return Math.round(100 * Math.pow(1.35, lvl) / 10) * 10; }
   function fmt(n) { return Math.floor(n).toLocaleString(CLX.LOCALE); }
   function rnd(a, b) { return a + Math.random() * (b - a); }
   function hex(n) { return "#" + n.toString(16).padStart(6, "0"); }
@@ -681,13 +726,13 @@ Claudix.ready(function () {
   function clearPops() { pops.forEach(function (p) { p.el.remove(); }); pops.length = 0; }
 
   // ---------- состояние ----------
-  var mode = "menu";            // menu | play | dead
+  var mode = "lobby";           // lobby | play | dead
   var paused = false;
   var player = null, run = null;
   var enemies = [], projs = [];
   var input = { jx: 0, jy: 0, btnAtk: false, abil: false, keys: {} };
   var shake = 0, deadT = 0, tAll = 0;
-  var menuHero = null, previewId = save.sel;
+  var heroOpen = false;
 
   // ---------- враги ----------
   function aliveCount() { var n = 0; enemies.forEach(function (e) { if (!e.dead) n++; }); return n; }
@@ -728,6 +773,7 @@ Claudix.ready(function () {
   function hurtEnemy(e, dmg, o) {
     if (e.dead) return;
     o = o || {};
+    dmg *= pwrMul();
     e.hp -= dmg; e.flash = 0.12;
     if (!o.silent) popText(e.pos.x, e.pos.y + 2.8 * e.scale, e.pos.z, String(Math.round(dmg)), o.color || "#ffffff", o.big);
     if (o.kx || o.kz) { e.kv.x += o.kx; e.kv.z += o.kz; }
@@ -936,6 +982,7 @@ Claudix.ready(function () {
     return n;
   }
   function meleeHit(range, cosArc, dmg, knock, mulFn, color) {
+    range *= rm();
     var p = player, fx = Math.sin(p.face), fz = Math.cos(p.face), n = 0;
     enemies.forEach(function (e) {
       if (e.dead) return;
@@ -951,18 +998,18 @@ Claudix.ready(function () {
   }
   var ATK = {
     cobalt: function (p) {
-      aim(5); slashFx(p.pos.x, p.pos.z, p.face, 3.2, 0xffc933);
+      aim(5); slashFx(p.pos.x, p.pos.z, p.face, 3.2 * rm(), 0xffc933);
       meleeHit(3.0, 0.1, 20, 9);
     },
     storm: function (p) {
-      var t = aim(14);
+      var t = aim(14 * rm());
       var from = new THREE.Vector3(p.pos.x + Math.sin(p.face) * 0.6, 1.8, p.pos.z + Math.cos(p.face) * 0.6);
       if (!t) { boltFx(from, new THREE.Vector3(from.x + Math.sin(p.face) * 8, 1.5, from.z + Math.cos(p.face) * 8), 0x35e0ff); return; }
       var hit = [t.e], cur = t.e, dmg = 14;
       boltFx(from, new THREE.Vector3(cur.pos.x, 1.6, cur.pos.z), 0x9ff3ff);
       hurtEnemy(cur, dmg, { color: "#9ff3ff", stun: 0.15 });
       for (var k = 0; k < 2; k++) {
-        var best = null, bd = 6;
+        var best = null, bd = 6 * rm();
         enemies.forEach(function (e) {
           if (e.dead || hit.indexOf(e) >= 0) return;
           var d = Math.hypot(e.pos.x - cur.pos.x, e.pos.z - cur.pos.z);
@@ -976,7 +1023,7 @@ Claudix.ready(function () {
       }
     },
     shade: function (p) {
-      aim(4); slashFx(p.pos.x, p.pos.z, p.face, 2.6, 0xb48cff);
+      aim(4); slashFx(p.pos.x, p.pos.z, p.face, 2.6 * rm(), 0xb48cff);
       var invis = p.invis > 0;
       meleeHit(2.4, 0.2, 15, 4, function (e, ux, uz) {
         var m = 1;
@@ -987,19 +1034,19 @@ Claudix.ready(function () {
       if (invis) p.invis = 0;
     },
     graviton: function (p) {
-      aim(6); slashFx(p.pos.x, p.pos.z, p.face, 5.4, 0xc79bff);
+      aim(6); slashFx(p.pos.x, p.pos.z, p.face, 5.4 * rm(), 0xc79bff);
       shake = Math.max(shake, 0.1);
       meleeHit(5.2, 0.3, 11, 16);
     },
     flame: function (p) {
       var t = aim(18), fx = Math.sin(p.face), fz = Math.cos(p.face);
-      shoot({ x: p.pos.x + fx * 0.8, z: p.pos.z + fz * 0.8, y: 1.6, dx: fx, dz: fz, speed: 15, dmg: 20, life: 1.1, friendly: true,
-        color: 0xff7a1a, size: 0.6, r: 0.5, splash: 2.4, burn: 2 });
+      shoot({ x: p.pos.x + fx * 0.8, z: p.pos.z + fz * 0.8, y: 1.6, dx: fx, dz: fz, speed: 15, dmg: 20, life: 1.1 * rm(), friendly: true,
+        color: 0xff7a1a, size: 0.6, r: 0.5, splash: 2.4 * rm(), burn: 2 });
     },
     abyss: function (p) {
       aim(18); var fx = Math.sin(p.face), fz = Math.cos(p.face);
-      shoot({ x: p.pos.x + fx * 0.8, z: p.pos.z + fz * 0.8, y: 1.6, dx: fx, dz: fz, speed: 20, dmg: 28, life: 0.95, friendly: true,
-        color: 0x9b4dff, size: 0.75, r: 0.8, pierce: true, knock: 5 });
+      shoot({ x: p.pos.x + fx * 0.8, z: p.pos.z + fz * 0.8, y: 1.6, dx: fx, dz: fz, speed: 20, dmg: 28, life: 0.95 * rm(), friendly: true,
+        color: 0x9b4dff, size: 0.75, r: 0.8 * rm(), pierce: true, knock: 5 });
     }
   };
   var ABIL = {
@@ -1015,10 +1062,10 @@ Claudix.ready(function () {
       p.dash = { t: 0, dur: 0.22, dx: dx, dz: dz, hit: [] };
     },
     storm: function (p) {
-      ringFx(p.pos.x, p.pos.z, 12, 0.5, 0x35e0ff, 0.8);
+      ringFx(p.pos.x, p.pos.z, 12 * rm(), 0.5, 0x35e0ff, 0.8);
       shake = Math.max(shake, 0.35);
       enemies.forEach(function (e) {
-        if (e.dead || Math.hypot(e.pos.x - p.pos.x, e.pos.z - p.pos.z) > 12 + e.r) return;
+        if (e.dead || Math.hypot(e.pos.x - p.pos.x, e.pos.z - p.pos.z) > 12 * rm() + e.r) return;
         boltFx(new THREE.Vector3(e.pos.x + rnd(-3, 3), 22, e.pos.z + rnd(-3, 3)), new THREE.Vector3(e.pos.x, 1, e.pos.z), 0xeaffff, 0.3);
         hurtEnemy(e, 40, { color: "#9ff3ff", big: true, stun: 0.9 });
         burst(e.pos.x, 1, e.pos.z, 0x9ff3ff, 6, 5, 0.4, 0.18, 1);
@@ -1029,15 +1076,15 @@ Claudix.ready(function () {
       burst(p.pos.x, 1.5, p.pos.z, 0x9b6bff, 16, 5, 0.6, 0.22, 1);
     },
     graviton: function (p) {
-      ringFx(p.pos.x, p.pos.z, 9, 0.5, 0xc79bff, 0.8);
+      ringFx(p.pos.x, p.pos.z, 9 * rm(), 0.5, 0xc79bff, 0.8);
       shake = Math.max(shake, 0.2);
       enemies.forEach(function (e) {
-        if (e.dead || Math.hypot(e.pos.x - p.pos.x, e.pos.z - p.pos.z) > 9 + e.r) return;
+        if (e.dead || Math.hypot(e.pos.x - p.pos.x, e.pos.z - p.pos.z) > 9 * rm() + e.r) return;
         e.liftDur = e.type === "boss" ? 1.0 : 1.6; e.liftT = 0; e.wind = 0; e.kv.x = e.kv.z = 0;
       });
     },
     flame: function (p) {
-      var hit = [], cx = p.pos.x, cz = p.pos.z, maxR = 12;
+      var hit = [], cx = p.pos.x, cz = p.pos.z, maxR = 12 * rm();
       ringFx(cx, cz, maxR, 0.7, 0xff6a1a, 0.9, 0.15);
       ringFx(cx, cz, maxR * 0.85, 0.7, 0xffcc33, 0.8, 0.2);
       shake = Math.max(shake, 0.3);
@@ -1064,7 +1111,7 @@ Claudix.ready(function () {
       var r1 = new THREE.Mesh(new THREE.TorusGeometry(1.8, 0.1, 6, 32), rg); g.add(r1);
       var r2 = new THREE.Mesh(new THREE.TorusGeometry(2.4, 0.07, 6, 32), rg); r2.rotation.x = 1.2; g.add(r2);
       scene.add(g);
-      var tick = 0, DUR = 3.5, R = 11;
+      var tick = 0, DUR = 3.5, R = 11 * rm(), RC = 3 * rm(), RB = 4 * rm();
       addFx(DUR, function (k, dt, f) {
         r1.rotation.z += dt * 6; r2.rotation.y += dt * 4; g.scale.setScalar(k > 0.9 ? Math.max(0.01, (1 - k) * 10) : 1);
         tick -= dt;
@@ -1076,15 +1123,15 @@ Claudix.ready(function () {
             var pull = (e.type === "boss" ? 2.5 : 6) * dt;
             e.pos.x += dx / d * pull; e.pos.z += dz / d * pull;
           }
-          if (doDmg && d < 3) hurtEnemy(e, 10, { color: "#d9b8ff", silent: false });
+          if (doDmg && d < RC) hurtEnemy(e, 10, { color: "#d9b8ff", silent: false });
         });
         if (Math.random() < dt * 30) burst(hx + rnd(-3, 3), 1.6 + rnd(-1, 1), hz + rnd(-3, 3), 0xb066ff, 1, 1, 0.3, 0.16, 0.2);
       }, function () {
         scene.remove(g); core.dispose(); rg.dispose(); r1.geometry.dispose(); r2.geometry.dispose();
-        ringFx(hx, hz, 5, 0.4, 0x9b4dff, 0.9);
+        ringFx(hx, hz, 5 * rm(), 0.4, 0x9b4dff, 0.9);
         shake = Math.max(shake, 0.3);
         enemies.forEach(function (e) {
-          if (!e.dead && Math.hypot(e.pos.x - hx, e.pos.z - hz) < 4 + e.r) hurtEnemy(e, 40, { color: "#d9b8ff", big: true });
+          if (!e.dead && Math.hypot(e.pos.x - hx, e.pos.z - hz) < RB + e.r) hurtEnemy(e, 40, { color: "#d9b8ff", big: true });
         });
       });
     }
@@ -1106,19 +1153,19 @@ Claudix.ready(function () {
     if (p.invis > 0) { p.invis -= dt; if (p.invis <= 0) { p.invis = 0; setGhost(false); } }
     else if (p.ghost) setGhost(false);
     if (p.dash) {
-      var d = p.dash, step = 10 / d.dur * dt;
+      var d = p.dash, step = 10 * rm() / d.dur * dt;
       d.t += dt;
       p.pos.x += d.dx * step; p.pos.z += d.dz * step; clampPos(p.pos);
       burst(p.pos.x, 1.4, p.pos.z, 0x5aa0ff, 2, 2, 0.3, 0.3, 0.3);
       enemies.forEach(function (e) {
         if (e.dead || d.hit.indexOf(e) >= 0) return;
-        if (Math.hypot(e.pos.x - p.pos.x, e.pos.z - p.pos.z) < e.r + 1.5) {
+        if (Math.hypot(e.pos.x - p.pos.x, e.pos.z - p.pos.z) < e.r + 1.5 * rm()) {
           d.hit.push(e);
           hurtEnemy(e, 45, { color: "#ffd666", big: true, kx: d.dx * 12 * e.kb, kz: d.dz * 12 * e.kb, stun: 0.3 });
           shake = Math.max(shake, 0.2);
         }
       });
-      speedNow = 10 / d.dur;
+      speedNow = 10 * rm() / d.dur;
       if (d.t >= d.dur) p.dash = null;
     } else {
       var spd = def.speed * (p.invis > 0 ? 1.35 : 1);
@@ -1212,22 +1259,13 @@ Claudix.ready(function () {
       var owned = save.owned.indexOf(d.id) >= 0, sel = save.sel === d.id, btn;
       if (owned) btn = '<button class="act' + (sel ? " sec" : "") + '" data-do="pick" type="button"' + (sel ? " disabled" : "") + ">" + (sel ? TR("Выбран") : TR("Выбрать")) + "</button>";
       else btn = '<button class="act" data-do="buy" type="button"' + (save.money < d.price ? " disabled" : "") + ">" + (save.money < d.price ? TR("Нужно ") + fmt(d.price) : TR("Купить за ") + fmt(d.price)) + "</button>";
-      html += '<article class="card' + (sel ? " sel" : "") + (previewId === d.id ? " look" : "") + '" data-id="' + d.id + '" style="--hc:' + hex(d.accent) + '">' +
+      html += '<article class="card' + (sel ? " sel" : "") + '" data-id="' + d.id + '" style="--hc:' + hex(d.accent) + '">' +
         '<div class="chead">' + figSvg(d) + "<div><h3>" + d.name + "</h3><p>" + d.role + "</p></div></div>" +
         TR("<dl><dt>Атака</dt><dd>") + d.atk + TR("</dd><dt>Способность: ") + d.abilName + "</dt><dd>" + d.abil + "</dd></dl>" +
         TR('<div class="stats mono">Здоровье ') + d.hp + TR(" · скорость ") + d.speed + TR(" · перезарядка ") + d.cd + TR(" с</div>") + btn + "</article>";
     });
     host.innerHTML = html;
-    var d0 = HERO_BY_ID[save.sel];
-    $("goSub").textContent = TR("играть за героя: ") + d0.name;
     renderMoney();
-  }
-  function setPreview(id) {
-    previewId = id;
-    if (menuHero) disposeChar(menuHero);
-    menuHero = heroChar(HERO_BY_ID[id]);
-    scene.add(menuHero.root);
-    burst(0, 1.4, 0, HERO_BY_ID[id].accent, 14, 4, 0.7, 0.2, 1);
   }
   $("cards").addEventListener("click", function (e) {
     var card = e.target.closest(".card"); if (!card) return;
@@ -1238,21 +1276,184 @@ Claudix.ready(function () {
         var d = HERO_BY_ID[id];
         if (save.money >= d.price && save.owned.indexOf(id) < 0) { save.money -= d.price; save.owned.push(id); save.sel = id; persist(); }
       } else if (what === "pick") { save.sel = id; persist(); }
-      if (previewId !== id) setPreview(id); else burst(0, 1.4, 0, HERO_BY_ID[id].accent, 18, 5, 0.8, 0.22, 1);
-      renderCards(); return;
-    }
-    if (save.owned.indexOf(id) >= 0) { save.sel = id; persist(); }
-    if (previewId !== id) setPreview(id);
+    } else if (save.owned.indexOf(id) >= 0) { save.sel = id; persist(); }
+    refreshLobbyHero();
     renderCards();
   });
+  $("heroClose").addEventListener("click", function () { setHeroOpen(false); });
+  function setHeroOpen(on) {
+    heroOpen = on; $("heroOv").hidden = !on;
+    if (on) { input.keys = {}; joyEnd(); renderCards(); }
+    else renderPanel();
+  }
 
-  function showMenu() {
-    mode = "menu"; paused = false;
-    $("menu").hidden = false; $("hud").hidden = true; $("resultOv").hidden = true; $("pauseOv").hidden = true;
-    previewId = save.sel;
-    setPreview(previewId);
+  // ---------- лобби ----------
+  var lobby = { group: new THREE.Group(), stations: [], near: null, podium: null, labelEls: [] };
+  scene.add(lobby.group);
+  var TORUS = new THREE.TorusGeometry(1, 0.08, 6, 36);
+  function lobbyStation(o) {
+    var g = new THREE.Group(); g.position.set(o.x, 0, o.z); lobby.group.add(g);
+    var col = o.color;
+    var padM = new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: 0.22, depthWrite: false });
+    var pad = new THREE.Mesh(new THREE.CircleGeometry(o.r, 36), padM); pad.rotation.x = -Math.PI / 2; pad.position.y = 0.06; g.add(pad);
+    var ringM = new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: 0.85, side: THREE.DoubleSide, depthWrite: false });
+    var ring = new THREE.Mesh(new THREE.RingGeometry(o.r - 0.18, o.r, 48), ringM); ring.rotation.x = -Math.PI / 2; ring.position.y = 0.07; g.add(ring);
+    var st = { id: o.id, x: o.x, z: o.z, r: o.r, solid: o.solid || 0, color: col, group: g, ringM: ringM, padM: padM, tick: null, labelY: o.labelY || 5 };
+    var el = document.createElement("div");
+    el.className = "slabel"; el.textContent = o.label; el.style.setProperty("--hc", hex(col));
+    $("slabels").appendChild(el); st.el = el;
+    lobby.stations.push(st);
+    return st;
+  }
+  function buildLobby() {
+    var dark = lam(0x2b3142), metal = lam(0x8d97ad);
+    // тренажёр силы
+    var pw = lobbyStation({ id: "power", x: -14, z: -4, r: 3.6, solid: 1.9, color: 0xff6a3d, label: TR("Сила") });
+    part(BOX, dark, 4.2, 0.3, 3.2, 0, 0.15, 0, pw.group);
+    [-1.6, 1.6].forEach(function (x) { part(BOX, metal, 0.3, 2.4, 0.3, x, 1.5, -0.8, pw.group); });
+    var bar = new THREE.Group(); bar.position.set(0, 2.5, -0.8); pw.group.add(bar);
+    part(BOX, metal, 4.2, 0.18, 0.18, 0, 0, 0, bar);
+    var plM = lam(0xff6a3d), pl2 = lam(0xffb38a);
+    [-1.8, 1.8].forEach(function (x) { part(BOX, plM, 0.32, 1.3, 1.3, x, 0, 0, bar); part(BOX, pl2, 0.32, 0.8, 0.8, x * 1.17, 0, 0, bar); });
+    part(BOX, dark, 1.6, 0.5, 0.8, 0, 0.55, 0.9, pw.group);
+    pw.tick = function (t) { bar.position.y = 2.5 + Math.sin(t * 2) * 0.18; bar.rotation.z = Math.sin(t * 1.3) * 0.05; };
+    // радар радиуса
+    var rd = lobbyStation({ id: "radius", x: 14, z: -4, r: 3.6, solid: 1.4, color: 0x35e0ff, label: TR("Радиус") });
+    part(BOX, dark, 3.2, 0.3, 3.2, 0, 0.15, 0, rd.group);
+    part(BOX, metal, 0.5, 3.6, 0.5, 0, 2.1, 0, rd.group);
+    var dish = new THREE.Group(); dish.position.set(0, 4.1, 0); rd.group.add(dish);
+    part(SPH, lam(0xdfe9ff), 3, 0.5, 3, 0, 0, 0, dish);
+    part(BOX, metal, 0.2, 1.1, 0.2, 0.9, 0.7, 0, dish);
+    part(SPH, new THREE.MeshBasicMaterial({ color: 0x35e0ff }), 0.4, 0.4, 0.4, 0.9, 1.35, 0, dish);
+    var pulseM = new THREE.MeshBasicMaterial({ color: 0x35e0ff, transparent: true, opacity: 0.6, side: THREE.DoubleSide, depthWrite: false });
+    var pulse = new THREE.Mesh(RING, pulseM); pulse.rotation.x = -Math.PI / 2; pulse.position.y = 0.1; rd.group.add(pulse);
+    rd.tick = function (t) { dish.rotation.y = t * 1.6; var k = (t * 0.5) % 1; pulse.scale.setScalar(Math.max(0.01, 3.5 * k)); pulseM.opacity = 0.6 * (1 - k); };
+    // витрина героев
+    var hr = lobbyStation({ id: "heroes", x: -14, z: 12, r: 3.6, solid: 1.9, color: 0xb48cff, label: TR("Герои") });
+    part(BOX, dark, 3.2, 0.6, 3.2, 0, 0.3, 0, hr.group);
+    part(BOX, lam(0x4a3a7a), 2.6, 0.2, 2.6, 0, 0.7, 0, hr.group);
+    [[-1.4, -1.4], [1.4, -1.4], [-1.4, 1.4], [1.4, 1.4]].forEach(function (a) { part(BOX, new THREE.MeshBasicMaterial({ color: 0xb48cff }), 0.18, 0.18, 0.18, a[0], 0.95, a[1], hr.group); });
+    hr.tick = function (t) { if (lobby.podium) { lobby.podium.body.rotation.y = t * 0.9; } };
+    lobby.podiumHost = hr.group;
+    // портал в бой
+    var pt = lobbyStation({ id: "portal", x: 0, z: -18, r: 4.2, solid: 0, color: 0xffc933, label: TR("В БОЙ"), labelY: 8 });
+    var gate = lam(0x3a3f55);
+    [-2.7, 2.7].forEach(function (x) { part(BOX, gate, 0.9, 6.4, 0.9, x, 3.2, 0, pt.group); part(BOX, new THREE.MeshBasicMaterial({ color: 0xffc933 }), 0.3, 6.4, 0.3, x, 3.2, 0.5, pt.group); });
+    part(BOX, gate, 6.3, 0.9, 0.9, 0, 6.7, 0, pt.group);
+    var swirlM = new THREE.MeshBasicMaterial({ color: 0xff5a8c, transparent: true, opacity: 0.5, side: THREE.DoubleSide, depthWrite: false });
+    var swirl = new THREE.Mesh(new THREE.PlaneGeometry(4.5, 6), swirlM); swirl.position.set(0, 3.3, 0); pt.group.add(swirl);
+    var tor = new THREE.Mesh(TORUS, new THREE.MeshBasicMaterial({ color: 0xffd86b })); tor.position.set(0, 3.3, 0); tor.scale.set(2.1, 2.1, 2.1); pt.group.add(tor);
+    pt.tick = function (t) { tor.rotation.z = t * 2; swirlM.opacity = 0.42 + Math.sin(t * 3) * 0.12; swirl.scale.y = 1 + Math.sin(t * 2) * 0.03; };
+  }
+  buildLobby();
+  function refreshLobbyHero() {
+    if (!mode || mode !== "lobby") return;
+    var def = HERO_BY_ID[save.sel], pos = player ? player.pos.clone() : null, face = player ? player.face : Math.PI;
+    if (player) { disposeChar(player.c); player = null; }
+    player = makePlayer(def);
+    if (pos) player.pos.copy(pos);
+    player.face = face;
+    if (lobby.podium) { lobby.podiumHost.remove(lobby.podium.root); disposeChar(lobby.podium); }
+    lobby.podium = heroChar(def); lobby.podium.root.position.set(0, 0.8, 0); lobby.podiumHost.add(lobby.podium.root);
+    burst(player.pos.x, 1.4, player.pos.z, def.accent, 14, 4, 0.7, 0.2, 1);
+    renderPanel();
+  }
+  function lvlRow(label, lvl, max, val) {
+    $("lpLvl").textContent = label + lvl + " / " + max; $("lpVal").textContent = val;
+    $("lpBar").style.width = (lvl / max * 100).toFixed(1) + "%";
+  }
+  function mulTxt(x) { return "×" + x.toFixed(2).replace(".", CLX.DEC); }
+  function renderPanel() {
+    var panel = $("lpanel"), st = lobby.near;
+    if (mode !== "lobby" || heroOpen || !st) { panel.hidden = true; return; }
+    panel.hidden = false;
+    panel.style.setProperty("--hc", hex(st.color));
+    var btn = $("lpBtn"), lv = panel.querySelector(".lv"), meter = panel.querySelector(".meter");
+    lv.hidden = meter.hidden = false;
+    if (st.id === "power" || st.id === "radius") {
+      var pow = st.id === "power", lvl = pow ? save.pwr : save.rad, max = pow ? PWR_MAX : RAD_MAX;
+      var cur = pow ? pwrMul() : rm(), nxt = pow ? 1 + 0.1 * (lvl + 1) : 1 + 0.04 * (lvl + 1), cost = upCost(lvl);
+      $("lpTitle").textContent = pow ? TR("Сила") : TR("Радиус");
+      $("lpDesc").textContent = pow ? TR("Весь урон героя растёт: удары, способности и огонь.") : TR("Удары, взрывы и способности достают дальше.");
+      lvlRow(TR("Уровень "), lvl, max, (pow ? TR("Урон ") : TR("Дальность ")) + mulTxt(cur) + (lvl < max ? " → " + mulTxt(nxt) : ""));
+      if (lvl >= max) { btn.textContent = TR("Максимум"); btn.disabled = true; }
+      else { btn.disabled = save.money < cost; btn.textContent = (save.money < cost ? TR("Нужно ") : TR("Прокачать за ")) + fmt(cost); }
+      btn.onclick = function () { buyUpgrade(st.id); };
+    } else if (st.id === "heroes") {
+      $("lpTitle").textContent = TR("Герои");
+      $("lpDesc").textContent = TR("Выбери героя или купи нового.");
+      lv.hidden = meter.hidden = true;
+      btn.disabled = false; btn.textContent = TR("Открыть");
+      btn.onclick = function () { setHeroOpen(true); };
+    } else {
+      $("lpTitle").textContent = TR("В БОЙ");
+      $("lpDesc").textContent = TR("Волны преступников ждут. Чем дальше зайдёшь, тем больше монет.");
+      lv.hidden = meter.hidden = true;
+      btn.disabled = false; btn.textContent = TR("В БОЙ") + " · " + HERO_BY_ID[save.sel].name;
+      btn.onclick = startRun;
+    }
+  }
+  function buyUpgrade(id) {
+    var pow = id === "power", lvl = pow ? save.pwr : save.rad, max = pow ? PWR_MAX : RAD_MAX, cost = upCost(lvl);
+    if (lvl >= max || save.money < cost) return;
+    save.money -= cost;
+    if (pow) save.pwr++; else save.rad++;
+    persist(); renderMoney(); renderPanel();
+    var st = lobby.near || { color: 0xffffff };
+    popText(player.pos.x, 3.4, player.pos.z, TR("Ур. ") + (pow ? save.pwr : save.rad), "#ffc933", true);
+    ringFx(player.pos.x, player.pos.z, 4, 0.5, st.color, 0.9);
+    burst(player.pos.x, 1.6, player.pos.z, st.color, 18, 6, 0.8, 0.22, 1);
+  }
+  var _lp = new THREE.Vector3();
+  function updateLabels() {
+    camera.updateMatrixWorld();
+    var W = stageEl.clientWidth, H = stageEl.clientHeight;
+    lobby.stations.forEach(function (st) {
+      _lp.set(st.x, st.labelY, st.z).project(camera);
+      var vis = _lp.z < 1 && Math.abs(_lp.x) < 1.2;
+      st.el.style.display = vis ? "" : "none";
+      if (vis) st.el.style.transform = "translate(" + ((_lp.x * 0.5 + 0.5) * W).toFixed(1) + "px," + ((-_lp.y * 0.5 + 0.5) * H).toFixed(1) + "px) translate(-50%,-50%)";
+    });
+  }
+  function updateLobby(dt) {
+    var p = player; if (!p) return;
+    var mv = heroOpen ? { x: 0, z: 0 } : readMove(), moving = Math.hypot(mv.x, mv.z), spd = p.def.speed * 1.1;
+    p.pos.x += mv.x * spd * dt; p.pos.z += mv.z * spd * dt;
+    lobby.stations.forEach(function (st) {
+      var dx = p.pos.x - st.x, dz = p.pos.z - st.z, d = Math.hypot(dx, dz);
+      if (st.solid && d < st.solid && d > 0.001) { p.pos.x = st.x + dx / d * st.solid; p.pos.z = st.z + dz / d * st.solid; }
+    });
+    clampPos(p.pos);
+    if (moving > 0.15) p.face = turn(p.face, Math.atan2(mv.x, mv.z), dt * 14);
+    p.c.root.rotation.y = 0; p.c.body.rotation.y = p.face;
+    animWalk(p.c, dt, spd * moving);
+    var near = null, nd = 1e9;
+    lobby.stations.forEach(function (st) {
+      var d = Math.hypot(p.pos.x - st.x, p.pos.z - st.z);
+      if (d < st.r && d < nd) { nd = d; near = st; }
+    });
+    if (near !== lobby.near) { lobby.near = near; renderPanel(); }
+    lobby.stations.forEach(function (st) {
+      if (st.tick) st.tick(tAll);
+      var on = st === lobby.near;
+      st.ringM.opacity = on ? 1 : 0.55 + Math.sin(tAll * 3) * 0.2;
+      st.padM.opacity = on ? 0.4 : 0.2;
+    });
+  }
+  function showLobby() {
+    mode = "lobby"; paused = false; heroOpen = false;
+    lobby.group.visible = true; $("slabels").hidden = false;
+    $("lobby").hidden = false; $("hud").hidden = false; $("hud").classList.add("lobby");
+    $("heroOv").hidden = true; $("resultOv").hidden = true; $("pauseOv").hidden = true;
+    input.jx = input.jy = 0; input.btnAtk = false; input.abil = false; input.keys = {};
+    if (player) { disposeChar(player.c); player = null; }
+    lobby.near = null;
+    refreshLobbyHero();
+    player.pos.set(0, 0, 6); player.face = Math.PI;
     renderCards();
+    resetJoy();
     snapCamera();
+    banner(TR("Лобби"), TR("Подойди к станции или к порталу"));
   }
   function cleanupRun() {
     enemies.forEach(function (e) { if (!e.dead) { e.dead = true; disposeChar(e.c); } });
@@ -1270,7 +1471,9 @@ Claudix.ready(function () {
     persist();
   }
   function startRun() {
-    if (menuHero) { disposeChar(menuHero); menuHero = null; }
+    if (mode !== "lobby") return;
+    lobby.group.visible = false; $("slabels").hidden = true; $("lpanel").hidden = true; lobby.near = null;
+    if (player) { disposeChar(player.c); player = null; }
     var def = HERO_BY_ID[save.sel];
     player = makePlayer(def);
     run = { wave: 0, state: "break", timer: 1.6, queue: [], spawnT: 0, earn: 0, kills: 0, cap: 10, committed: false };
@@ -1278,7 +1481,7 @@ Claudix.ready(function () {
     input.jx = input.jy = 0; input.btnAtk = false; input.abil = false; input.keys = {};
     $("hName").textContent = def.name;
     $("abilLbl").textContent = def.abilName;
-    $("menu").hidden = true; $("hud").hidden = false; $("resultOv").hidden = true; $("pauseOv").hidden = true;
+    $("lobby").hidden = true; $("hud").hidden = false; $("hud").classList.remove("lobby"); $("resultOv").hidden = true; $("pauseOv").hidden = true;
     resetJoy();
     snapCamera();
     banner(TR("Лига Улиц"), TR("Город ждёт героя"));
@@ -1290,17 +1493,16 @@ Claudix.ready(function () {
     $("resEarn").textContent = fmt(run.earn); $("resTotal").textContent = fmt(save.money);
     $("hud").hidden = true; $("resultOv").hidden = false;
   }
-  function quitToMenu() { commitRun(); cleanupRun(); showMenu(); }
+  function quitToMenu() { commitRun(); cleanupRun(); showLobby(); }
   function setPause(on) {
     if (mode !== "play") return;
     paused = on; $("pauseOv").hidden = !on;
     if (on) { input.btnAtk = false; input.keys = {}; joyEnd(); }
   }
-  $("go").addEventListener("click", startRun);
-  $("pauseBtn").addEventListener("click", function () { setPause(true); });
+    $("pauseBtn").addEventListener("click", function () { setPause(true); });
   $("resumeBtn").addEventListener("click", function () { setPause(false); });
   $("quitBtn").addEventListener("click", quitToMenu);
-  $("resBtn").addEventListener("click", function () { cleanupRun(); showMenu(); });
+  $("resBtn").addEventListener("click", function () { cleanupRun(); showLobby(); });
   document.addEventListener("visibilitychange", function () { if (document.hidden) setPause(true); });
 
   // ---------- управление ----------
@@ -1340,6 +1542,14 @@ Claudix.ready(function () {
   holdBtn($("btnAtk"), function () { input.btnAtk = true; }, function () { input.btnAtk = false; });
   holdBtn($("btnAbil"), function () { input.abil = true; }, function () { /* разовое нажатие */ });
   window.addEventListener("keydown", function (e) {
+    if (mode === "lobby") {
+      var kl = e.code;
+      if (kl === "Escape" && heroOpen) { setHeroOpen(false); return; }
+      if (heroOpen) return;
+      if (kl === "ArrowUp" || kl === "ArrowDown" || kl === "ArrowLeft" || kl === "ArrowRight" || kl === "Space") e.preventDefault();
+      if (kl === "KeyE" || kl === "Enter") { var b = $("lpBtn"); if (!$("lpanel").hidden && !b.disabled) b.click(); return; }
+      input.keys[kl] = true; return;
+    }
     if (mode !== "play") return;
     var k = e.code;
     if (k === "ArrowUp" || k === "ArrowDown" || k === "ArrowLeft" || k === "ArrowRight" || k === "Space") e.preventDefault();
@@ -1354,10 +1564,6 @@ Claudix.ready(function () {
   var camPos = new THREE.Vector3(), camLook = new THREE.Vector3();
   function camScale() { var a = camera.aspect; return a < 1.25 ? Math.min(1.9, 1.25 / a) : 1; }
   function desiredCam() {
-    if (mode === "menu") {
-      var a = camera.aspect, back = a < 0.9 ? 9.5 + (0.9 - a) * 10 : 9.5;
-      return { px: 0, py: 2.4, pz: back, lx: 0, ly: -0.6, lz: 0 };
-    }
     var k = camScale(), x = player ? player.pos.x : 0, z = player ? player.pos.z : 0;
     return { px: x, py: CAM_Y * k, pz: z + CAM_Z * k, lx: x, ly: 0, lz: z };
   }
@@ -1367,12 +1573,9 @@ Claudix.ready(function () {
   }
   function updateCamera(dt) {
     var d = desiredCam(), f = 1 - Math.exp(-dt * 7);
-    if (mode === "menu") { camPos.set(d.px, d.py, d.pz); camLook.set(d.lx, d.ly, d.lz); }
-    else {
-      camPos.x += (d.px - camPos.x) * f; camPos.y += (d.py - camPos.y) * f; camPos.z += (d.pz - camPos.z) * f;
-      var k = camScale();
-      camLook.set(camPos.x, 0, camPos.z - CAM_Z * k);
-    }
+    camPos.x += (d.px - camPos.x) * f; camPos.y += (d.py - camPos.y) * f; camPos.z += (d.pz - camPos.z) * f;
+    var k = camScale();
+    camLook.set(camPos.x, 0, camPos.z - CAM_Z * k);
     shake = Math.max(0, shake - dt * 1.5);
     camera.position.set(camPos.x + (Math.random() - 0.5) * shake, camPos.y + (Math.random() - 0.5) * shake, camPos.z + (Math.random() - 0.5) * shake);
     camera.lookAt(camLook);
@@ -1384,7 +1587,7 @@ Claudix.ready(function () {
     lastW = w; lastH = h;
     renderer.setSize(w, h);
     camera.aspect = w / h; camera.updateProjectionMatrix();
-    if (mode === "play" || mode === "dead") snapCamera();
+    snapCamera();
   }
 
   // ---------- главный цикл ----------
@@ -1397,8 +1600,8 @@ Claudix.ready(function () {
     resizeIfNeeded();
     if (!paused) {
       tAll += dt;
-      if (mode === "menu") {
-        if (menuHero) { menuHero.body.rotation.y += dt * 0.7; menuHero.body.position.y = Math.sin(tAll * 2) * 0.03; animWalk(menuHero, dt, 0); }
+      if (mode === "lobby") {
+        updateLobby(dt);
       } else if (mode === "play") {
         updatePlayer(dt);
         if (mode === "play") updateRun(dt);
@@ -1413,13 +1616,13 @@ Claudix.ready(function () {
       updateParticles(dt); updatePops(dt);
     }
     updateCamera(paused ? 0.0001 : dt);
+    if (mode === "lobby") updateLabels();
     renderer.render(scene, camera);
   }
 
   loadSave();
-  previewId = save.sel;
   window.addEventListener("resize", resizeIfNeeded);
-  showMenu();
+  showLobby();
   requestAnimationFrame(function (t) { lastT = t; requestAnimationFrame(loop); });
 });
 </script>

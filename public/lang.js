@@ -6,10 +6,9 @@
   var EN = {
 "3D-экшен": "3D action",
 "Claudix · альфа 0.2 · общие аккаунты и облачные сохранения.": "Claudix · alpha 0.2 · shared accounts and cloud saves.",
-"АЛЬФА 0.2": "ALPHA 0.2",
 "Аккаунт": "Account",
 "Аккаунт общий: заходи с любого устройства, прогресс подтянется сам. Пароль хранится в зашифрованном виде и забытый не восстанавливается. Не используй пароль от почты или других сайтов.": "One account for every device: sign in anywhere and your progress follows you. Your password is stored encrypted and a forgotten one can't be recovered. Don't reuse your email or other site passwords.",
-"Бей волны преступников, зарабатывай монеты и покупай шесть героев с разными способностями. Управление пальцами.": "Fight waves of criminals, earn coins and buy six heroes with different powers. Touch controls.",
+"Бей волны преступников, качай силу и радиус в 3D-лобби и покупай шесть героев с разными способностями. Управление пальцами.": "Fight waves of criminals, upgrade power and range in the 3D lobby and buy six heroes with different powers. Touch controls.",
 "Больше игр": "More games",
 "В планах": "Coming soon",
 "Введи пароль, чтобы удалить аккаунт вместе с прогрессом": "Enter your password to delete the account along with its progress",
@@ -193,7 +192,25 @@
 "Хозяин гравитации": "Master of Gravity",
 "Чёрная дыра: затягивает всех и дробит": "Black hole: pulls everyone in and crushes them",
 "Шторм-Джей": "Storm-Jay",
-"играть за героя:": "play as hero:"
+"играть за героя:": "play as hero:",
+"Качай героя и прыгай в портал.": "Upgrade your hero and jump into the portal.",
+"Закрыть": "Close",
+"Сила": "Power",
+"Радиус": "Range",
+"Весь урон героя растёт: удары, способности и огонь.": "All your hero's damage grows: strikes, abilities and fire.",
+"Удары, взрывы и способности достают дальше.": "Strikes, blasts and abilities reach further.",
+"Уровень ": "Level ",
+"Урон ": "Damage ",
+"Дальность ": "Reach ",
+"Максимум": "Maxed out",
+"Прокачать за ": "Upgrade for ",
+"Выбери героя или купи нового.": "Pick a hero or buy a new one.",
+"Открыть": "Open",
+"Волны преступников ждут. Чем дальше зайдёшь, тем больше монет.": "Waves of criminals are waiting. The further you get, the more coins you earn.",
+"Ур. ": "Lv. ",
+"Лобби": "Lobby",
+"Подойди к станции или к порталу": "Walk up to a station or the portal",
+"АЛЬФА 0.2": "ALPHA 0.2"
 };
   function stored() { try { return localStorage.getItem(KEY); } catch (e) { return null; } }
   function detect() {
