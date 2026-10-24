@@ -184,6 +184,8 @@ button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
   font-family: var(--font-display); font-size: 0.95rem; padding: 3px 11px; border-radius: 999px;
   background: rgba(10, 16, 34, 0.72); border: 2px solid var(--hc, var(--line)); text-shadow: 0 2px 0 rgba(0,0,0,.6);
 }
+.slabel.nick { font-size: 0.78rem; padding: 2px 9px; border-width: 1px; border-color: rgba(255,255,255,.35); }
+.slabel.nick.me { border-color: #ffc933; color: #ffe08a; }
 #lobby { padding-block: 12px; }
 #lobby > .mtop { pointer-events: none; display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
 .lpanel {
@@ -435,9 +437,11 @@ Claudix.ready(function () {
     }
     uv.needsUpdate = true;
   }
+  var cityG = null; // дома, фонари и машины: в онлайн-комнате их прячем, остаётся пустая площадь
   function buildWorld() {
     var seed = 12345;
     function sr() { seed = (seed * 1664525 + 1013904223) % 4294967296; return seed / 4294967296; }
+    cityG = new THREE.Group(); scene.add(cityG);
     var ground = new THREE.Mesh(new THREE.PlaneGeometry(600, 600), lam(0x363b46));
     ground.rotation.x = -Math.PI / 2; scene.add(ground);
     var S = ARENA * 2 + 6;
@@ -468,8 +472,8 @@ Claudix.ready(function () {
     function building(x, z, w, d, h, roof) {
       var g = new THREE.BoxGeometry(w, h, d); boxUV(g, w, h, d);
       var m = new THREE.Mesh(g, wallMats[Math.floor(sr() * wallMats.length)]);
-      m.position.set(x, h / 2, z); scene.add(m);
-      if (roof) part(BOX, roofM, w + 0.6, 0.5, d + 0.6, x, h + 0.25, z, scene);
+      m.position.set(x, h / 2, z); cityG.add(m);
+      if (roof) part(BOX, roofM, w + 0.6, 0.5, d + 0.6, x, h + 0.25, z, cityG);
     }
     var D = S / 2 + 14;
     for (var s2 = 0; s2 < 4; s2++) {
@@ -486,8 +490,8 @@ Claudix.ready(function () {
     var poleM = lam(0x3a3f4a), lampM = new THREE.MeshBasicMaterial({ color: 0xfff2b0 });
     [[-1, -1], [1, -1], [-1, 1], [1, 1], [0, -1], [0, 1], [-1, 0], [1, 0]].forEach(function (a) {
       var x = a[0] * (S / 2 - 1), z = a[1] * (S / 2 - 1);
-      part(BOX, poleM, 0.25, 6, 0.25, x, 3, z, scene);
-      part(SPH, lampM, 0.7, 0.7, 0.7, x, 6.2, z, scene);
+      part(BOX, poleM, 0.25, 6, 0.25, x, 3, z, cityG);
+      part(SPH, lampM, 0.7, 0.7, 0.7, x, 6.2, z, cityG);
     });
     var carCols = [0xc0392b, 0x2980b9, 0xf1c40f, 0x27ae60, 0xecf0f1, 0x8e44ad, 0xe67e22];
     for (var i = 0; i < 12; i++) {
@@ -498,7 +502,7 @@ Claudix.ready(function () {
       if (sd >= 2) g1.rotation.y = Math.PI / 2;
       part(BOX, cm, 2, 0.9, 4.2, 0, 0.8, 0, g1);
       part(BOX, lam(0x9fc3e6), 1.7, 0.7, 2.1, 0, 1.55, -0.1, g1);
-      scene.add(g1);
+      cityG.add(g1);
     }
   }
   buildWorld();
@@ -1300,7 +1304,7 @@ Claudix.ready(function () {
     var pad = new THREE.Mesh(new THREE.CircleGeometry(o.r, 36), padM); pad.rotation.x = -Math.PI / 2; pad.position.y = 0.06; g.add(pad);
     var ringM = new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: 0.85, side: THREE.DoubleSide, depthWrite: false });
     var ring = new THREE.Mesh(new THREE.RingGeometry(o.r - 0.18, o.r, 48), ringM); ring.rotation.x = -Math.PI / 2; ring.position.y = 0.07; g.add(ring);
-    var st = { id: o.id, x: o.x, z: o.z, r: o.r, solid: o.solid || 0, color: col, group: g, ringM: ringM, padM: padM, tick: null, labelY: o.labelY || 5 };
+    var st = { id: o.id, where: o.where || null, active: true, x: o.x, z: o.z, r: o.r, solid: o.solid || 0, color: col, group: g, ringM: ringM, padM: padM, tick: null, labelY: o.labelY || 5 };
     var el = document.createElement("div");
     el.className = "slabel"; el.textContent = o.label; el.style.setProperty("--hc", hex(col));
     $("slabels").appendChild(el); st.el = el;
@@ -1310,7 +1314,7 @@ Claudix.ready(function () {
   function buildLobby() {
     var dark = lam(0x2b3142), metal = lam(0x8d97ad);
     // тренажёр силы
-    var pw = lobbyStation({ id: "power", x: -14, z: -4, r: 3.6, solid: 1.9, color: 0xff6a3d, label: TR("Сила") });
+    var pw = lobbyStation({ id: "power", where: "solo", x: -14, z: -4, r: 3.6, solid: 1.9, color: 0xff6a3d, label: TR("Сила") });
     part(BOX, dark, 4.2, 0.3, 3.2, 0, 0.15, 0, pw.group);
     [-1.6, 1.6].forEach(function (x) { part(BOX, metal, 0.3, 2.4, 0.3, x, 1.5, -0.8, pw.group); });
     var bar = new THREE.Group(); bar.position.set(0, 2.5, -0.8); pw.group.add(bar);
@@ -1320,7 +1324,7 @@ Claudix.ready(function () {
     part(BOX, dark, 1.6, 0.5, 0.8, 0, 0.55, 0.9, pw.group);
     pw.tick = function (t) { bar.position.y = 2.5 + Math.sin(t * 2) * 0.18; bar.rotation.z = Math.sin(t * 1.3) * 0.05; };
     // радар радиуса
-    var rd = lobbyStation({ id: "radius", x: 14, z: -4, r: 3.6, solid: 1.4, color: 0x35e0ff, label: TR("Радиус") });
+    var rd = lobbyStation({ id: "radius", where: "solo", x: 14, z: -4, r: 3.6, solid: 1.4, color: 0x35e0ff, label: TR("Радиус") });
     part(BOX, dark, 3.2, 0.3, 3.2, 0, 0.15, 0, rd.group);
     part(BOX, metal, 0.5, 3.6, 0.5, 0, 2.1, 0, rd.group);
     var dish = new THREE.Group(); dish.position.set(0, 4.1, 0); rd.group.add(dish);
@@ -1337,8 +1341,9 @@ Claudix.ready(function () {
     [[-1.4, -1.4], [1.4, -1.4], [-1.4, 1.4], [1.4, 1.4]].forEach(function (a) { part(BOX, new THREE.MeshBasicMaterial({ color: 0xb48cff }), 0.18, 0.18, 0.18, a[0], 0.95, a[1], hr.group); });
     hr.tick = function (t) { if (lobby.podium) { lobby.podium.body.rotation.y = t * 0.9; } };
     lobby.podiumHost = hr.group;
+    hr.base = { x: -14, z: 12 }; hr.alt = { x: 0, z: -9 };
     // портал в бой
-    var pt = lobbyStation({ id: "portal", x: 0, z: -18, r: 4.2, solid: 0, color: 0xffc933, label: TR("В БОЙ"), labelY: 8 });
+    var pt = lobbyStation({ id: "portal", where: "solo", x: 0, z: -18, r: 4.2, solid: 0, color: 0xffc933, label: TR("В БОЙ"), labelY: 8 });
     var gate = lam(0x3a3f55);
     [-2.7, 2.7].forEach(function (x) { part(BOX, gate, 0.9, 6.4, 0.9, x, 3.2, 0, pt.group); part(BOX, new THREE.MeshBasicMaterial({ color: 0xffc933 }), 0.3, 6.4, 0.3, x, 3.2, 0.5, pt.group); });
     part(BOX, gate, 6.3, 0.9, 0.9, 0, 6.7, 0, pt.group);
@@ -1348,6 +1353,26 @@ Claudix.ready(function () {
     pt.tick = function (t) { tor.rotation.z = t * 2; swirlM.opacity = 0.42 + Math.sin(t * 3) * 0.12; swirl.scale.y = 1 + Math.sin(t * 2) * 0.03; };
   }
   buildLobby();
+  function buildOnlineStations() {
+    var dark = lam(0x2b3142), metal = lam(0x8d97ad), GREEN = 0x59f09a;
+    // портал «Онлайн» в своём лобби
+    var on = lobbyStation({ id: "online", where: "solo", x: 14, z: 12, r: 3.6, solid: 1.5, color: GREEN, label: TR("Онлайн") });
+    part(BOX, dark, 3.2, 0.3, 3.2, 0, 0.15, 0, on.group);
+    part(BOX, metal, 0.5, 2.6, 0.5, 0, 1.6, 0, on.group);
+    var gl = new THREE.Mesh(SPH, new THREE.MeshBasicMaterial({ color: GREEN, transparent: true, opacity: 0.55 })); gl.scale.set(2.2, 2.2, 2.2); gl.position.set(0, 4, 0); on.group.add(gl);
+    var tr1 = new THREE.Mesh(TORUS, new THREE.MeshBasicMaterial({ color: 0xb8ffd6 })); tr1.scale.set(1.8, 1.8, 1.8); tr1.position.set(0, 4, 0); on.group.add(tr1);
+    var tr2 = new THREE.Mesh(TORUS, new THREE.MeshBasicMaterial({ color: 0xb8ffd6 })); tr2.scale.set(1.8, 1.8, 1.8); tr2.position.set(0, 4, 0); on.group.add(tr2);
+    on.tick = function (t) { tr1.rotation.set(t * 1.4, 0.4, 0); tr2.rotation.set(0.4, t * 1.7, 0); gl.position.y = 4 + Math.sin(t * 2) * 0.12; };
+    // выход из онлайн-лобби
+    var ex = lobbyStation({ id: "exit", where: "online", x: 0, z: -18, r: 3.8, solid: 0, color: GREEN, label: TR("Выход"), labelY: 8 });
+    var gate = lam(0x3a3f55);
+    [-2.4, 2.4].forEach(function (x) { part(BOX, gate, 0.9, 6, 0.9, x, 3, 0, ex.group); part(BOX, new THREE.MeshBasicMaterial({ color: GREEN }), 0.3, 6, 0.3, x, 3, 0.5, ex.group); });
+    part(BOX, gate, 5.7, 0.9, 0.9, 0, 6.3, 0, ex.group);
+    var swM = new THREE.MeshBasicMaterial({ color: GREEN, transparent: true, opacity: 0.4, side: THREE.DoubleSide, depthWrite: false });
+    var sw = new THREE.Mesh(new THREE.PlaneGeometry(4, 5.6), swM); sw.position.set(0, 3, 0); ex.group.add(sw);
+    ex.tick = function (t) { swM.opacity = 0.32 + Math.sin(t * 3) * 0.1; };
+  }
+  buildOnlineStations();
   function refreshLobbyHero() {
     if (!mode || mode !== "lobby") return;
     var def = HERO_BY_ID[save.sel], pos = player ? player.pos.clone() : null, face = player ? player.face : Math.PI;
@@ -1358,8 +1383,112 @@ Claudix.ready(function () {
     if (lobby.podium) { lobby.podiumHost.remove(lobby.podium.root); disposeChar(lobby.podium); }
     lobby.podium = heroChar(def); lobby.podium.root.position.set(0, 0.8, 0); lobby.podiumHost.add(lobby.podium.root);
     burst(player.pos.x, 1.4, player.pos.z, def.accent, 14, 4, 0.7, 0.2, 1);
+    netHero();
     renderPanel();
   }
+  // ---------- онлайн-лобби ----------
+  var net = { ws: null, you: null, ready: false, remotes: {}, selfEl: null, sendT: 0, lx: 1e9, lz: 1e9, lf: 1e9, lm: -1, sentHero: null, pingT: null };
+  lobby.online = false;
+  function applyLobbyScene() {
+    var on = lobby.online;
+    lobby.stations.forEach(function (st) {
+      st.active = !st.where || st.where === (on ? "online" : "solo");
+      st.group.visible = st.active;
+      if (!st.active) st.el.style.display = "none";
+      if (st.alt) { var q = on ? st.alt : st.base; st.x = q.x; st.z = q.z; st.group.position.set(q.x, 0, q.z); }
+    });
+    lobby.near = null;
+    if (cityG) cityG.visible = !on;
+    renderPanel();
+  }
+  function nickEl(name, me) {
+    var el = document.createElement("div"); el.className = "slabel nick" + (me ? " me" : "");
+    el.textContent = name; $("slabels").appendChild(el); return el;
+  }
+  function addRemote(p) {
+    if (net.remotes[p.u]) removeRemote(p.u);
+    var def = HERO_BY_ID[p.h] || HERO_BY_ID.cobalt, c = heroChar(def);
+    scene.add(c.root); c.root.position.set(p.x, 0, p.z);
+    net.remotes[p.u] = { u: p.u, name: p.n, hero: def.id, c: c, x: p.x, z: p.z, f: p.f, tx: p.x, tz: p.z, tf: p.f, el: nickEl(p.n, false) };
+  }
+  function removeRemote(u) { var r = net.remotes[u]; if (!r) return; disposeChar(r.c); r.el.remove(); delete net.remotes[u]; }
+  function clearRemotes() {
+    Object.keys(net.remotes).forEach(removeRemote);
+    if (net.selfEl) { net.selfEl.remove(); net.selfEl = null; }
+  }
+  function netSend(obj) { if (net.ws && net.ready && net.ws.readyState === 1) net.ws.send(JSON.stringify(obj)); }
+  function netHero() { if (lobby.online && net.sentHero !== save.sel) { net.sentHero = save.sel; netSend({ t: "h", id: save.sel }); } }
+  function onNet(m) {
+    if (!m || typeof m.t !== "string") return;
+    if (m.t === "hello") {
+      net.ready = true; net.you = m.you; lobby.online = true; heroOpen = false; $("heroOv").hidden = true;
+      clearRemotes();
+      (m.players || []).forEach(addRemote);
+      net.selfEl = nickEl(SESSION.name, true);
+      if (player) { player.pos.set((Math.random() - 0.5) * 10, 0, 6 + Math.random() * 3); player.face = Math.PI; }
+      net.sentHero = null; net.lx = 1e9; net.lm = -1;
+      applyLobbyScene(); snapCamera();
+      netHero(); netSend({ t: "p", x: player.pos.x, z: player.pos.z, f: player.face, m: 0 });
+      net.pingT = setInterval(function () { if (net.ws && net.ws.readyState === 1) net.ws.send("ping"); }, 25000);
+      banner(TR("Онлайн"), TR("Тут можно тусоваться с другими игроками"));
+    } else if (m.t === "j" && m.p) { addRemote(m.p); }
+    else if (m.t === "l") { removeRemote(m.u); }
+    else if (m.t === "p") { var r = net.remotes[m.u]; if (r) { r.tx = m.x; r.tz = m.z; r.tf = m.f; } }
+    else if (m.t === "h") {
+      var q = net.remotes[m.u];
+      if (q && q.hero !== m.h && HERO_BY_ID[m.h]) { var nm = q.name, pp = { u: q.u, n: nm, h: m.h, x: q.x, z: q.z, f: q.f }, el = q.el; el.remove(); removeRemote(m.u); addRemote(pp); }
+    }
+  }
+  function goOnline() {
+    if (!SESSION || !SESSION.token || net.ws || mode !== "lobby" || lobby.online) return;
+    var ws;
+    try { ws = new WebSocket((location.protocol === "https:" ? "wss://" : "ws://") + location.host + "/api/room", [SESSION.token]); }
+    catch (e) { banner(TR("Онлайн"), TR("Не удалось подключиться")); return; }
+    net.ws = ws; net.ready = false;
+    banner(TR("Онлайн"), "…");
+    var timer = setTimeout(function () { if (net.ws === ws && !net.ready) { try { ws.close(); } catch (e) { /* ничего */ } } }, 8000);
+    ws.onmessage = function (ev) { if (net.ws !== ws) return; var m; try { m = JSON.parse(ev.data); } catch (e) { return; } onNet(m); };
+    ws.onerror = function () { /* закроется само */ };
+    ws.onclose = function () {
+      clearTimeout(timer);
+      if (net.ws !== ws) return;
+      var wasOnline = lobby.online;
+      net.ws = null; net.ready = false;
+      if (wasOnline) leaveOnline(true); else banner(TR("Онлайн"), TR("Не удалось подключиться"));
+    };
+  }
+  function leaveOnline(lost) {
+    var ws = net.ws; net.ws = null; net.ready = false;
+    if (ws) { try { ws.close(); } catch (e) { /* ничего */ } }
+    clearInterval(net.pingT); net.pingT = null;
+    clearRemotes();
+    lobby.online = false; heroOpen = false; $("heroOv").hidden = true;
+    applyLobbyScene();
+    if (player) { player.pos.set(14, 0, 7); player.face = Math.PI; }
+    snapCamera();
+    banner(lost ? TR("Связь потеряна") : TR("Лобби"), lost ? TR("Ты снова в своём лобби") : TR("Подойди к станции или к порталу"));
+  }
+  function updateRemotes(dt) {
+    var k = 1 - Math.exp(-dt * 12);
+    Object.keys(net.remotes).forEach(function (u) {
+      var r = net.remotes[u];
+      r.x += (r.tx - r.x) * k; r.z += (r.tz - r.z) * k; r.f = turn(r.f, r.tf, dt * 14);
+      r.c.root.position.set(r.x, 0, r.z); r.c.root.rotation.y = 0; r.c.body.rotation.y = r.f;
+      animWalk(r.c, dt, Math.hypot(r.tx - r.x, r.tz - r.z) > 0.08 ? 8 : 0);
+    });
+  }
+  function updateOnline(dt) {
+    updateRemotes(dt);
+    net.sendT += dt;
+    if (net.sendT < 0.1 || !player) return;
+    net.sendT = 0;
+    var p = player, mv = lobby.moving ? 1 : 0;
+    if (Math.hypot(p.pos.x - net.lx, p.pos.z - net.lz) > 0.03 || Math.abs(p.face - net.lf) > 0.05 || mv !== net.lm) {
+      net.lx = p.pos.x; net.lz = p.pos.z; net.lf = p.face; net.lm = mv;
+      netSend({ t: "p", x: +p.pos.x.toFixed(2), z: +p.pos.z.toFixed(2), f: +p.face.toFixed(2), m: mv });
+    }
+  }
+
   function lvlRow(label, lvl, max, val) {
     $("lpLvl").textContent = label + lvl + " / " + max; $("lpVal").textContent = val;
     $("lpBar").style.width = (lvl / max * 100).toFixed(1) + "%";
@@ -1387,6 +1516,21 @@ Claudix.ready(function () {
       lv.hidden = meter.hidden = true;
       btn.disabled = false; btn.textContent = TR("Открыть");
       btn.onclick = function () { setHeroOpen(true); };
+    } else if (st.id === "online") {
+      $("lpTitle").textContent = TR("Онлайн");
+      lv.hidden = meter.hidden = true;
+      if (SESSION && SESSION.token) {
+        $("lpDesc").textContent = TR("Общая комната, где можно тусоваться с другими игроками.");
+        btn.disabled = false; btn.textContent = TR("Войти онлайн"); btn.onclick = goOnline;
+      } else {
+        $("lpDesc").textContent = TR("Нужен аккаунт: войди на главной странице, и можно тусоваться.");
+        btn.disabled = false; btn.textContent = TR("На главную"); btn.onclick = function () { location.href = "./"; };
+      }
+    } else if (st.id === "exit") {
+      $("lpTitle").textContent = TR("Выход");
+      $("lpDesc").textContent = TR("Вернуться в своё лобби.");
+      lv.hidden = meter.hidden = true;
+      btn.disabled = false; btn.textContent = TR("Вернуться"); btn.onclick = function () { leaveOnline(false); };
     } else {
       $("lpTitle").textContent = TR("В БОЙ");
       $("lpDesc").textContent = TR("Волны преступников ждут. Чем дальше зайдёшь, тем больше монет.");
@@ -1407,21 +1551,27 @@ Claudix.ready(function () {
     burst(player.pos.x, 1.6, player.pos.z, st.color, 18, 6, 0.8, 0.22, 1);
   }
   var _lp = new THREE.Vector3();
+  function placeLabel(el, x, y, z, W, H) {
+    _lp.set(x, y, z).project(camera);
+    var vis = _lp.z < 1 && Math.abs(_lp.x) < 1.2;
+    el.style.display = vis ? "" : "none";
+    if (vis) el.style.transform = "translate(" + ((_lp.x * 0.5 + 0.5) * W).toFixed(1) + "px," + ((-_lp.y * 0.5 + 0.5) * H).toFixed(1) + "px) translate(-50%,-50%)";
+  }
   function updateLabels() {
     camera.updateMatrixWorld();
     var W = stageEl.clientWidth, H = stageEl.clientHeight;
-    lobby.stations.forEach(function (st) {
-      _lp.set(st.x, st.labelY, st.z).project(camera);
-      var vis = _lp.z < 1 && Math.abs(_lp.x) < 1.2;
-      st.el.style.display = vis ? "" : "none";
-      if (vis) st.el.style.transform = "translate(" + ((_lp.x * 0.5 + 0.5) * W).toFixed(1) + "px," + ((-_lp.y * 0.5 + 0.5) * H).toFixed(1) + "px) translate(-50%,-50%)";
-    });
+    lobby.stations.forEach(function (st) { if (st.active) placeLabel(st.el, st.x, st.labelY, st.z, W, H); });
+    if (lobby.online) {
+      Object.keys(net.remotes).forEach(function (u) { var r = net.remotes[u]; placeLabel(r.el, r.x, 3.5, r.z, W, H); });
+      if (net.selfEl && player) placeLabel(net.selfEl, player.pos.x, 3.5, player.pos.z, W, H);
+    }
   }
   function updateLobby(dt) {
     var p = player; if (!p) return;
     var mv = heroOpen ? { x: 0, z: 0 } : readMove(), moving = Math.hypot(mv.x, mv.z), spd = p.def.speed * 1.1;
     p.pos.x += mv.x * spd * dt; p.pos.z += mv.z * spd * dt;
     lobby.stations.forEach(function (st) {
+      if (!st.active) return;
       var dx = p.pos.x - st.x, dz = p.pos.z - st.z, d = Math.hypot(dx, dz);
       if (st.solid && d < st.solid && d > 0.001) { p.pos.x = st.x + dx / d * st.solid; p.pos.z = st.z + dz / d * st.solid; }
     });
@@ -1429,19 +1579,24 @@ Claudix.ready(function () {
     if (moving > 0.15) p.face = turn(p.face, Math.atan2(mv.x, mv.z), dt * 14);
     p.c.root.rotation.y = 0; p.c.body.rotation.y = p.face;
     animWalk(p.c, dt, spd * moving);
+    lobby.moving = moving > 0.15;
     var near = null, nd = 1e9;
     lobby.stations.forEach(function (st) {
+      if (!st.active) return;
       var d = Math.hypot(p.pos.x - st.x, p.pos.z - st.z);
       if (d < st.r && d < nd) { nd = d; near = st; }
     });
     if (near !== lobby.near) { lobby.near = near; renderPanel(); }
     lobby.stations.forEach(function (st) {
+      if (!st.active) return;
       if (st.tick) st.tick(tAll);
       var on = st === lobby.near;
       st.ringM.opacity = on ? 1 : 0.55 + Math.sin(tAll * 3) * 0.2;
       st.padM.opacity = on ? 0.4 : 0.2;
     });
+    if (lobby.online) updateOnline(dt);
   }
+
   function showLobby() {
     mode = "lobby"; paused = false; heroOpen = false;
     lobby.group.visible = true; $("slabels").hidden = false;

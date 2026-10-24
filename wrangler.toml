@@ -13,3 +13,12 @@ run_worker_first = ["/api/*"]
 binding = "DB"
 database_name = "claudix-db"
 database_id = "ee60de13-17c9-4dcf-b68e-483dc9121fbf"
+
+# Онлайн-лобби: одна общая комната (Durable Object).
+[[durable_objects.bindings]]
+name = "ROOM"
+class_name = "Room"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["Room"]

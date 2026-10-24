@@ -210,7 +210,19 @@
 "Ур. ": "Lv. ",
 "Лобби": "Lobby",
 "Подойди к станции или к порталу": "Walk up to a station or the portal",
-"АЛЬФА 0.2": "ALPHA 0.2"
+"АЛЬФА 0.2": "ALPHA 0.2",
+"Онлайн": "Online",
+"Тут можно тусоваться с другими игроками": "Hang out with other players here",
+"Общая комната, где можно тусоваться с другими игроками.": "A shared room where you can hang out with other players.",
+"Нужен аккаунт: войди на главной странице, и можно тусоваться.": "You need an account: sign in on the main page to hang out.",
+"На главную": "Home",
+"Войти онлайн": "Go online",
+"Выход": "Exit",
+"Вернуться в своё лобби.": "Back to your own lobby.",
+"Вернуться": "Go back",
+"Не удалось подключиться": "Couldn't connect",
+"Связь потеряна": "Connection lost",
+"Ты снова в своём лобби": "You're back in your own lobby"
 };
   function stored() { try { return localStorage.getItem(KEY); } catch (e) { return null; } }
   function detect() {

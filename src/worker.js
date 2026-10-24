@@ -83,14 +83,17 @@ async function startSession(env, uid) {
   await env.DB.prepare("INSERT INTO sessions (th, uid, exp) VALUES (?1, ?2, ?3)").bind(await sha(token), uid, Date.now() + SESSION_MS).run();
   return token;
 }
-async function auth(env, req) {
-  const m = /^Bearer ([\w-]{20,80})$/.exec(req.headers.get("authorization") || "");
-  if (!m) return null;
-  const th = await sha(m[1]);
+async function authToken(env, token) {
+  if (!/^[\w-]{20,80}$/.test(token || "")) return null;
+  const th = await sha(token);
   const row = await env.DB.prepare("SELECT s.uid AS uid, u.name AS name, s.exp AS exp FROM sessions s JOIN users u ON u.uid = s.uid WHERE s.th = ?1").bind(th).first();
   if (!row) return null;
   if (row.exp < Date.now()) { await env.DB.prepare("DELETE FROM sessions WHERE th = ?1").bind(th).run(); return null; }
   return { uid: row.uid, name: row.name, th };
+}
+async function auth(env, req) {
+  const m = /^Bearer ([\w-]{20,80})$/.exec(req.headers.get("authorization") || "");
+  return m ? authToken(env, m[1]) : null;
 }
 // Очки для таблицы лидеров: Лимонный Икс считается по общему иксу, Лига Улиц по лучшей волне.
 // Данные приходят с устройства игрока, так что это честная игра без защиты от подделки.
@@ -189,6 +192,17 @@ async function route(req, env) {
     return json({ token: await startSession(env, uid), user: uid, name: u.name });
   }
 
+  if (path === "/api/room") {
+    // WebSocket не умеет слать заголовок Authorization, поэтому токен едет как подпротокол.
+    if (req.headers.get("upgrade") !== "websocket") return fail("expected_websocket", 426);
+    const proto = (req.headers.get("sec-websocket-protocol") || "").split(",")[0].trim();
+    const who = await authToken(env, proto);
+    if (!who) return fail("unauthorized", 401);
+    return env.ROOM.get(env.ROOM.idFromName("main")).fetch("https://room.internal/ws", {
+      headers: { upgrade: "websocket", "x-uid": who.uid, "x-name": who.name, "x-proto": proto },
+    });
+  }
+
   const me = await auth(env, req);
   if (!me) return fail("unauthorized", 401);
 
@@ -241,6 +255,74 @@ async function route(req, env) {
   }
 
   return fail("not_found", 404);
+}
+
+// ---- онлайн-лобби: одна общая комната на всех (Durable Object, WebSocket) ----
+const HERO_IDS = ["cobalt", "storm", "shade", "graviton", "flame", "abyss"];
+const ROOM_MAX = 24;
+const lim = (v, l) => (Number.isFinite(v) ? Math.max(-l, Math.min(l, v)) : 0);
+const pub = (a) => ({ u: a.u, n: a.n, h: a.h, x: a.x, z: a.z, f: a.f, m: a.m });
+
+export class Room {
+  constructor(ctx, env) {
+    this.ctx = ctx;
+    this.env = env;
+    try { ctx.setWebSocketAutoResponse(new WebSocketRequestResponsePair("ping", "pong")); } catch (e) { /* не критично */ }
+  }
+  live() {
+    return this.ctx.getWebSockets().filter((w) => { const a = w.deserializeAttachment(); return a && !a.dead; });
+  }
+  broadcast(obj, exceptUid) {
+    const text = JSON.stringify(obj);
+    for (const w of this.live()) {
+      if (exceptUid && w.deserializeAttachment().u === exceptUid) continue;
+      try { w.send(text); } catch (e) { /* сокет уже закрыт */ }
+    }
+  }
+  async fetch(req) {
+    if (req.headers.get("upgrade") !== "websocket") return new Response("expected websocket", { status: 426 });
+    const uid = req.headers.get("x-uid"), name = req.headers.get("x-name"), proto = req.headers.get("x-proto");
+    if (!uid || !name) return new Response("unauthorized", { status: 401 });
+    // тот же аккаунт открыл вторую вкладку: старую выкидываем
+    for (const w of this.ctx.getWebSockets()) {
+      const a = w.deserializeAttachment();
+      if (a && a.u === uid && !a.dead) { w.serializeAttachment({ ...a, dead: true }); try { w.close(4000, "replaced"); } catch (e) { /* ничего */ } }
+    }
+    const others = this.live();
+    if (others.length >= ROOM_MAX) return new Response("full", { status: 503 });
+    const pair = new WebSocketPair();
+    const client = pair[0], server = pair[1];
+    this.ctx.acceptWebSocket(server);
+    const me = { u: uid, n: name, h: "cobalt", x: 0, z: 6, f: Math.PI, m: 0, ts: 0 };
+    server.serializeAttachment(me);
+    server.send(JSON.stringify({ t: "hello", you: uid, players: others.map((w) => pub(w.deserializeAttachment())) }));
+    this.broadcast({ t: "j", p: pub(me) }, uid);
+    return new Response(null, { status: 101, webSocket: client, headers: proto ? { "Sec-WebSocket-Protocol": proto } : {} });
+  }
+  webSocketMessage(ws, data) {
+    if (typeof data !== "string" || data.length > 300) return;
+    let m;
+    try { m = JSON.parse(data); } catch (e) { return; }
+    const a = ws.deserializeAttachment();
+    if (!a || a.dead || !m) return;
+    if (m.t === "p") {
+      const now = Date.now();
+      if (now - a.ts < 50) return; // не чаще 20 раз в секунду
+      a.x = lim(m.x, 35.5); a.z = lim(m.z, 35.5); a.f = lim(m.f, 10); a.m = m.m ? 1 : 0; a.ts = now;
+      ws.serializeAttachment(a);
+      this.broadcast({ t: "p", u: a.u, x: a.x, z: a.z, f: a.f, m: a.m }, a.u);
+    } else if (m.t === "h" && HERO_IDS.includes(m.id)) {
+      a.h = m.id;
+      ws.serializeAttachment(a);
+      this.broadcast({ t: "h", u: a.u, h: a.h }, a.u);
+    }
+  }
+  drop(ws) {
+    const a = ws.deserializeAttachment();
+    if (a && !a.dead) { ws.serializeAttachment({ ...a, dead: true }); this.broadcast({ t: "l", u: a.u }, a.u); }
+  }
+  webSocketClose(ws) { this.drop(ws); try { ws.close(); } catch (e) { /* ничего */ } }
+  webSocketError(ws) { this.drop(ws); }
 }
 
 export default {
