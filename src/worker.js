@@ -272,6 +272,41 @@ export class Room {
   live() {
     return this.ctx.getWebSockets().filter((w) => { const a = w.deserializeAttachment(); return a && !a.dead; });
   }
+  sockOf(uid) {
+    return this.live().find((w) => w.deserializeAttachment().u === uid) || null;
+  }
+  sendTo(ws, obj) { try { ws.send(JSON.stringify(obj)); } catch (e) { /* сокет уже закрыт */ } }
+  // дуэль закончилась: возвращаем обоих в общую комнату
+  endDuel(aWs, winner, reason) {
+    const a = aWs.deserializeAttachment();
+    if (!a || !a.d) return;
+    const oWs = this.sockOf(a.d), oppUid = a.d;
+    const fin = (ws) => {
+      const x = ws.deserializeAttachment();
+      if (!x || x.dead) return;
+      x.d = ""; x.q = 0; ws.serializeAttachment(x);
+      this.sendTo(ws, { t: "de", w: winner, r: reason || "" });
+      this.broadcast({ t: "j", p: pub(x) }, x.u);
+    };
+    fin(aWs);
+    if (oWs && oWs.deserializeAttachment().d === a.u) fin(oWs);
+    void oppUid;
+  }
+  tryMatch(ws) {
+    const a = ws.deserializeAttachment();
+    for (const w of this.live()) {
+      const b = w.deserializeAttachment();
+      if (b.u === a.u || !b.q || b.d) continue;
+      a.q = 0; b.q = 0; a.d = b.u; b.d = a.u; a.dl = Date.now(); b.dl = a.dl;
+      ws.serializeAttachment(a); w.serializeAttachment(b);
+      // обоих убираем из общей комнаты
+      this.broadcast({ t: "l", u: a.u });
+      this.broadcast({ t: "l", u: b.u });
+      this.sendTo(ws, { t: "ds", s: 0, o: { u: b.u, n: b.n, h: b.dh } });
+      this.sendTo(w, { t: "ds", s: 1, o: { u: a.u, n: a.n, h: a.dh } });
+      return;
+    }
+  }
   broadcast(obj, exceptUid) {
     const text = JSON.stringify(obj);
     for (const w of this.live()) {
@@ -293,9 +328,9 @@ export class Room {
     const pair = new WebSocketPair();
     const client = pair[0], server = pair[1];
     this.ctx.acceptWebSocket(server);
-    const me = { u: uid, n: name, h: "cobalt", x: 0, z: 6, f: Math.PI, m: 0, ts: 0 };
+    const me = { u: uid, n: name, h: "cobalt", x: 0, z: 6, f: Math.PI, m: 0, ts: 0, q: 0, d: "", dh: "cobalt", dl: 0, hs: 0 };
     server.serializeAttachment(me);
-    server.send(JSON.stringify({ t: "hello", you: uid, players: others.map((w) => pub(w.deserializeAttachment())) }));
+    server.send(JSON.stringify({ t: "hello", you: uid, players: others.map((w) => w.deserializeAttachment()).filter((x) => !x.d).map(pub) }));
     this.broadcast({ t: "j", p: pub(me) }, uid);
     return new Response(null, { status: 101, webSocket: client, headers: proto ? { "Sec-WebSocket-Protocol": proto } : {} });
   }
@@ -308,18 +343,61 @@ export class Room {
     if (m.t === "p") {
       const now = Date.now();
       if (now - a.ts < 50) return; // не чаще 20 раз в секунду
-      a.x = lim(m.x, 35.5); a.z = lim(m.z, 35.5); a.f = lim(m.f, 10); a.m = m.m ? 1 : 0; a.ts = now;
+      a.ts = now;
+      if (a.d) {
+        // в дуэли позиции видит только соперник
+        const o = this.sockOf(a.d);
+        ws.serializeAttachment(a);
+        if (o) this.sendTo(o, { t: "dp", x: lim(m.x, 20), z: lim(m.z, 20), f: lim(m.f, 10), m: m.m ? 1 : 0, hp: Math.max(0, Math.min(1000, +m.hp || 0)) });
+        return;
+      }
+      a.x = lim(m.x, 35.5); a.z = lim(m.z, 35.5); a.f = lim(m.f, 10); a.m = m.m ? 1 : 0;
       ws.serializeAttachment(a);
       this.broadcast({ t: "p", u: a.u, x: a.x, z: a.z, f: a.f, m: a.m }, a.u);
     } else if (m.t === "h" && HERO_IDS.includes(m.id)) {
+      if (a.d) return;
       a.h = m.id;
       ws.serializeAttachment(a);
       this.broadcast({ t: "h", u: a.u, h: a.h }, a.u);
+    } else if (m.t === "q" && HERO_IDS.includes(m.id)) {
+      if (a.d) return;
+      a.q = 1; a.dh = m.id;
+      ws.serializeAttachment(a);
+      this.tryMatch(ws);
+    } else if (m.t === "qc") {
+      if (a.q) { a.q = 0; ws.serializeAttachment(a); }
+    } else if (a.d && (m.t === "da" || m.t === "dx")) {
+      // эффект атаки / удар по сопернику
+      const o = this.sockOf(a.d);
+      if (!o) return;
+      if (m.t === "da") this.sendTo(o, { t: "da", k: m.k ? 1 : 0, f: lim(m.f, 10), x: lim(m.x, 20), z: lim(m.z, 20) });
+      else {
+        const now = Date.now();
+        if (now - a.hs < 40) return; // не чаще 25 ударов в секунду
+        a.hs = now; ws.serializeAttachment(a);
+        this.sendTo(o, { t: "dx", d: Math.max(0, Math.min(150, +m.d || 0)), x: lim(m.x, 20), z: lim(m.z, 20) });
+      }
+    } else if (a.d && m.t === "dd") {
+      // я проиграл
+      this.endDuel(ws, a.d, "ko");
+    } else if (a.d && m.t === "dq") {
+      // я сдался / вышел из дуэли
+      this.endDuel(ws, a.d, "quit");
     }
   }
   drop(ws) {
     const a = ws.deserializeAttachment();
-    if (a && !a.dead) { ws.serializeAttachment({ ...a, dead: true }); this.broadcast({ t: "l", u: a.u }, a.u); }
+    if (a && !a.dead) {
+      if (a.d) {
+        const o = this.sockOf(a.d);
+        ws.serializeAttachment({ ...a, dead: true });
+        if (o) this.endDuel(o, a.d, "left");
+        this.broadcast({ t: "l", u: a.u }, a.u);
+        return;
+      }
+      ws.serializeAttachment({ ...a, dead: true });
+      this.broadcast({ t: "l", u: a.u }, a.u);
+    }
   }
   webSocketClose(ws) { this.drop(ws); try { ws.close(); } catch (e) { /* ничего */ } }
   webSocketError(ws) { this.drop(ws); }
