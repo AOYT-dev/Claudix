@@ -756,7 +756,7 @@ Claudix.ready(function () {
   var input = { jx: 0, jy: 0, btnAtk: false, abil: false, keys: {} };
   var shake = 0, deadT = 0, tAll = 0;
   var heroOpen = false;
-  var duel = null, dsel = null, dq = false;
+  var duel = null, dsel = null, dq = false, DUEL_HP = 4; // в дуэли здоровье ×4, чтобы бой не кончался за секунды
 
   // ---------- враги ----------
   function aliveCount() { var n = 0; enemies.forEach(function (e) { if (!e.dead) n++; }); return n; }
@@ -1274,7 +1274,7 @@ Claudix.ready(function () {
     hpTxt.textContent = Math.ceil(p.hp) + " / " + p.maxHp;
     if (duel) {
       earnEl.textContent = "—"; waveEl.textContent = TR("Дуэль");
-      foeEl.textContent = duel.opp.n + " · " + Math.ceil(duel.fhp) + " / " + duel.opp.def.hp;
+      foeEl.textContent = duel.opp.n + " · " + Math.ceil(duel.fhp) + " / " + duel.opp.def.hp * DUEL_HP;
     } else {
     earnEl.textContent = fmt(run.earn);
     waveEl.textContent = run.state === "break" && run.wave === 0 ? TR("Старт") : TR("Волна ") + run.wave;
@@ -1577,10 +1577,11 @@ Claudix.ready(function () {
     heroOpen = false; $("heroOv").hidden = true;
     lobby.group.visible = false; $("slabels").hidden = true; $("lpanel").hidden = true; lobby.near = null;
     if (player) { disposeChar(player.c); player = null; }
-    duel = { opp: { u: m.o.u, n: m.o.n, def: od }, fhp: od.hp, sendT: 0, over: false, lx: 0, lz: 0 };
+    duel = { opp: { u: m.o.u, n: m.o.n, def: od }, fhp: od.hp * DUEL_HP, sendT: 0, over: false, lx: 0, lz: 0 };
     setRemotesVisible(false);
     if (cityG) cityG.visible = true;
     player = makePlayer(def);
+    player.hp = player.maxHp = def.hp * DUEL_HP;
     var sx = m.s ? 8 : -8;
     player.pos.set(sx, 0, 0); player.face = m.s ? -Math.PI / 2 : Math.PI / 2;
     var c = heroChar(od); scene.add(c.root); c.root.position.set(-sx, 0, 0);
