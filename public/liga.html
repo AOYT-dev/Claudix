@@ -202,6 +202,13 @@ button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 .lpanel .meter i { display: block; height: 100%; background: var(--hc, var(--accent)); }
 .lpanel .act { margin-top: 4px; }
 #heroOv { padding-block: 12px; }
+.ddlg { width: 100%; max-width: 560px; display: flex; flex-direction: column; gap: 10px; padding: 16px; border-radius: 16px; background: var(--panel); border: 1px solid var(--line); }
+.ddlg h2 { margin: 0; }
+.ddlg p { margin: 0; opacity: .85; }
+.dgrid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+.dgrid .act { display: flex; align-items: center; gap: 8px; text-align: left; padding: 8px 10px; }
+.dgrid .act svg { width: 26px; height: 36px; flex: none; }
+.dgrid .act.on { outline: 2px solid var(--accent); background: rgba(255,255,255,.22); }
 .hdlg { width: 100%; max-width: 920px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
 
 /* ---------- Оверлеи ---------- */
@@ -281,6 +288,16 @@ html, body { touch-action: manipulation; -webkit-tap-highlight-color: transparen
   <div class="hdlg">
     <div class="cards" id="cards"></div>
     <button class="act sec" id="heroClose" type="button">Закрыть</button>
+  </div>
+</div>
+
+<div class="layer scrim" id="duelOv" hidden>
+  <div class="ddlg">
+    <h2>Дуэль 1 на 1</h2>
+    <p id="dStat"></p>
+    <div class="dgrid" id="dHeroes"></div>
+    <button class="act" id="dGo" type="button"></button>
+    <button class="act sec" id="dClose" type="button">Закрыть</button>
   </div>
 </div>
 
@@ -367,8 +384,8 @@ Claudix.ready(function () {
     } catch (e) { /* хранилище недоступно */ }
   }
   function persist() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); } catch (e) { /* ничего */ } if (SESSION) Claudix.push("liga"); }
-  function pwrMul() { return 1 + 0.1 * save.pwr; }
-  function rm() { return 1 + 0.04 * save.rad; }
+  function pwrMul() { return duel ? 1 : 1 + 0.1 * save.pwr; }
+  function rm() { return duel ? 1 : 1 + 0.04 * save.rad; }
   function upCost(lvl) { return Math.round(100 * Math.pow(1.35, lvl) / 10) * 10; }
   function fmt(n) { return Math.floor(n).toLocaleString(CLX.LOCALE); }
   function rnd(a, b) { return a + Math.random() * (b - a); }
@@ -739,6 +756,7 @@ Claudix.ready(function () {
   var input = { jx: 0, jy: 0, btnAtk: false, abil: false, keys: {} };
   var shake = 0, deadT = 0, tAll = 0;
   var heroOpen = false;
+  var duel = null, dsel = null, dq = false;
 
   // ---------- враги ----------
   function aliveCount() { var n = 0; enemies.forEach(function (e) { if (!e.dead) n++; }); return n; }
@@ -780,6 +798,14 @@ Claudix.ready(function () {
     if (e.dead) return;
     o = o || {};
     dmg *= pwrMul();
+    if (e.duel) {
+      var dd = Math.min(150, Math.round(dmg));
+      e.flash = 0.12;
+      popText(e.pos.x, e.pos.y + 2.8, e.pos.z, String(dd), o.color || "#ffffff", o.big);
+      burst(e.pos.x, e.pos.y + 1.5, e.pos.z, 0xffffff, 3, 4, 0.25, 0.14, 0.6);
+      if (player) netSend({ t: "dx", d: dd, x: +player.pos.x.toFixed(2), z: +player.pos.z.toFixed(2) });
+      return;
+    }
     e.hp -= dmg; e.flash = 0.12;
     if (!o.silent) popText(e.pos.x, e.pos.y + 2.8 * e.scale, e.pos.z, String(Math.round(dmg)), o.color || "#ffffff", o.big);
     if (o.kx || o.kz) { e.kv.x += o.kx; e.kv.z += o.kz; }
@@ -883,7 +909,7 @@ Claudix.ready(function () {
     }
   }
   function clampPos(v) {
-    var L = ARENA - 0.5;
+    var L = duel ? 13 : ARENA - 0.5;
     if (v.x > L) v.x = L; else if (v.x < -L) v.x = -L;
     if (v.z > L) v.z = L; else if (v.z < -L) v.z = -L;
   }
@@ -971,7 +997,7 @@ Claudix.ready(function () {
       p.pos.x += kx / kd * 0.6; p.pos.z += kz / kd * 0.6; clampPos(p.pos);
     }
     if (p.invis > 0) p.invis = 0;
-    if (p.hp <= 0) { p.hp = 0; p.dead = true; mode = "dead"; deadT = 1.3; setGhost(false); burst(p.pos.x, 1.5, p.pos.z, p.def.suit, 24, 7, 0.9, 0.3, 1); p.c.root.visible = false; }
+    if (p.hp <= 0) { p.hp = 0; p.dead = true; mode = "dead"; deadT = duel ? 1e9 : 1.3; if (duel) netSend({ t: "dd" }); setGhost(false); burst(p.pos.x, 1.5, p.pos.z, p.def.suit, 24, 7, 0.9, 0.3, 1); p.c.root.visible = false; }
   }
   function nearest(x, z, maxD) {
     var best = null, bd = maxD;
@@ -1182,10 +1208,11 @@ Claudix.ready(function () {
     var wantAtk = input.btnAtk || input.keys.Space || input.keys.KeyJ;
     if (wantAtk && p.atkT <= 0 && !p.dash) {
       ATK[def.id](p); p.atkT = def.atkCd; p.atkAnim = 0.22;
+      if (duel) netSend({ t: "da", k: 0, f: +p.face.toFixed(2), x: +p.pos.x.toFixed(2), z: +p.pos.z.toFixed(2) });
     }
     if (input.abil) {
       input.abil = false;
-      if (p.abilT <= 0 && !p.dash) { ABIL[def.id](p); p.abilT = def.cd; p.atkAnim = 0.25; }
+      if (p.abilT <= 0 && !p.dash) { ABIL[def.id](p); p.abilT = def.cd; p.atkAnim = 0.25; if (duel) netSend({ t: "da", k: 1, f: +p.face.toFixed(2), x: +p.pos.x.toFixed(2), z: +p.pos.z.toFixed(2) }); }
     }
     p.c.root.rotation.y = 0; p.c.body.rotation.y = p.face;
     p.c.armBusy = p.atkAnim > 0;
@@ -1222,6 +1249,7 @@ Claudix.ready(function () {
   }
   function updateRun(dt) {
     var r = run;
+    if (r.state === "duel") return;
     if (r.state === "break") { r.timer -= dt; if (r.timer <= 0) beginWave(); }
     else {
       r.spawnT -= dt;
@@ -1244,9 +1272,14 @@ Claudix.ready(function () {
     hpFill.style.transform = "scaleX(" + Math.max(0, r).toFixed(3) + ")";
     hpFill.classList.toggle("low", r < 0.3);
     hpTxt.textContent = Math.ceil(p.hp) + " / " + p.maxHp;
+    if (duel) {
+      earnEl.textContent = "—"; waveEl.textContent = TR("Дуэль");
+      foeEl.textContent = duel.opp.n + " · " + Math.ceil(duel.fhp) + " / " + duel.opp.def.hp;
+    } else {
     earnEl.textContent = fmt(run.earn);
     waveEl.textContent = run.state === "break" && run.wave === 0 ? TR("Старт") : TR("Волна ") + run.wave;
     foeEl.textContent = run.state === "fight" ? TR("Врагов: ") + (aliveCount() + run.queue.length) : TR("Передышка");
+    }
     var cd = Math.max(0, p.abilT) / p.def.cd;
     cdFill.style.transform = "scaleY(" + cd.toFixed(3) + ")";
     btnAbil.classList.toggle("ready", p.abilT <= 0);
@@ -1372,6 +1405,15 @@ Claudix.ready(function () {
     var sw = new THREE.Mesh(new THREE.PlaneGeometry(4, 5.6), swM); sw.position.set(0, 3, 0); ex.group.add(sw);
     ex.tick = function (t) { swM.opacity = 0.32 + Math.sin(t * 3) * 0.1; };
   }
+  function buildDuelStation() {
+    var RED = 0xff4a5c, dark = lam(0x2b3142);
+    var du = lobbyStation({ id: "duel", where: "online", x: 14, z: 12, r: 3.6, solid: 1.6, color: RED, label: TR("Дуэль"), labelY: 6 });
+    part(BOX, dark, 3.4, 0.3, 3.4, 0, 0.15, 0, du.group);
+    var s1 = new THREE.Mesh(BOX, lam(0xff4a5c)), s2 = new THREE.Mesh(BOX, lam(0xffc933));
+    [s1, s2].forEach(function (m, i) { m.scale.set(0.35, 3.6, 0.35); m.position.set(0, 3, 0); m.rotation.z = i ? -0.7 : 0.7; du.group.add(m); });
+    du.tick = function (t) { du.group.children.forEach(function (c, i) { if (i > 2) c.position.y = 3 + Math.sin(t * 2.4) * 0.15; }); };
+  }
+  buildDuelStation();
   buildOnlineStations();
   function refreshLobbyHero() {
     if (!mode || mode !== "lobby") return;
@@ -1409,6 +1451,7 @@ Claudix.ready(function () {
     if (net.remotes[p.u]) removeRemote(p.u);
     var def = HERO_BY_ID[p.h] || HERO_BY_ID.cobalt, c = heroChar(def);
     scene.add(c.root); c.root.position.set(p.x, 0, p.z);
+    var vis = !duel; c.root.visible = vis;
     net.remotes[p.u] = { u: p.u, name: p.n, hero: def.id, c: c, x: p.x, z: p.z, f: p.f, tx: p.x, tz: p.z, tf: p.f, el: nickEl(p.n, false) };
   }
   function removeRemote(u) { var r = net.remotes[u]; if (!r) return; disposeChar(r.c); r.el.remove(); delete net.remotes[u]; }
@@ -1433,6 +1476,15 @@ Claudix.ready(function () {
       banner(TR("Онлайн"), TR("Тут можно тусоваться с другими игроками"));
     } else if (m.t === "j" && m.p) { addRemote(m.p); }
     else if (m.t === "l") { removeRemote(m.u); }
+    else if (m.t === "ds" && m.o) { dq = false; $("duelOv").hidden = true; startDuel(m); }
+    else if (m.t === "dp" && duel) { var f = duel.foe; f.tx = m.x; f.tz = m.z; f.tf = m.f; f.mv = m.m; duel.fhp = m.hp; }
+    else if (m.t === "da" && duel) {
+      var f2 = duel.foe; f2.atk = 0.25;
+      if (m.k) { ringFx(f2.pos.x, f2.pos.z, 5, 0.4, duel.opp.def.accent, 0.8); shake = Math.max(shake, 0.15); }
+      else slashFx(f2.pos.x, f2.pos.z, f2.face, 3, duel.opp.def.accent);
+    }
+    else if (m.t === "dx" && duel && player && !duel.over) { hurtPlayer(+m.d || 0, m.x, m.z); }
+    else if (m.t === "de" && duel) { endDuelUi(m); }
     else if (m.t === "p") { var r = net.remotes[m.u]; if (r) { r.tx = m.x; r.tz = m.z; r.tf = m.f; } }
     else if (m.t === "h") {
       var q = net.remotes[m.u];
@@ -1458,6 +1510,8 @@ Claudix.ready(function () {
     };
   }
   function leaveOnline(lost) {
+    if (duel) { duel = null; cleanupRun(); resetResultDlg(); showLobby(); }
+    dq = false; $("duelOv").hidden = true;
     var ws = net.ws; net.ws = null; net.ready = false;
     if (ws) { try { ws.close(); } catch (e) { /* ничего */ } }
     clearInterval(net.pingT); net.pingT = null;
@@ -1487,6 +1541,107 @@ Claudix.ready(function () {
       net.lx = p.pos.x; net.lz = p.pos.z; net.lf = p.face; net.lm = mv;
       netSend({ t: "p", x: +p.pos.x.toFixed(2), z: +p.pos.z.toFixed(2), f: +p.face.toFixed(2), m: mv });
     }
+  }
+
+  // ---------- дуэли 1 на 1 ----------
+  function setDuelOpen(on) {
+    heroOpen = on; $("duelOv").hidden = !on;
+    if (on) { input.keys = {}; joyEnd(); if (!dsel) dsel = save.sel; renderDuelUi(); }
+    else { if (dq) { dq = false; netSend({ t: "qc" }); } renderPanel(); }
+  }
+  function renderDuelUi() {
+    var h = "";
+    HEROES.forEach(function (d) {
+      h += '<button class="act sec' + (dsel === d.id ? " on" : "") + '" data-id="' + d.id + '" type="button"' + (dq ? " disabled" : "") + ">" + figSvg(d) + "<span>" + d.name + "</span></button>";
+    });
+    $("dHeroes").innerHTML = h;
+    $("dStat").textContent = dq ? TR("Ищем соперника…") : TR("Выбери любого героя. Прокачка силы и радиуса в дуэли не работает.");
+    $("dGo").textContent = dq ? TR("Отмена") : TR("Искать соперника");
+  }
+  $("dHeroes").addEventListener("click", function (e) {
+    var b = e.target.closest("button"); if (!b || dq) return;
+    dsel = b.getAttribute("data-id"); renderDuelUi();
+  });
+  $("dGo").addEventListener("click", function () {
+    if (dq) { dq = false; netSend({ t: "qc" }); }
+    else { dq = true; netSend({ t: "q", id: dsel || save.sel }); }
+    renderDuelUi();
+  });
+  $("dClose").addEventListener("click", function () { setDuelOpen(false); });
+  function setRemotesVisible(v) {
+    Object.keys(net.remotes).forEach(function (u) { net.remotes[u].c.root.visible = v; });
+  }
+  function startDuel(m) {
+    if (mode !== "lobby" || duel) return;
+    var def = HERO_BY_ID[dsel] || HERO_BY_ID[save.sel], od = HERO_BY_ID[m.o.h] || HERO_BY_ID.cobalt;
+    heroOpen = false; $("heroOv").hidden = true;
+    lobby.group.visible = false; $("slabels").hidden = true; $("lpanel").hidden = true; lobby.near = null;
+    if (player) { disposeChar(player.c); player = null; }
+    duel = { opp: { u: m.o.u, n: m.o.n, def: od }, fhp: od.hp, sendT: 0, over: false, lx: 0, lz: 0 };
+    setRemotesVisible(false);
+    if (cityG) cityG.visible = true;
+    player = makePlayer(def);
+    var sx = m.s ? 8 : -8;
+    player.pos.set(sx, 0, 0); player.face = m.s ? -Math.PI / 2 : Math.PI / 2;
+    var c = heroChar(od); scene.add(c.root); c.root.position.set(-sx, 0, 0);
+    var fe = { duel: true, type: "duel", c: c, root: c.root, pos: c.root.position, scale: 1, r: 0.6, hp: 1e9, maxHp: 1e9, kb: 0,
+      face: m.s ? Math.PI / 2 : -Math.PI / 2, kv: { x: 0, z: 0 }, flash: 0, stun: 0, burn: 0, burnDps: 0, liftT: 0, liftDur: 0, dead: false,
+      tx: -sx, tz: 0, tf: m.s ? Math.PI / 2 : -Math.PI / 2, mv: 0, atk: 0 };
+    duel.foe = fe; enemies.push(fe);
+    run = { wave: 0, state: "duel", timer: 0, queue: [], spawnT: 0, earn: 0, kills: 0, cap: 0, committed: true };
+    mode = "play"; paused = false;
+    input.jx = input.jy = 0; input.btnAtk = false; input.abil = false; input.keys = {};
+    $("hName").textContent = def.name; $("abilLbl").textContent = def.abilName;
+    $("quitBtn").textContent = TR("Сдаться");
+    $("lobby").hidden = true; $("hud").hidden = false; $("hud").classList.remove("lobby"); $("resultOv").hidden = true; $("pauseOv").hidden = true;
+    resetJoy(); snapCamera();
+    banner(TR("Дуэль"), def.name + " vs " + od.name + " · " + m.o.n);
+    updateHud();
+  }
+  function updateDuel(dt) {
+    var f = duel.foe, k = 1 - Math.exp(-dt * 12), p = player;
+    f.pos.x += (f.tx - f.pos.x) * k; f.pos.z += (f.tz - f.pos.z) * k;
+    f.face = turn(f.face, f.tf, dt * 14);
+    f.flash = Math.max(0, f.flash - dt); f.atk = Math.max(0, f.atk - dt);
+    var fl = f.flash > 0 ? 0.9 : 0;
+    for (var i = 0; i < f.c.mats.length; i++) { var mm = f.c.mats[i]; if (mm.emissive) mm.emissive.setRGB(fl, fl, fl); }
+    f.c.root.rotation.y = 0; f.c.body.rotation.y = f.face;
+    f.c.armBusy = f.atk > 0;
+    animWalk(f.c, dt, Math.hypot(f.tx - f.pos.x, f.tz - f.pos.z) > 0.08 || f.mv ? 7 : 0);
+    if (f.atk > 0) { var a = Math.sin((1 - f.atk / 0.25) * Math.PI); f.c.armR.rotation.x = -1.7 * a; f.c.armL.rotation.x = -0.6 * a; }
+    if (!p || duel.over) return;
+    duel.sendT += dt;
+    if (duel.sendT >= 0.1) {
+      duel.sendT = 0;
+      var mv = Math.hypot(p.pos.x - duel.lx, p.pos.z - duel.lz) > 0.05 ? 1 : 0;
+      duel.lx = p.pos.x; duel.lz = p.pos.z;
+      netSend({ t: "p", x: +p.pos.x.toFixed(2), z: +p.pos.z.toFixed(2), f: +p.face.toFixed(2), m: mv, hp: Math.max(0, Math.round(p.hp)) });
+    }
+  }
+  function endDuelUi(m) {
+    duel.over = true;
+    var win = m.w === net.you;
+    mode = "dead"; deadT = 1e9; input.btnAtk = false; input.keys = {}; joyEnd();
+    $("pauseOv").hidden = true;
+    var why = m.r === "left" ? TR("Соперник вышел") : m.r === "quit" ? (win ? TR("Соперник сдался") : TR("Ты сдался")) : "";
+    $("resTitle").textContent = (win ? TR("Победа!") : TR("Поражение")) + (why ? " · " + why : "");
+    $("resultOv").querySelector("ul").style.display = "none";
+    $("resBtn").textContent = TR("Вернуться в комнату");
+    $("hud").hidden = true; $("resultOv").hidden = false;
+  }
+  function resetResultDlg() {
+    $("resTitle").textContent = TR("Герой пал");
+    $("resultOv").querySelector("ul").style.display = "";
+    $("resBtn").textContent = TR("В меню");
+    $("quitBtn").textContent = TR("Выйти в меню");
+    $("resultOv").hidden = true; $("pauseOv").hidden = true;
+  }
+  function leaveDuel() {
+    cleanupRun(); duel = null; resetResultDlg();
+    showLobby();
+    if (cityG) cityG.visible = !lobby.online;
+    setRemotesVisible(true);
+    net.lx = 1e9; net.lm = -1;
   }
 
   function lvlRow(label, lvl, max, val) {
@@ -1526,6 +1681,11 @@ Claudix.ready(function () {
         $("lpDesc").textContent = TR("Нужен аккаунт: войди на главной странице, и можно тусоваться.");
         btn.disabled = false; btn.textContent = TR("На главную"); btn.onclick = function () { location.href = "./"; };
       }
+    } else if (st.id === "duel") {
+      $("lpTitle").textContent = TR("Дуэль");
+      $("lpDesc").textContent = TR("Бой 1 на 1 с живым игроком. Герой любой, даже некупленный.");
+      lv.hidden = meter.hidden = true;
+      btn.disabled = false; btn.textContent = TR("Выбрать героя"); btn.onclick = function () { setDuelOpen(true); };
     } else if (st.id === "exit") {
       $("lpTitle").textContent = TR("Выход");
       $("lpDesc").textContent = TR("Вернуться в своё лобби.");
@@ -1653,13 +1813,14 @@ Claudix.ready(function () {
   function quitToMenu() { commitRun(); cleanupRun(); showLobby(); }
   function setPause(on) {
     if (mode !== "play") return;
+    if (duel) { $("pauseOv").hidden = !on; if (on) input.btnAtk = false; return; }
     paused = on; $("pauseOv").hidden = !on;
     if (on) { input.btnAtk = false; input.keys = {}; joyEnd(); }
   }
     $("pauseBtn").addEventListener("click", function () { setPause(true); });
   $("resumeBtn").addEventListener("click", function () { setPause(false); });
-  $("quitBtn").addEventListener("click", quitToMenu);
-  $("resBtn").addEventListener("click", function () { cleanupRun(); showLobby(); });
+  $("quitBtn").addEventListener("click", function () { if (duel) { $("pauseOv").hidden = true; netSend({ t: "dq" }); } else quitToMenu(); });
+  $("resBtn").addEventListener("click", function () { if (duel) leaveDuel(); else { cleanupRun(); showLobby(); } });
   document.addEventListener("visibilitychange", function () { if (document.hidden) setPause(true); });
 
   // ---------- управление ----------
@@ -1701,7 +1862,7 @@ Claudix.ready(function () {
   window.addEventListener("keydown", function (e) {
     if (mode === "lobby") {
       var kl = e.code;
-      if (kl === "Escape" && heroOpen) { setHeroOpen(false); return; }
+      if (kl === "Escape" && heroOpen) { if (!$("duelOv").hidden) setDuelOpen(false); else setHeroOpen(false); return; }
       if (heroOpen) return;
       if (kl === "ArrowUp" || kl === "ArrowDown" || kl === "ArrowLeft" || kl === "ArrowRight" || kl === "Space") e.preventDefault();
       if (kl === "KeyE" || kl === "Enter") { var b = $("lpBtn"); if (!$("lpanel").hidden && !b.disabled) b.click(); return; }
@@ -1762,13 +1923,15 @@ Claudix.ready(function () {
       } else if (mode === "play") {
         updatePlayer(dt);
         if (mode === "play") updateRun(dt);
-        for (var i = 0; i < enemies.length; i++) if (!enemies[i].dead) updateEnemy(enemies[i], dt);
+        for (var i = 0; i < enemies.length; i++) if (!enemies[i].dead && !enemies[i].duel) updateEnemy(enemies[i], dt);
+        if (duel) updateDuel(dt);
         for (var j = enemies.length - 1; j >= 0; j--) if (enemies[j].dead) enemies.splice(j, 1);
         updateProjs(dt); updateFx(dt);
         if (player) updateHud();
       } else if (mode === "dead") {
         deadT -= dt; updateFx(dt);
-        if (deadT <= 0 && $("resultOv").hidden) showResult();
+        if (duel) updateDuel(dt);
+        if (deadT <= 0 && !duel && $("resultOv").hidden) showResult();
       }
       updateParticles(dt); updatePops(dt);
     }
@@ -1779,6 +1942,7 @@ Claudix.ready(function () {
 
   loadSave();
   window.addEventListener("resize", resizeIfNeeded);
+  applyLobbyScene();
   showLobby();
   requestAnimationFrame(function (t) { lastT = t; requestAnimationFrame(loop); });
 });
