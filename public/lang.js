@@ -285,7 +285,7 @@
     if (!slots.length) return;
     var css = document.createElement("style");
     css.textContent = ".cx-lang{display:inline-flex;border:1px solid rgba(255,255,255,.28);border-radius:999px;overflow:hidden;vertical-align:middle;font:700 12px/1 system-ui,sans-serif;background:rgba(0,0,0,.25)}" +
-      ".cx-lang button{all:unset;cursor:pointer;padding:7px 10px;color:inherit;opacity:.65;letter-spacing:.04em}" +
+      ".cx-lang button{all:unset;touch-action:manipulation;cursor:pointer;padding:7px 10px;color:inherit;opacity:.65;letter-spacing:.04em}" +
       ".cx-lang button[aria-pressed=true]{opacity:1;background:rgba(255,255,255,.2)}" +
       ".cx-lang button:focus-visible{outline:2px solid #58d6ff;outline-offset:-2px}";
     document.head.appendChild(css);

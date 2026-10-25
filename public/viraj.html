@@ -2,10 +2,12 @@
 <html lang="ru">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>Вираж-9</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <style>
+/* без зума от быстрых тапов */
+* { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
 body { background: #11141b; }
 /* Одна тёмная вселенная: закатная трасса. Акцент оранжевый, второй цвет холодный голубой для нитро. */
 :root {
@@ -204,6 +206,7 @@ body.touchy #nitro { display: none; }
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
+  document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
 (function () {
   "use strict";
   var $ = function (id) { return document.getElementById(id); };
