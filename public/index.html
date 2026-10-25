@@ -297,6 +297,7 @@ html, body { touch-action: manipulation; -webkit-tap-highlight-color: transparen
       <div class="tabs" role="tablist" aria-label="Игра">
         <button class="tab" id="tbLemon" role="tab" type="button" aria-selected="true">Лимонный Икс</button>
         <button class="tab" id="tbLiga" role="tab" type="button" aria-selected="false">Лига Улиц</button>
+        <button class="tab" id="tbViraj" role="tab" type="button" aria-selected="false">Вираж-9</button>
       </div>
       <p class="hint" id="boardNote">Лимонный Икс: у кого больше общий икс.</p>
       <ol class="board" id="board" aria-live="polite"></ol>
@@ -361,7 +362,7 @@ html, body { touch-action: manipulation; -webkit-tap-highlight-color: transparen
   var C = window.Claudix;
   var SUF = ["", "K", "M", "B", "T", "Qa", "Qi", "Sx", "Sp", "Oc", "No", "Dc"];
   var TIERS = [2, 3, 5, 10, 20, 50, 100, 300, 1000];
-  var LEMON = "limonny-iks-v1", LIGA = "liga-ulic-v1";
+  var LEMON = "limonny-iks-v1", LIGA = "liga-ulic-v1", VIRAJ = "viraj-9-v1";
   var NAME_RE = /^[A-Za-zА-Яа-яЁё0-9_\-]{3,16}$/;
 
   // ---------- хранилище (только для статистики) ----------
@@ -388,13 +389,22 @@ html, body { touch-action: manipulation; -webkit-tap-highlight-color: transparen
   // ---------- статистика текущего аккаунта ----------
   function saveKey(base, user) { return user ? base + ":" + user : base; }
   function hasProgress(user) {
-    var L = read(saveKey(LEMON, user)), G = read(saveKey(LIGA, user));
-    return !!((L && (L.lemons > 0 || L.clickLvl > 0)) || (G && (G.best > 0 || G.money > 0 || (G.owned && G.owned.length > 1))));
+    var L = read(saveKey(LEMON, user)), G = read(saveKey(LIGA, user)), V = read(saveKey(VIRAJ, user));
+    return !!((V && (V.coins > 0 || (V.camp && V.camp.some(function (x) { return x > 0; })))) || (L && (L.lemons > 0 || L.clickLvl > 0)) || (G && (G.best > 0 || G.money > 0 || (G.owned && G.owned.length > 1))));
   }
   function paintStats() {
     var s = session(), u = s ? s.user : "";
     $("statLemon").textContent = TR("Ты ещё не играл. Начни с первого лимона.");
     $("statLiga").textContent = TR("Ты ещё не играл. Первый герой уже ждёт.");
+    $("statViraj").textContent = TR("Ты ещё не гонял. Развалюха уже прогрета.");
+    var V = read(saveKey(VIRAJ, u));
+    if (!V && !u) { // старые гостевые ключи до облака
+      try { var oc = JSON.parse(localStorage.getItem("viraj-camp") || "null"), ocn = parseInt(localStorage.getItem("viraj-coins") || "0", 10) || 0; if (oc || ocn) V = { camp: oc || [], coins: ocn }; } catch (e) { /* ничего */ }
+    }
+    if (V && (V.coins > 0 || (Array.isArray(V.camp) && V.camp.some(function (x) { return x > 0; })))) {
+      var vs = 0; (V.camp || []).forEach(function (x) { vs += x | 0; });
+      $("statViraj").innerHTML = TR("Звёзд: <b>") + vs + TR(" из 24</b> · монет <b>$") + big(+V.coins || 0) + "</b>";
+    }
     var L = read(saveKey(LEMON, u));
     if (L && (L.lemons > 0 || L.clickLvl > 0 || (L.gens && L.gens.some(function (g) { return g > 0; })))) {
       var mult = 1;
@@ -511,10 +521,10 @@ html, body { touch-action: manipulation; -webkit-tap-highlight-color: transparen
 
   // ---------- таблица лидеров ----------
   var boardGame = "lemon";
-  function fmtScore(game, v) { return game === "lemon" ? "×" + big(v) : TR("волна ") + Math.floor(v); }
+  function fmtScore(game, v) { return game === "lemon" ? "×" + big(v) : game === "viraj" ? Math.floor(v / 1000) + "★ · " + TR("ур. ") + (Math.floor(v % 1000) + 1) : TR("волна ") + Math.floor(v); }
   function paintBoard() {
     var game = boardGame, list = $("board"), me = $("boardMe");
-    $("boardNote").textContent = game === "lemon" ? TR("Лимонный Икс: у кого больше общий икс.") : TR("Лига Улиц: у кого дальше волна.");
+    $("boardNote").textContent = game === "lemon" ? TR("Лимонный Икс: у кого больше общий икс.") : game === "viraj" ? TR("Вираж-9: у кого больше звёзд в кампании, при равенстве — уровень быстрых гонок.") : TR("Лига Улиц: у кого дальше волна.");
     C.top(game).then(function (r) {
       if (game !== boardGame) return;
       list.innerHTML = ""; me.textContent = "";
@@ -538,10 +548,12 @@ html, body { touch-action: manipulation; -webkit-tap-highlight-color: transparen
     boardGame = g;
     $("tbLemon").setAttribute("aria-selected", g === "lemon" ? "true" : "false");
     $("tbLiga").setAttribute("aria-selected", g === "liga" ? "true" : "false");
+    $("tbViraj").setAttribute("aria-selected", g === "viraj" ? "true" : "false");
     paintBoard();
   }
   $("tbLemon").addEventListener("click", function () { setBoard("lemon"); });
   $("tbLiga").addEventListener("click", function () { setBoard("liga"); });
+  $("tbViraj").addEventListener("click", function () { setBoard("viraj"); });
 
   if (!storageOk()) setMsg($("aerr"), TR("Браузер не даёт сохранять данные, аккаунты работать не будут."), "bad");
   window.__boardReady = true;
@@ -552,18 +564,5 @@ html, body { touch-action: manipulation; -webkit-tap-highlight-color: transparen
 })();
 </script>
 
-<script>
-(function () {
-  try {
-    var camp = JSON.parse(localStorage.getItem("viraj-camp") || "[]"), stars = 0;
-    camp.forEach(function (v) { stars += v | 0; });
-    var coins = parseInt(localStorage.getItem("viraj-coins") || "0", 10) || 0;
-    if (stars || coins) {
-      var T = window.TR || function (x) { return x; };
-      document.getElementById("statViraj").innerHTML = T("Звёзд: <b>") + stars + T(" из 24</b> · монет <b>$") + coins + "</b>";
-    }
-  } catch (e) { /* ничего */ }
-})();
-</script>
 </body>
 </html>

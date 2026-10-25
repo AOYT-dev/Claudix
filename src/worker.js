@@ -2,7 +2,7 @@
 // Пароли хранятся только как PBKDF2-хеш с солью. Сессия живёт 60 дней.
 
 const NAME_RE = /^[A-Za-zА-Яа-яЁё0-9_-]{3,16}$/;
-const GAMES = ["lemon", "liga"];
+const GAMES = ["lemon", "liga", "viraj"];
 const MAX_SAVE = 200000;
 const SESSION_MS = 60 * 24 * 3600 * 1000;
 const PBKDF2_ITER = 100000; // максимум, который разрешает Workers
@@ -108,6 +108,13 @@ function scoreOf(game, str) {
       return m <= 1 ? 0 : (Number.isFinite(m) ? m : 1e300); // без иксов в таблицу не попадаешь
     }
     if (game === "liga") return Math.min(Math.max(0, Math.floor(+o.best || 0)), 1e6);
+    if (game === "viraj") {
+      // Вираж-9: сначала звёзды кампании (до 24), при равенстве уровень быстрых гонок
+      let stars = 0;
+      if (Array.isArray(o.camp)) o.camp.slice(0, 8).forEach((v) => { stars += Math.min(3, Math.max(0, Math.floor(+v || 0))); });
+      const q = Math.min(999, Math.max(0, Math.floor(+o.qlvl || 0)));
+      return stars * 1000 + q;
+    }
   } catch (e) { /* ниже */ }
   return 0;
 }

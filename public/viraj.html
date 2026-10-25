@@ -157,7 +157,7 @@ body.touchy #nitro { display: none; }
 
 <div class="overlay" id="menu">
   <div class="box">
-    <a href="./" style="color:var(--dim);text-decoration:none;font-size:1.05rem;letter-spacing:.06em;align-self:flex-start">← Claudix</a>
+    <div class="row" style="justify-content:space-between"><a href="./" style="color:var(--dim);text-decoration:none;font-size:1.05rem;letter-spacing:.06em">← Claudix</a><span id="who" style="color:var(--dim);font-size:1rem;letter-spacing:.04em"></span></div>
     <h1><b>Вираж</b>-9 <small style="font-size:1.2rem;color:var(--dim);letter-spacing:.14em">сезон 1</small></h1>
     <p>Три круга против трёх соперников. Выбери машину и держи линию, а нитро прибереги для прямых.</p>
     <p id="coinsP"></p>
@@ -226,10 +226,12 @@ body.touchy #nitro { display: none; }
   ["gesturestart", "gesturechange", "gestureend"].forEach(function (t) { document.addEventListener(t, function (e) { e.preventDefault(); }, { passive: false }); });
 })();
 </script>
+<script src="lang.js"></script>
+<script src="claudix.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
   document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
-(function () {
+(window.Claudix ? Claudix.ready : function (f) { f(); })(function () {
   "use strict";
   var $ = function (id) { return document.getElementById(id); };
   if (typeof THREE === "undefined") { $("fail").hidden = false; return; }
@@ -242,7 +244,26 @@ body.touchy #nitro { display: none; }
   var rnd = function (a, b) { return a + Math.random() * (b - a); };
   var clamp = function (v, a, b) { return Math.max(a, Math.min(b, v)); };
   var angDiff = function (a, b) { var d = a - b; while (d > Math.PI) d -= 2 * Math.PI; while (d < -Math.PI) d += 2 * Math.PI; return d; };
-  function store(k, v) { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch (e) { /* ничего */ } return null; }
+  // ---------- сохранение: один объект, в аккаунте уходит в облако Claudix ----------
+  var SESSION = window.Claudix ? Claudix.session() : null;
+  var SAVE_KEY = window.Claudix ? Claudix.saveKey("viraj", SESSION ? SESSION.user : "") : "viraj-9-v1";
+  var LEGACY = { "viraj-coins": ["coins", "num"], "viraj-owned": ["owned", "json"], "viraj-car2": ["car", "str"], "viraj-camp": ["camp", "json"], "viraj-best": ["best", "num"], "viraj-qlvl": ["qlvl", "num"], "viraj-ups": ["ups", "json"] };
+  function lsGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+  var SAVE = null;
+  try { SAVE = JSON.parse(lsGet(SAVE_KEY) || "null"); } catch (e) { SAVE = null; }
+  if (!SAVE || typeof SAVE !== "object" || Array.isArray(SAVE)) {
+    // первый заход после обновления: переносим прогресс со старых ключей браузера
+    SAVE = { v: 1 }; var moved = false;
+    Object.keys(LEGACY).forEach(function (k) { var raw = lsGet(k); if (raw === null) return; moved = true; var f = LEGACY[k]; try { SAVE[f[0]] = f[1] === "json" ? JSON.parse(raw) : f[1] === "num" ? +raw : raw; } catch (e) { /* битое поле пропускаем */ } });
+    if (moved) { persist(); Object.keys(LEGACY).concat(["viraj-car"]).forEach(function (k) { try { localStorage.removeItem(k); } catch (e) { /* ничего */ } }); }
+  }
+  function persist() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(SAVE)); } catch (e) { /* ничего */ } if (SESSION && window.Claudix) Claudix.push("viraj"); }
+  function store(k, v) {
+    var f = LEGACY[k];
+    if (!f) return null;
+    if (v === undefined) { var x = SAVE[f[0]]; return x === undefined || x === null ? null : f[1] === "json" ? JSON.stringify(x) : String(x); }
+    SAVE[f[0]] = f[1] === "json" ? JSON.parse(v) : f[1] === "num" ? +v : v; persist(); return null;
+  }
 
   // ---------- сцена ----------
   var SKY = 0xf2a46e, scene = new THREE.Scene();
@@ -452,8 +473,9 @@ body.touchy #nitro { display: none; }
   $("resetBtn").addEventListener("click", function () { $("sure").hidden = false; $("sureNo").focus(); });
   $("sureNo").addEventListener("click", function () { $("sure").hidden = true; $("resetBtn").focus(); });
   $("sureYes").addEventListener("click", function () {
-    ["viraj-owned", "viraj-car", "viraj-car2", "viraj-coins", "viraj-camp", "viraj-best", "viraj-qlvl", "viraj-ups"].forEach(function (k) { try { localStorage.removeItem(k); } catch (e) { /* ничего */ } });
-    location.reload();
+    SAVE = { v: 1, reset: Date.now() }; persist();
+    if (SESSION && window.Claudix) Claudix.flushAll(true);
+    setTimeout(function () { location.reload(); }, SESSION ? 400 : 0);
   });
   var keys = {}, touch = { l: false, r: false, g: false, b: false, n: false, h: false }, bestLap = parseFloat(store("viraj-best") || "0") || 0;
   var NAMES = ["Макс", "Рэй", "Зина", "Бро", "Ласка", "Тоха"];
@@ -804,10 +826,11 @@ body.touchy #nitro { display: none; }
   buildTrack(0);
   grantCars(); renderEvents();
   racers = []; camH = SL.h; camera.position.set(SL.x - Math.sin(SL.h) * 14, 6, SL.z - Math.cos(SL.h) * 14); camera.lookAt(SL.x, 1, SL.z);
+  $("who").textContent = SESSION ? "☁ " + (SESSION.name || SESSION.user) + " · прогресс в облаке" : "Гость · войди на главной, чтобы сохранять в облако";
   renderCars(); resize();
   window.__rc = { paused: function () { return paused; }, TRACKS: TRACKS, build: buildTrack, tr: function () { return TR; }, W: function () { return W; }, camp: function () { return camp; }, startCamp: startCampaign,  ai: ai, racers: function () { return racers; }, step: step, state: function () { return state; }, TOTAL: TOTAL, LENGTH: LENGTH, player: function () { return player; }, keys: keys, finish: function () { return finishOrder; }, raceT: function () { return raceT; } };
   requestAnimationFrame(loop);
-})();
+});
 </script>
 
 </body>

@@ -2,7 +2,7 @@
 (function () {
   "use strict";
   var SES = "claudix-session";
-  var GAMES = { lemon: "limonny-iks-v1", liga: "liga-ulic-v1" };
+  var GAMES = { lemon: "limonny-iks-v1", liga: "liga-ulic-v1", viraj: "viraj-9-v1" };
   var FLUSH_MS = 30000;
 
   function lsGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }

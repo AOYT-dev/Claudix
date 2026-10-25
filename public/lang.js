@@ -6,6 +6,8 @@
   var EN = {
 "3D-экшен": "3D action",
 "Гонки": "Racing",
+"Вираж-9: у кого больше звёзд в кампании, при равенстве — уровень быстрых гонок.": "Viraj-9: most campaign stars wins, ties go to quick-race level.",
+"ур. ": "lvl ",
 "Вираж-9": "Viraj-9",
 "Кампания из восьми заездов против злеющих соперников. Начинаешь на развалюхе, копишь на тюнинг и новые тачки.": "An eight-race campaign against rivals who keep getting meaner. Start in a rust bucket and save up for tuning and new cars.",
 "Ты ещё не гонял. Развалюха уже прогрета.": "You haven't raced yet. The rust bucket is warmed up.",
