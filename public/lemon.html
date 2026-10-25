@@ -309,13 +309,24 @@ img { max-width: 100%; }
 html, body { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
 </style>
 <script>
-/* iOS: жесты зума не должны срабатывать на игровых кнопках, джойстике и сцене */
+/* iOS: зум отключён на всём экране — ни щипком, ни двойным тапом, ни кучей пальцев */
 (function () {
   function locked(el) { for (; el && el.nodeType === 1 && el !== document.body && el !== document.documentElement; el = el.parentElement) if (getComputedStyle(el).touchAction === "none") return true; return false; }
-  document.addEventListener("touchstart", function (e) { if (locked(e.target)) e.preventDefault(); }, { passive: false });
-  document.addEventListener("touchmove", function (e) { if (e.touches.length > 1 || locked(e.target)) e.preventDefault(); }, { passive: false });
+  var lastEnd = 0, moved = false;
+  document.addEventListener("touchstart", function (e) { moved = false; if (e.touches.length > 1 || locked(e.target)) e.preventDefault(); }, { passive: false });
+  document.addEventListener("touchmove", function (e) { moved = true; if (e.touches.length > 1 || e.scale && e.scale !== 1 || locked(e.target)) e.preventDefault(); }, { passive: false });
+  document.addEventListener("touchend", function (e) {
+    if (locked(e.target)) return;
+    var now = Date.now();
+    if (!moved && now - lastEnd < 400) {
+      e.preventDefault(); // второй быстрый тап: не даём зумить, но клик делаем сами
+      var t = e.target.closest && e.target.closest("button, a, label, input, select, textarea, summary, [role=tab], [role=button]");
+      if (t && !t.disabled) { if (/^(INPUT|SELECT|TEXTAREA)$/.test(t.tagName)) t.focus(); else t.click(); }
+    }
+    lastEnd = now;
+  }, { passive: false });
   document.addEventListener("dblclick", function (e) { e.preventDefault(); }, { passive: false });
-  ["gesturestart", "gesturechange"].forEach(function (t) { document.addEventListener(t, function (e) { e.preventDefault(); }, { passive: false }); });
+  ["gesturestart", "gesturechange", "gestureend"].forEach(function (t) { document.addEventListener(t, function (e) { e.preventDefault(); }, { passive: false }); });
 })();
 </script>
 <script>document.addEventListener("gesturestart", function (e) { e.preventDefault(); });</script>

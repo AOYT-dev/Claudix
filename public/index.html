@@ -2,11 +2,13 @@
 <html lang="ru">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>Claudix</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@600;800&family=Onest:wght@400;500;700&display=swap">
 <style>
+/* без зума от быстрых тапов */
+* { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
 /* Layout: шапка с логотипом и ником, короткое вступление, сетка карточек игр с обложками, ниже профиль и планы. Одна смелая деталь: розовый X в логотипе, он же акцент кнопок. */
 :root {
   --font-display: "Unbounded", "Arial Black", system-ui, sans-serif;
@@ -142,6 +144,27 @@ img { max-width: 100%; }
 [hidden] { display: none !important; }
 html, body { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
 </style>
+<script>
+/* iOS: зум отключён на всём экране — ни щипком, ни двойным тапом, ни кучей пальцев */
+(function () {
+  function locked(el) { for (; el && el.nodeType === 1 && el !== document.body && el !== document.documentElement; el = el.parentElement) if (getComputedStyle(el).touchAction === "none") return true; return false; }
+  var lastEnd = 0, moved = false;
+  document.addEventListener("touchstart", function (e) { moved = false; if (e.touches.length > 1 || locked(e.target)) e.preventDefault(); }, { passive: false });
+  document.addEventListener("touchmove", function (e) { moved = true; if (e.touches.length > 1 || e.scale && e.scale !== 1 || locked(e.target)) e.preventDefault(); }, { passive: false });
+  document.addEventListener("touchend", function (e) {
+    if (locked(e.target)) return;
+    var now = Date.now();
+    if (!moved && now - lastEnd < 400) {
+      e.preventDefault(); // второй быстрый тап: не даём зумить, но клик делаем сами
+      var t = e.target.closest && e.target.closest("button, a, label, input, select, textarea, summary, [role=tab], [role=button]");
+      if (t && !t.disabled) { if (/^(INPUT|SELECT|TEXTAREA)$/.test(t.tagName)) t.focus(); else t.click(); }
+    }
+    lastEnd = now;
+  }, { passive: false });
+  document.addEventListener("dblclick", function (e) { e.preventDefault(); }, { passive: false });
+  ["gesturestart", "gesturechange", "gestureend"].forEach(function (t) { document.addEventListener(t, function (e) { e.preventDefault(); }, { passive: false }); });
+})();
+</script>
 </head>
 <body>
 <div class="wrap">
