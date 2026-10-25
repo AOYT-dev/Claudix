@@ -100,6 +100,7 @@ table { width: 100%; border-collapse: collapse; font-size: 1.2rem; }
 td { padding: 6px 4px; border-bottom: 1px solid var(--line); }
 td.t { font-family: var(--mono); text-align: right; color: var(--dim); }
 tr.me td { color: var(--accent); font-weight: 700; }
+canvas, .hud { touch-action: none; }
 #touch { position: fixed; inset: 0; z-index: 4; pointer-events: none; display: none; }
 #touch.on { display: block; }
 .tb { position: absolute; border: 0; padding: 0; background: none; color: var(--fg); font: 700 .8rem var(--font); letter-spacing: .1em; text-transform: uppercase; pointer-events: auto; touch-action: none; -webkit-tap-highlight-color: transparent; }
@@ -204,6 +205,16 @@ body.touchy #nitro { display: none; }
 </div>
 <div id="fail" hidden>Не удалось запустить 3D. Открой страницу в обычном браузере с включённым WebGL и интернетом.</div>
 
+<script>
+/* iOS: жесты зума не должны срабатывать на игровых кнопках, джойстике и сцене */
+(function () {
+  function locked(el) { for (; el && el.nodeType === 1 && el !== document.body && el !== document.documentElement; el = el.parentElement) if (getComputedStyle(el).touchAction === "none") return true; return false; }
+  document.addEventListener("touchstart", function (e) { if (locked(e.target)) e.preventDefault(); }, { passive: false });
+  document.addEventListener("touchmove", function (e) { if (e.touches.length > 1 || locked(e.target)) e.preventDefault(); }, { passive: false });
+  document.addEventListener("dblclick", function (e) { e.preventDefault(); }, { passive: false });
+  ["gesturestart", "gesturechange"].forEach(function (t) { document.addEventListener(t, function (e) { e.preventDefault(); }, { passive: false }); });
+})();
+</script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
   document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
