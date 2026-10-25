@@ -155,7 +155,7 @@ html, body { touch-action: manipulation; -webkit-tap-highlight-color: transparen
 
   <section class="intro">
     <h1>Выбери игру и погнали</h1>
-    <p>Это альфа-версия площадки. Пока на ней две игры, остальные в пути. Создай аккаунт, и у тебя будет свой прогресс.</p>
+    <p>Это альфа-версия площадки. Пока на ней три игры, остальные в пути. Создай аккаунт, и у тебя будет свой прогресс.</p>
   </section>
 
   <section class="sec" aria-labelledby="gh">
@@ -227,6 +227,37 @@ html, body { touch-action: manipulation; -webkit-tap-highlight-color: transparen
           <p>Бей волны преступников, качай силу и радиус в 3D-лобби и покупай шесть героев с разными способностями. Управление пальцами.</p>
           <div class="stat" id="statLiga">Ты ещё не играл. Первый герой уже ждёт.</div>
           <a class="play" href="liga.html">Играть</a>
+        </div>
+      </article>
+
+      <article class="game">
+        <a class="cover" href="viraj.html" tabindex="-1" aria-hidden="true">
+          <svg viewBox="0 0 320 180" preserveAspectRatio="xMidYMid slice">
+            <defs>
+              <linearGradient id="skyV" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2a1a4a"/><stop offset="0.55" stop-color="#d1553a"/><stop offset="1" stop-color="#ffb057"/></linearGradient>
+              <linearGradient id="roadV" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3a3d47"/><stop offset="1" stop-color="#1c1e24"/></linearGradient>
+            </defs>
+            <rect width="320" height="180" fill="url(#skyV)"/>
+            <circle cx="160" cy="92" r="30" fill="#ffd27a" opacity="0.85"/>
+            <path d="M0 100 L60 82 L110 96 L170 76 L230 94 L280 80 L320 92 L320 110 L0 110Z" fill="#3b1f3d"/>
+            <path d="M138 104 L182 104 L320 180 L0 180Z" fill="url(#roadV)"/>
+            <path d="M158 108 L162 108 L166 124 L154 124Z M151 134 L169 134 L175 160 L145 160Z" fill="#ffd27a" opacity="0.8"/>
+            <path d="M138 104 L0 170 L0 180 L10 180 L142 104Z M182 104 L320 170 L320 180 L310 180 L178 104Z" fill="#e23b3b"/>
+            <g transform="translate(160 150)">
+              <path d="M-34 0 L-30 -16 L-18 -26 L18 -26 L30 -16 L34 0Z" fill="#ff7a2f"/>
+              <path d="M-16 -24 L16 -24 L22 -15 L-22 -15Z" fill="#1a2230"/>
+              <rect x="-36" y="-30" width="72" height="5" rx="2" fill="#15161a"/>
+              <rect x="-30" y="-8" width="12" height="5" rx="2" fill="#cc2222"/><rect x="18" y="-8" width="12" height="5" rx="2" fill="#cc2222"/>
+              <path d="M-14 2 L-20 22 L-8 22Z M14 2 L20 22 L8 22Z" fill="#39d3ff" opacity="0.85"/>
+            </g>
+          </svg>
+        </a>
+        <div class="gbody">
+          <div class="tags"><span class="tag">Гонки</span><span class="tag">3D</span></div>
+          <h3>Вираж-9</h3>
+          <p>Кампания из восьми заездов против злеющих соперников. Начинаешь на развалюхе, копишь на тюнинг и новые тачки.</p>
+          <div class="stat" id="statViraj">Ты ещё не гонял. Развалюха уже прогрета.</div>
+          <a class="play" href="viraj.html">Играть</a>
         </div>
       </article>
 
@@ -498,5 +529,18 @@ html, body { touch-action: manipulation; -webkit-tap-highlight-color: transparen
 })();
 </script>
 
+<script>
+(function () {
+  try {
+    var camp = JSON.parse(localStorage.getItem("viraj-camp") || "[]"), stars = 0;
+    camp.forEach(function (v) { stars += v | 0; });
+    var coins = parseInt(localStorage.getItem("viraj-coins") || "0", 10) || 0;
+    if (stars || coins) {
+      var T = window.TR || function (x) { return x; };
+      document.getElementById("statViraj").innerHTML = T("Звёзд: <b>") + stars + T(" из 24</b> · монет <b>$") + coins + "</b>";
+    }
+  } catch (e) { /* ничего */ }
+})();
+</script>
 </body>
 </html>

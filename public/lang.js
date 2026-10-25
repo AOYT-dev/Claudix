@@ -5,6 +5,12 @@
   var KEY = "claudix-lang";
   var EN = {
 "3D-экшен": "3D action",
+"Гонки": "Racing",
+"Вираж-9": "Viraj-9",
+"Кампания из восьми заездов против злеющих соперников. Начинаешь на развалюхе, копишь на тюнинг и новые тачки.": "An eight-race campaign against rivals who keep getting meaner. Start in a rust bucket and save up for tuning and new cars.",
+"Ты ещё не гонял. Развалюха уже прогрета.": "You haven't raced yet. The rust bucket is warmed up.",
+"Звёзд: <b>": "Stars: <b>",
+" из 24</b> · монет <b>$": " of 24</b> · coins <b>$",
 "Claudix · альфа 0.2 · общие аккаунты и облачные сохранения.": "Claudix · alpha 0.2 · shared accounts and cloud saves.",
 "Аккаунт": "Account",
 "Аккаунт общий: заходи с любого устройства, прогресс подтянется сам. Пароль хранится в зашифрованном виде и забытый не восстанавливается. Не используй пароль от почты или других сайтов.": "One account for every device: sign in anywhere and your progress follows you. Your password is stored encrypted and a forgotten one can't be recovered. Don't reuse your email or other site passwords.",
@@ -48,7 +54,7 @@
 "Ты ещё не играл. Первый герой уже ждёт.": "You haven't played yet. Your first hero is waiting.",
 "Удалить аккаунт": "Delete account",
 "Удалить навсегда": "Delete forever",
-"Это альфа-версия площадки. Пока на ней две игры, остальные в пути. Создай аккаунт, и у тебя будет свой прогресс.": "This is the alpha version of the platform. There are two games so far, more are on the way. Create an account to keep your own progress.",
+"Это альфа-версия площадки. Пока на ней три игры, остальные в пути. Создай аккаунт, и у тебя будет свой прогресс.": "This is the alpha version of the platform. There are three games so far, more are on the way. Create an account to keep your own progress.",
 "от 3 до 16 символов": "3 to 16 characters",
 "от 4 символов": "at least 4 characters",
 " из 6</b> · лучшая волна <b>": " of 6</b> · best wave <b>",
