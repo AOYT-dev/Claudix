@@ -1370,10 +1370,10 @@ Claudix.ready(function () {
     hpTxt.textContent = Math.ceil(p.hp) + " / " + p.maxHp;
     if (adv) {
       earnEl.textContent = fmt(adv.earn);
-      waveEl.textContent = TR("Этаж ") + adv.floor + " · " + (ROOMS[adv.room].boss ? TR("Босс") : TR("Комната ") + (adv.room % 2 + 1));
+      waveEl.textContent = ROOMS[adv.room].intro ? TR("Улица") : TR("Этаж ") + adv.floor + " · " + ROOMS[adv.room].name;
       var bossE = null; enemies.forEach(function (e) { if (!e.dead && e.T && e.T.boss) bossE = e; });
       foeEl.textContent = bossE ? TR("Тыквенный король · ") + Math.ceil(100 * (bossE.proxy ? bossE.hpF : bossE.hp / bossE.maxHp)) + "%"
-        : adv.state === "gate" ? TR("Ворота открыты ↑") : adv.state === "won" ? TR("Победа!") : TR("Врагов: ") + (aliveCount() + (adv.host ? adv.queue.length : 0));
+        : adv.state === "gate" ? (ROOMS[adv.room].intro ? TR("Войди в поместье ↑") : TR("Дверь открыта ↑")) : adv.state === "won" ? TR("Победа!") : TR("Врагов: ") + (aliveCount() + (adv.host ? adv.queue.length : 0));
       if (adv.mate) $("mateTxt").textContent = adv.mate.n + " · " + (adv.mate.dead ? TR("пал") : Math.ceil(adv.mate.hp) + " / " + adv.mate.mh);
       if (p.dead) hpTxt.textContent = TR("пал · ждёт следующей комнаты");
     } else if (duel) {
@@ -1794,7 +1794,10 @@ Claudix.ready(function () {
     } else if (st.id === "online") {
       $("lpTitle").textContent = TR("Онлайн");
       lv.hidden = meter.hidden = true;
-      if (SESSION && SESSION.token) {
+      if (ADV_OFFLINE) {
+        $("lpDesc").textContent = "В артефакте нет сервера Claudix, поэтому онлайн-портал тут ведёт сразу в Halloween Adventure (тест: соло или с ботом).";
+        btn.disabled = false; btn.textContent = "Halloween Adventure"; btn.onclick = function () { setAdvOpen(true); };
+      } else if (SESSION && SESSION.token) {
         $("lpDesc").textContent = TR("Общая комната, где можно тусоваться с другими игроками.");
         btn.disabled = false; btn.textContent = TR("Войти онлайн"); btn.onclick = goOnline;
       } else {
@@ -2049,12 +2052,13 @@ Claudix.ready(function () {
   };
   var MON_IDS = ["zombie", "skel", "ghost", "butcher", "pking"];
   var ROOMS = [
-    { f: 1, R: 15, waves: [["zombie", "zombie", "zombie", "zombie", "skel"], ["zombie", "zombie", "zombie", "skel", "skel"]] },
-    { f: 1, R: 15, waves: [["zombie", "zombie", "zombie", "ghost", "ghost", "ghost"], ["butcher", "zombie", "zombie", "zombie"]] },
-    { f: 2, R: 16, waves: [["ghost", "ghost", "ghost", "ghost", "skel", "skel"], ["zombie", "zombie", "zombie", "zombie", "ghost", "ghost"]] },
-    { f: 2, R: 16, waves: [["butcher", "butcher", "skel", "skel", "skel"], ["ghost", "ghost", "ghost", "ghost", "zombie", "zombie", "zombie"]] },
-    { f: 3, R: 16, waves: [["butcher", "butcher", "ghost", "ghost", "ghost", "skel", "skel"], ["zombie", "zombie", "zombie", "zombie", "zombie", "skel", "skel", "skel"]] },
-    { f: 3, R: 19, boss: true, waves: [["pking"]] }
+    { intro: true, f: 1, R: 18, name: TR("Улица"), waves: [] },
+    { f: 1, R: 15, theme: "hall", name: TR("Холл"), waves: [["zombie", "zombie", "zombie", "zombie", "skel"], ["zombie", "zombie", "zombie", "skel", "skel"]] },
+    { f: 1, R: 15, theme: "dining", name: TR("Столовая"), waves: [["zombie", "zombie", "zombie", "ghost", "ghost", "ghost"], ["butcher", "zombie", "zombie", "zombie"]] },
+    { f: 2, R: 16, theme: "library", name: TR("Библиотека"), waves: [["ghost", "ghost", "ghost", "ghost", "skel", "skel"], ["zombie", "zombie", "zombie", "zombie", "ghost", "ghost"]] },
+    { f: 2, R: 16, theme: "bedroom", name: TR("Спальня"), waves: [["butcher", "butcher", "skel", "skel", "skel"], ["ghost", "ghost", "ghost", "ghost", "zombie", "zombie", "zombie"]] },
+    { f: 3, R: 16, theme: "attic", name: TR("Чердак"), waves: [["butcher", "butcher", "ghost", "ghost", "ghost", "skel", "skel"], ["zombie", "zombie", "zombie", "zombie", "zombie", "skel", "skel", "skel"]] },
+    { f: 3, R: 19, boss: true, theme: "ballroom", name: TR("Бальный зал"), waves: [["pking"]] }
   ];
   var hemiL = null;
   scene.children.forEach(function (c) { if (c.isHemisphereLight) hemiL = c; });
@@ -2093,71 +2097,162 @@ Claudix.ready(function () {
     }
     parent.add(g); return g;
   }
+  // ---------- поместье: двор и комнаты ----------
   function buildAdvRoom(i) {
     disposeAdvRoom();
-    var D = ROOMS[i], R = D.R, f = D.f;
+    var D = ROOMS[i], R = D.R;
     adv.R = R;
     advG = new THREE.Group(); scene.add(advG);
     var seed = 77 + i * 131;
     function sr() { seed = (seed * 1664525 + 1013904223) % 4294967296; return seed / 4294967296; }
-    var floorC = [0x26222e, 0x221f2c, 0x2c1c22][f - 1], wallC = [0x3b3446, 0x332e48, 0x4a2a32][f - 1];
-    var fg = new THREE.PlaneGeometry(R * 2 + 2, R * 2 + 2); advOwnGeo.push(fg);
-    var fl = new THREE.Mesh(fg, lam(D.boss ? 0x2a1418 : floorC)); fl.rotation.x = -Math.PI / 2; fl.position.y = 0.06; advG.add(fl);
-    var seam = lam(0x15121b);
-    for (var k = -R + 3; k < R; k += 3) { part(BOX, seam, 0.07, 0.02, R * 2, k, 0.075, 0, advG); part(BOX, seam, R * 2, 0.02, 0.07, 0, 0.075, k, advG); }
-    var wm = lam(wallC), cap = lam(0x1d1924), H = 3.4;
-    part(BOX, wm, R * 2 + 2, H, 1, 0, H / 2, R + 0.5, advG);
-    part(BOX, wm, 1, H, R * 2 + 2, -R - 0.5, H / 2, 0, advG);
-    part(BOX, wm, 1, H, R * 2 + 2, R + 0.5, H / 2, 0, advG);
-    var seg = R - 3 + 1;
-    part(BOX, wm, seg, H, 1, -3 - seg / 2, H / 2, -R - 0.5, advG);
-    part(BOX, wm, seg, H, 1, 3 + seg / 2, H / 2, -R - 0.5, advG);
-    for (var b = -R; b <= R; b += 2.5) {
-      part(BOX, cap, 0.9, 0.5, 1.1, b, H + 0.25, R + 0.5, advG);
-      part(BOX, cap, 1.1, 0.5, 0.9, -R - 0.5, H + 0.25, b, advG);
-      part(BOX, cap, 1.1, 0.5, 0.9, R + 0.5, H + 0.25, b, advG);
-    }
-    // ворота в следующую комнату (на север)
-    var gateM = lam(0x241f2c), last = i === ROOMS.length - 1;
-    [-3.4, 3.4].forEach(function (x) { part(BOX, gateM, 1, 5.4, 1.4, x, 2.7, -R - 0.5, advG); });
-    part(BOX, gateM, 7.8, 1, 1.4, 0, 5.6, -R - 0.5, advG);
-    var portalM = new THREE.MeshBasicMaterial({ color: 0xff7a1a, transparent: true, opacity: 0, side: THREE.DoubleSide, depthWrite: false });
-    var pg = new THREE.PlaneGeometry(5.8, 5); advOwnGeo.push(pg);
-    var portal = new THREE.Mesh(pg, portalM); portal.position.set(0, 2.6, -R - 0.4); advG.add(portal);
-    var barM = lam(0x5a5866), bars = [];
-    if (!last) for (var bx = -2.4; bx <= 2.41; bx += 1.2) bars.push(part(BOX, barM, 0.18, 5, 0.18, bx, 2.5, -R - 0.5, advG));
+    var flameM = new THREE.MeshBasicMaterial({ color: 0xffa23a }), torches = [];
+    function sconce(x, y, z) { part(BOX, lam(0x2a2430), 0.22, 0.6, 0.22, x, y - 0.4, z, advG); torches.push(part(CONE, flameM, 0.36, 0.6, 0.36, x, y + 0.15, z, advG)); }
+    function plane(w, h, mat, x, y, z, rx, ry) { var g = new THREE.PlaneGeometry(w, h); advOwnGeo.push(g); var m = new THREE.Mesh(g, mat); m.position.set(x, y, z); m.rotation.set(rx || 0, ry || 0, 0); advG.add(m); return m; }
+    var portalM = new THREE.MeshBasicMaterial({ color: 0xff8a2a, transparent: true, opacity: 0, side: THREE.DoubleSide, depthWrite: false });
     var padM = new THREE.MeshBasicMaterial({ color: 0xff7a1a, transparent: true, opacity: 0, depthWrite: false });
     var pad = new THREE.Mesh(DISC, padM); pad.rotation.x = -Math.PI / 2; pad.scale.setScalar(2.8); pad.position.set(0, 0.09, -R + 1.8); advG.add(pad);
-    // факелы
-    var torches = [], poleM = lam(0x2a2430), flameM = new THREE.MeshBasicMaterial({ color: 0xffa23a });
-    var tpos = [[-R + 0.2, -R / 2], [-R + 0.2, R / 2], [R - 0.2, -R / 2], [R - 0.2, R / 2], [-6.5, -R + 0.2], [6.5, -R + 0.2]];
-    tpos.forEach(function (p) {
-      part(BOX, poleM, 0.25, 0.9, 0.25, p[0], 2.2, p[1], advG);
-      var fl2 = part(CONE, flameM, 0.4, 0.75, 0.4, p[0], 2.95, p[1], advG); torches.push(fl2);
-    });
-    // тыквы, кости, свечи
-    for (var n = 0; n < 8; n++) {
-      var side = Math.floor(sr() * 3), u = (sr() * 2 - 1) * (R - 2), e = R - 1.3, x = side === 0 ? -e : side === 1 ? e : u, z = side === 2 ? e : u;
-      if (Math.abs(x) < 4.5 && z < -R + 4) continue;
-      makePumpkin(x, z, 0.8 + sr() * 0.9, sr() < 0.6, advG);
+    var doors = [];
+    var last = i === ROOMS.length - 1;
+
+    if (D.intro) {
+      // улица у поместья: трава, дорожка, ограда, могилы, мёртвые деревья, а впереди трёхэтажный дом
+      plane(R * 2 + 30, R * 2 + 30, lam(0x1c2619), 0, 0.06, 6, -Math.PI / 2);
+      plane(5, R * 2, lam(0x3a342e), 0, 0.075, 0, -Math.PI / 2);
+      var ironM = lam(0x15141a);
+      for (var fx = -R; fx <= R; fx += 1.5) part(BOX, ironM, 0.14, 1.8, 0.14, fx, 0.9, R + 0.4, advG);
+      for (var fz = -R; fz <= R; fz += 1.5) { part(BOX, ironM, 0.14, 1.8, 0.14, -R - 0.4, 0.9, fz, advG); part(BOX, ironM, 0.14, 1.8, 0.14, R + 0.4, 0.9, fz, advG); }
+      [[0, R + 0.4, R * 2 + 1, 0.1], [-R - 0.4, 0, 0.1, R * 2 + 1], [R + 0.4, 0, 0.1, R * 2 + 1]].forEach(function (a) { part(BOX, ironM, a[2], 0.12, a[3], a[0], 1.55, a[1], advG); part(BOX, ironM, a[2], 0.12, a[3], a[0], 0.5, a[1], advG); });
+      var graveM = lam(0x5d5a66), dirtM = lam(0x2a221c);
+      for (var g2 = 0; g2 < 12; g2++) {
+        var gx = (sr() < 0.5 ? -1 : 1) * (4.5 + sr() * (R - 6)), gz = -R + 6 + sr() * (R * 2 - 9);
+        part(BOX, graveM, 1.1, 1.3 + sr() * 0.5, 0.3, gx, 0.7, gz, advG); part(BOX, graveM, 1.1, 0.3, 0.3, gx, 1.45, gz, advG).scale.x = 0.8;
+        part(BOX, dirtM, 1.2, 0.12, 2, gx, 0.1, gz + 1.2, advG);
+      }
+      var barkM = lam(0x2a1f1a);
+      [[-R + 3, -R + 4], [R - 3, -R + 5], [-R + 2.5, 4], [R - 2.5, 8], [-8, R - 3], [9, R - 4]].forEach(function (t) {
+        part(BOX, barkM, 0.6, 5, 0.6, t[0], 2.5, t[1], advG);
+        [[1.1, 3.6, 0.7], [-1, 4.2, -0.6], [0.6, 4.9, -0.9]].forEach(function (b) { var br = part(BOX, barkM, 1.9, 0.22, 0.22, t[0] + b[0] * 0.6, b[1], t[1], advG); br.rotation.z = b[2]; });
+      });
+      var postM = lam(0x24222a), lampM = new THREE.MeshBasicMaterial({ color: 0xbfd6ff });
+      [[-3.5, 4], [3.5, 4], [-3.5, -8], [3.5, -8]].forEach(function (l) { part(BOX, postM, 0.25, 4, 0.25, l[0], 2, l[1], advG); part(SPH, lampM, 0.6, 0.6, 0.6, l[0], 4.2, l[1], advG); });
+      for (var pk = 0; pk < 7; pk++) makePumpkin((sr() < 0.5 ? -1 : 1) * (3.2 + sr() * 2), -R + 4 + sr() * (R * 1.6), 0.7 + sr() * 0.6, sr() < 0.7, advG);
+      // само поместье
+      var hz = -R - 7, wallM = lam(0x2a2433), trimM = lam(0x17131d), roofM = lam(0x1d1824), litM = new THREE.MeshBasicMaterial({ color: 0xffb347 }), greenM = new THREE.MeshBasicMaterial({ color: 0x7dff9a }), darkM = lam(0x0e1018);
+      part(BOX, wallM, 36, 13, 12, 0, 6.5, hz, advG);
+      part(BOX, trimM, 36.6, 0.4, 12.6, 0, 4.4, hz, advG); part(BOX, trimM, 36.6, 0.4, 12.6, 0, 8.7, hz, advG); part(BOX, trimM, 37, 0.6, 13, 0, 13, hz, advG);
+      var roof = part(CONE, roofM, 38, 6, 16, 0, 16.3, hz, advG); roof.rotation.y = Math.PI / 4;
+      part(BOX, wallM, 7, 20, 7, 0, 10, hz + 3.6, advG);
+      var tr = part(CONE, roofM, 9, 7, 9, 0, 23.5, hz + 3.6, advG); tr.rotation.y = Math.PI / 6;
+      for (var row = 0; row < 3; row++) for (var col = -3; col <= 3; col++) {
+        if (row === 0 && col === 0) continue;
+        var wx = col * 4.6, wy = 2.4 + row * 4.3, roll = sr(), wmM = roll < 0.25 ? litM : roll < 0.32 ? greenM : darkM;
+        part(BOX, trimM, 2.2, 2.8, 0.2, wx, wy, hz + 6.05, advG);
+        part(BOX, wmM, 1.7, 2.3, 0.2, wx, wy, hz + 6.12, advG);
+        part(BOX, trimM, 0.12, 2.3, 0.22, wx, wy, hz + 6.16, advG);
+      }
+      [0, 1, 2, 3].forEach(function (k) { part(BOX, k === 3 ? litM : darkM, 1.6, 2.2, 0.2, 0, 4 + k * 4.2, hz + 7.15, advG); });
+      // крыльцо и дверь
+      part(BOX, lam(0x3a3240), 9, 0.5, 3, 0, 0.25, -R + 0.2, advG);
+      [-3.4, 3.4].forEach(function (x) { part(BOX, trimM, 0.6, 5, 0.6, x, 2.5, -R + 0.8, advG); });
+      part(BOX, trimM, 8, 0.6, 2, 0, 5.2, -R, advG);
+      sconce(-2.6, 3.4, -R + 0.9); sconce(2.6, 3.4, -R + 0.9);
+      var moon = new THREE.Mesh(SPH, new THREE.MeshBasicMaterial({ color: 0xeef2ff, fog: false })); moon.scale.setScalar(6); moon.position.set(-14, 26, hz - 6); advG.add(moon);
+    } else {
+      // комната внутри дома: деревянный пол, обои, панели, окна с луной, картины
+      var TH = { hall: [0x3b2d4a, 0x2a1d1a], dining: [0x4a2630, 0x2e1f17], library: [0x24382f, 0x2c2117], bedroom: [0x2e2a4f, 0x2b1e1c], attic: [0x3a3128, 0x2a2016], ballroom: [0x4a1f2c, 0x241615] }[D.theme];
+      var wallC = TH[0], woodC = TH[1];
+      plane(R * 2 + 2, R * 2 + 2, lam(woodC), 0, 0.06, 0, -Math.PI / 2);
+      var seam = lam(0x150f0b);
+      for (var k = -R + 1.2; k < R; k += 1.2) part(BOX, seam, 0.05, 0.02, R * 2, k, 0.075, 0, advG);
+      var wm = lam(wallC), pnl = lam(0x1d1416), H = 4;
+      part(BOX, wm, R * 2 + 2, H, 1, 0, H / 2, R + 0.5, advG);
+      part(BOX, wm, 1, H, R * 2 + 2, -R - 0.5, H / 2, 0, advG);
+      part(BOX, wm, 1, H, R * 2 + 2, R + 0.5, H / 2, 0, advG);
+      var seg = R - 2.6 + 1;
+      part(BOX, wm, seg, H, 1, -2.6 - seg / 2, H / 2, -R - 0.5, advG);
+      part(BOX, wm, seg, H, 1, 2.6 + seg / 2, H / 2, -R - 0.5, advG);
+      // панели снизу
+      part(BOX, pnl, R * 2, 1.1, 0.12, 0, 0.55, R - 0.05, advG);
+      part(BOX, pnl, 0.12, 1.1, R * 2, -R + 0.05, 0.55, 0, advG);
+      part(BOX, pnl, 0.12, 1.1, R * 2, R - 0.05, 0.55, 0, advG);
+      part(BOX, pnl, R - 2.6, 1.1, 0.12, -R / 2 - 1.3, 0.55, -R + 0.05, advG); part(BOX, pnl, R - 2.6, 1.1, 0.12, R / 2 + 1.3, 0.55, -R + 0.05, advG);
+      // окна с лунным светом на боковых стенах и картины
+      var glassM = new THREE.MeshBasicMaterial({ color: 0x5f7bb3 }), frameM = lam(0x1a1210);
+      [-R / 2, R / 2].forEach(function (z) {
+        [-1, 1].forEach(function (s) {
+          part(BOX, frameM, 0.15, 2.4, 1.9, s * (R - 0.02), 2.4, z, advG);
+          part(BOX, glassM, 0.16, 2.1, 1.6, s * (R - 0.04), 2.4, z, advG);
+          part(BOX, frameM, 0.17, 2.1, 0.1, s * (R - 0.05), 2.4, z, advG);
+        });
+      });
+      var artC = [0x6a3a2a, 0x2a4a3a, 0x3a2a5a, 0x5a4a2a];
+      [-R * 0.6, 0, R * 0.6].forEach(function (x, n) {
+        part(BOX, lam(0x8a6a2a), 1.8, 1.4, 0.12, x, 2.6, R - 0.04, advG);
+        part(BOX, lam(artC[n % 4]), 1.5, 1.1, 0.13, x, 2.6, R - 0.06, advG);
+      });
+      sconce(-4.5, 3, -R + 0.25); sconce(4.5, 3, -R + 0.25); sconce(-R + 0.25, 3, 0); sconce(R - 0.25, 3, 0);
+      // двустворчатая дверь на север (или лестница)
+      var doorM = lam(0x3a2414);
+      [-1.25, 1.25].forEach(function (x) { doors.push(part(BOX, doorM, 2.4, 3.8, 0.3, x, 1.9, -R - 0.45, advG)); });
+      part(BOX, frameM, 6, 0.5, 1.2, 0, 4.1, -R - 0.5, advG);
+      // обстановка по комнате (вдоль стен, чтобы не мешать драке)
+      var t = D.theme;
+      if (t === "hall") {
+        part(BOX, lam(0x6a1a22), 3.2, 0.03, R * 2 - 2, 0, 0.08, 0, advG);
+        [[-R + 1.2, -R + 1.2], [R - 1.2, -R + 1.2], [-R + 1.2, R - 1.2], [R - 1.2, R - 1.2]].forEach(function (a) {
+          var steel = lam(0x8d94a3); part(BOX, steel, 0.7, 1.4, 0.5, a[0], 1.3, a[1], advG); part(BOX, steel, 0.5, 0.5, 0.5, a[0], 2.3, a[1], advG); part(BOX, steel, 0.25, 1, 0.25, a[0], 0.5, a[1], advG);
+        });
+      } else if (t === "dining") {
+        part(BOX, lam(0x4a2c1a), 2.2, 0.2, R * 1.2, -R + 2, 1.1, 0, advG);
+        for (var c = -R * 0.5; c <= R * 0.5; c += 2.5) { part(BOX, lam(0xefe6d0), 0.15, 0.5, 0.15, -R + 2, 1.45, c, advG); part(SPH, flameM, 0.14, 0.2, 0.14, -R + 2, 1.8, c, advG); }
+        part(BOX, lam(0x4a2c1a), 2.2, 0.2, R * 1.2, R - 2, 1.1, 0, advG);
+      } else if (t === "library") {
+        var shelfM = lam(0x3a2414), bookC = [0x7a2a2a, 0x2a4a6a, 0x5a6a2a, 0x6a4a1a, 0x4a2a5a];
+        [[-R + 0.7, 1], [R - 0.7, -1]].forEach(function (sh) {
+          for (var sz = -R + 2; sz <= R - 2; sz += 3.4) {
+            if (Math.abs(sz - (-R / 2)) < 1.3 || Math.abs(sz - R / 2) < 1.3) continue;
+            part(BOX, shelfM, 0.9, 3.4, 2.8, sh[0], 1.7, sz, advG);
+            for (var bl = 0; bl < 3; bl++) part(BOX, lam(bookC[(bl + Math.round(sz + 40)) % 5]), 0.92, 0.5, 2.5, sh[0] + sh[1] * 0.02, 0.8 + bl * 1, sz, advG);
+          }
+        });
+      } else if (t === "bedroom") {
+        part(BOX, lam(0x3a2414), 4, 0.7, 5, R - 3, 0.5, R - 3.5, advG); part(BOX, lam(0x6a2a3a), 3.8, 0.3, 3.8, R - 3, 0.95, R - 3.9, advG); part(BOX, lam(0xe0dcd0), 3.4, 0.25, 1, R - 3, 1.05, R - 1.6, advG);
+        part(BOX, lam(0x2e1d12), 2.4, 3.6, 1.2, -R + 1.5, 1.8, R - 2.5, advG);
+        part(BOX, lam(0x9fb3c8), 1.2, 2, 0.1, -R + 0.1, 2.2, -R / 3, advG).rotation.y = Math.PI / 2;
+      } else if (t === "attic") {
+        var beamM = lam(0x2a1d12);
+        for (var bz = -R + 3; bz < R; bz += 5) part(BOX, beamM, R * 2, 0.4, 0.4, 0, 3.9, bz, advG);
+        var crateM = lam(0x5a4228);
+        [[-R + 1.5, R - 2], [-R + 2.6, R - 1.6], [R - 1.6, -R + 4], [R - 1.8, R - 6]].forEach(function (a) { part(BOX, crateM, 1.6, 1.4, 1.6, a[0], 0.7, a[1], advG); });
+        var webM = new THREE.MeshBasicMaterial({ color: 0xdfe3ea, transparent: true, opacity: 0.25, side: THREE.DoubleSide, depthWrite: false });
+        [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(function (s) { plane(3, 3, webM, s[0] * (R - 1), 3.2, s[1] * (R - 1), 0, s[0] * s[1] > 0 ? Math.PI / 4 : -Math.PI / 4); });
+      } else if (t === "ballroom") {
+        var rugM = new THREE.MeshBasicMaterial({ color: 0x5a1622, transparent: true, opacity: 0.8, depthWrite: false });
+        var rug = new THREE.Mesh(DISC, rugM); rug.rotation.x = -Math.PI / 2; rug.position.set(0, 0.08, -2); rug.scale.setScalar(9); advG.add(rug);
+        var runeM = new THREE.MeshBasicMaterial({ color: 0xff3a2a, transparent: true, opacity: 0.5, side: THREE.DoubleSide, depthWrite: false });
+        var rg = new THREE.RingGeometry(7.2, 7.6, 64); advOwnGeo.push(rg);
+        var rune = new THREE.Mesh(rg, runeM); rune.rotation.x = -Math.PI / 2; rune.position.set(0, 0.09, -2); advG.add(rune);
+        var chM = lam(0xc9a24a), cg = new THREE.TorusGeometry(3, 0.12, 6, 40); advOwnGeo.push(cg);
+        var ch = new THREE.Mesh(cg, chM); ch.rotation.x = -Math.PI / 2; ch.position.set(0, 6.5, -2); advG.add(ch);
+        for (var cc = 0; cc < 10; cc++) { var a2 = cc / 10 * Math.PI * 2; part(SPH, flameM, 0.2, 0.32, 0.2, Math.cos(a2) * 3, 6.8, -2 + Math.sin(a2) * 3, advG); }
+        makePumpkin(-R + 2, -R + 2, 2.2, true, advG); makePumpkin(R - 2, -R + 2, 2.2, true, advG);
+      }
+      for (var n2 = 0; n2 < 5; n2++) {
+        var side = Math.floor(sr() * 3), u = (sr() * 2 - 1) * (R - 3), e2 = R - 1.4, x = side === 0 ? -e2 : side === 1 ? e2 : u, z = side === 2 ? e2 : u;
+        if (Math.abs(x) < 4.5 && z < -R + 4) continue;
+        makePumpkin(x, z, 0.6 + sr() * 0.6, sr() < 0.6, advG);
+      }
     }
-    var boneM = lam(0xd8d2c2);
-    for (var q = 0; q < 6; q++) { var bb = part(BOX, boneM, 0.9, 0.12, 0.14, (sr() * 2 - 1) * (R - 3), 0.12, (sr() * 2 - 1) * (R - 3), advG); bb.rotation.y = sr() * 3; }
-    if (D.boss) {
-      var runeM = new THREE.MeshBasicMaterial({ color: 0xff3a2a, transparent: true, opacity: 0.45, side: THREE.DoubleSide, depthWrite: false });
-      var rg = new THREE.RingGeometry(6.6, 7, 64); advOwnGeo.push(rg);
-      var rune = new THREE.Mesh(rg, runeM); rune.rotation.x = -Math.PI / 2; rune.position.set(0, 0.08, -2); advG.add(rune);
-      var candM = lam(0xefe6d0), wick = new THREE.MeshBasicMaterial({ color: 0xffc04a });
-      for (var c = 0; c < 10; c++) { var a = c / 10 * Math.PI * 2, cx = Math.cos(a) * 6.8, cz = -2 + Math.sin(a) * 6.8; part(BOX, candM, 0.22, 0.6, 0.22, cx, 0.3, cz, advG); part(SPH, wick, 0.16, 0.24, 0.16, cx, 0.72, cz, advG); }
-      makePumpkin(-R + 2, -R + 2, 2.2, true, advG); makePumpkin(R - 2, -R + 2, 2.2, true, advG);
-    }
-    adv.gate = { portalM: portalM, bars: bars, padM: padM, open: false, torches: torches, last: last };
+    var pg = new THREE.PlaneGeometry(D.intro ? 5.4 : 4.8, 3.8); advOwnGeo.push(pg);
+    var portal = new THREE.Mesh(pg, portalM); portal.position.set(0, 1.9, -R - 0.25); advG.add(portal);
+    if (D.intro) { var dM = lam(0x3a2414); [-1.3, 1.3].forEach(function (x) { doors.push(part(BOX, dM, 2.5, 4, 0.3, x, 2, -R - 0.2, advG)); }); }
+    adv.gate = { portalM: portalM, bars: last ? [] : doors, padM: padM, open: false, torches: torches, last: last };
   }
   function openGate() {
     if (!adv.gate || adv.gate.open) return;
     adv.gate.open = true;
     adv.gate.bars.forEach(function (b) { b.visible = false; });
-    burst(0, 2.5, -adv.R + 0.5, 0xff7a1a, 18, 5, 0.8, 0.25, 1);
+    burst(0, 2, -adv.R + 0.5, 0xff7a1a, 18, 5, 0.8, 0.25, 1);
   }
   function tickRoom(dt) {
     var g = adv.gate; if (!g) return;
@@ -2423,13 +2518,14 @@ Claudix.ready(function () {
     while (projs.length) removeProj(projs.length - 1);
     enemies.forEach(function (e) { if (!e.dead) { e.dead = true; disposeChar(e.c); } });
     enemies.length = 0;
-    var newFloor = !adv.started || ROOMS[i].f !== adv.floor;
+    var D = ROOMS[i], newFloor = i === 1 || (i > 1 && D.f !== ROOMS[i - 1].f);
     adv.started = true;
-    adv.room = i; adv.floor = ROOMS[i].f; adv.waveI = -1; adv.queue = []; adv.state = "fight"; adv.spawnT = 1.4;
+    adv.room = i; adv.floor = D.f; adv.waveI = -1; adv.queue = []; adv.state = "fight"; adv.spawnT = 1.4;
     buildAdvRoom(i); advPlaceStart();
-    if (ROOMS[i].boss) banner(TR("БОСС"), TR("Тыквенный король ждёт"));
-    else banner(newFloor ? TR("Этаж ") + adv.floor : TR("Комната ") + (i % 2 + 1), newFloor ? TR("Комната 1 из 2") : TR("Дальше только страшнее"));
-    if (adv.host) { advEvent({ k: "room", i: i }); advNextWave(); }
+    if (D.intro) { adv.state = "gate"; openGate(); banner(TR("Поместье Тыквенного короля"), TR("Зайди внутрь… если не страшно")); }
+    else if (D.boss) banner(TR("БОСС"), TR("Бальный зал · Тыквенный король ждёт"));
+    else banner(D.name, newFloor ? TR("Этаж ") + D.f + TR(" · держитесь вместе") : TR("Этаж ") + D.f + TR(" · дальше только страшнее"));
+    if (adv.host) { advEvent({ k: "room", i: i }); if (!D.intro) advNextWave(); }
   }
   function advNextWave() { adv.waveI++; adv.queue = ROOMS[adv.room].waves[adv.waveI].slice(); adv.spawnT = adv.waveI ? 0.8 : 1.4; }
   function advSpawnPoint(type) {
@@ -2448,7 +2544,7 @@ Claudix.ready(function () {
     return best;
   }
   function advRoomClear() {
-    var last = adv.room === ROOMS.length - 1, bonus = last ? 2500 : 120 + 80 * adv.room;
+    var last = adv.room === ROOMS.length - 1, bonus = last ? 2500 : 120 + 80 * (adv.room - 1);
     advEvent({ k: "clear", b: bonus, w: last ? 1 : 0 });
     advOnClear(bonus, last);
   }
@@ -2465,7 +2561,7 @@ Claudix.ready(function () {
       setTimeout(function () { if (adv && !adv.over) advResult(true); }, 2600);
     } else {
       openGate();
-      banner(TR("Комната зачищена"), "+" + bonus + TR(" · иди в ворота наверху"));
+      banner(TR("Комната зачищена"), "+" + bonus + TR(" · дверь наверху открыта"));
     }
   }
   function advMateLeft() {
@@ -2568,7 +2664,7 @@ Claudix.ready(function () {
     mode = "dead"; deadT = 1e9; input.btnAtk = false; input.keys = {}; joyEnd();
     $("pauseOv").hidden = true;
     $("resTitle").textContent = win ? TR("Победа! Тыквенный король повержен") : TR("Подземелье оказалось сильнее");
-    var rows = [[TR("Комнат пройдено"), adv.cleared + " / " + ROOMS.length], [TR("Дошли до этажа"), String(adv.floor)], [TR("Заработано монет"), fmt(adv.earn)], [TR("Всего монет"), fmt(save.money)]];
+    var rows = [[TR("Комнат пройдено"), adv.cleared + " / " + (ROOMS.length - 1)], [TR("Дошли до этажа"), String(adv.floor)], [TR("Заработано монет"), fmt(adv.earn)], [TR("Всего монет"), fmt(save.money)]];
     $("resultOv").querySelectorAll("li span").forEach(function (s, i) { s.textContent = rows[i][0]; });
     RES_IDS.forEach(function (id, i) { $(id).textContent = rows[i][1]; });
     $("resultOv").querySelector("ul").style.display = "";
@@ -2634,8 +2730,8 @@ Claudix.ready(function () {
 
   // станция в лобби: тёмная арка с тыквами
   (function buildAdvStation() {
-    var where = Date.now() < ADV_UNTIL ? (ADV_OFFLINE ? "solo" : "online") : "never";
-    var at = ADV_OFFLINE ? { x: 0, z: 18 } : { x: -14, z: 12 };
+    var where = Date.now() < ADV_UNTIL && !ADV_OFFLINE ? "online" : "never";
+    var at = { x: -14, z: 12 };
     var st = lobbyStation({ id: "adv", where: where, x: at.x, z: at.z, r: 3.8, solid: 1.6, color: 0xff7a1a, label: TR("Хеллоуин"), labelY: 7 });
     var stone = lam(0x2e2838);
     [-2.2, 2.2].forEach(function (x) { part(BOX, stone, 0.9, 4.6, 0.9, x, 2.3, 0, st.group); });
