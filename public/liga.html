@@ -1930,6 +1930,7 @@ Claudix.ready(function () {
       st.ringM.opacity = on ? 1 : 0.55 + Math.sin(tAll * 3) * 0.2;
       st.padM.opacity = on ? 0.4 : 0.2;
     });
+    if (lobby.decorTick) lobby.decorTick(tAll);
     if (lobby.online) updateOnline(dt);
   }
 
@@ -2785,6 +2786,51 @@ Claudix.ready(function () {
   });
   $("aClose").addEventListener("click", function () { setAdvOpen(false); });
 
+  // хеллоуинские украшения лобби (своё и онлайн): тыквы, гирлянды, призраки, могилы, паутина
+  (function buildLobbyDecor() {
+    if (Date.now() >= ADV_UNTIL) return;
+    var g = new THREE.Group(); lobby.group.add(g);
+    var seed = 31;
+    function sr() { seed = (seed * 1664525 + 1013904223) % 4294967296; return seed / 4294967296; }
+    var spots = [[-24, -24], [24, -24], [-24, 24], [24, 24], [-6, -26], [6, -26], [-30, 4], [30, 4], [-30, -14], [30, -14], [-8, 28], [8, 28], [-22, 0], [22, 0], [-8, -11], [8, -11], [-20, 20], [20, 20]];
+    spots.forEach(function (p) { makePumpkin(p[0] + (sr() - 0.5) * 2, p[1] + (sr() - 0.5) * 2, 0.9 + sr() * 0.9, sr() < 0.75, g); });
+    makePumpkin(-3.2, -18 + 3.5, 1.4, true, g); makePumpkin(3.2, -18 + 3.5, 1.4, true, g);
+    // могилы по углам
+    var stone = lam(0x6a6874), dirt = lam(0x2a221c);
+    [[-30, -30], [30, -30], [-30, 30], [30, 30]].forEach(function (c) {
+      for (var k = 0; k < 4; k++) {
+        var x = c[0] - Math.sign(c[0]) * (k % 2) * 2.6, z = c[1] - Math.sign(c[1]) * Math.floor(k / 2) * 3;
+        part(BOX, stone, 1.2, 1.5 + sr() * 0.5, 0.3, x, 0.8, z, g); part(BOX, dirt, 1.3, 0.1, 1.8, x, 0.06, z + 1.1, g);
+      }
+    });
+    // гирлянды из оранжевых и фиолетовых огоньков на столбах
+    var poleM = lam(0x2a2430), bulbO = new THREE.MeshBasicMaterial({ color: 0xff8a2a }), bulbP = new THREE.MeshBasicMaterial({ color: 0xa35bff }), bulbs = [];
+    [[-34, -34, 34, -34], [-34, 34, 34, 34], [-34, -34, -34, 34], [34, -34, 34, 34]].forEach(function (L) {
+      for (var t = 0; t <= 1.0001; t += 0.25) part(BOX, poleM, 0.25, 4.4, 0.25, L[0] + (L[2] - L[0]) * t, 2.2, L[1] + (L[3] - L[1]) * t, g);
+      for (var u = 0; u <= 1.0001; u += 1 / 40) {
+        var sag = Math.sin((u * 4 % 1) * Math.PI) * 0.9;
+        bulbs.push(part(SPH, (Math.round(u * 40)) % 2 ? bulbO : bulbP, 0.28, 0.28, 0.28, L[0] + (L[2] - L[0]) * u, 4.3 - sag, L[1] + (L[3] - L[1]) * u, g));
+      }
+    });
+    // призраки, которые парят и кружат
+    var ghM = new THREE.MeshBasicMaterial({ color: 0xeef2ff, transparent: true, opacity: 0.6, depthWrite: false }), eyeM = new THREE.MeshBasicMaterial({ color: 0x111111 }), ghosts = [];
+    [[-18, -14], [18, -14], [0, 24], [-26, 12], [26, 12]].forEach(function (p, i) {
+      var gh = new THREE.Group(); gh.position.set(p[0], 5, p[1]); g.add(gh);
+      part(CONE, ghM, 1.6, 2.4, 1.6, 0, -0.4, 0, gh).rotation.x = Math.PI;
+      part(SPH, ghM, 1.2, 1.2, 1.2, 0, 1, 0, gh);
+      part(BOX, eyeM, 0.16, 0.24, 0.05, -0.2, 1.1, 0.57, gh); part(BOX, eyeM, 0.16, 0.24, 0.05, 0.2, 1.1, 0.57, gh);
+      ghosts.push({ g: gh, x: p[0], z: p[1], ph: i * 1.3 });
+    });
+    // паутина в углах площади
+    var webM = new THREE.MeshBasicMaterial({ color: 0xdfe3ea, transparent: true, opacity: 0.3, side: THREE.DoubleSide, depthWrite: false });
+    [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(function (s2) {
+      var w = new THREE.Mesh(new THREE.PlaneGeometry(4, 4), webM); w.position.set(s2[0] * 34, 3, s2[1] * 34); w.rotation.y = s2[0] * s2[1] > 0 ? -Math.PI / 4 : Math.PI / 4; g.add(w);
+    });
+    lobby.decorTick = function (t) {
+      ghosts.forEach(function (o) { o.g.position.set(o.x + Math.sin(t * 0.5 + o.ph) * 2.5, 5 + Math.sin(t * 1.7 + o.ph) * 0.5, o.z + Math.cos(t * 0.5 + o.ph) * 2.5); o.g.rotation.y = t * 0.5 + o.ph; });
+      bulbs.forEach(function (b, i) { b.visible = ((i + Math.floor(t * 3)) % 5) !== 0; });
+    };
+  })();
   // артефакт: онлайн-комната без сервера, чтобы проверить путь «портал Онлайн → станция Хеллоуин»
   function fakeOnline() {
     if (mode !== "lobby" || lobby.online) return;
