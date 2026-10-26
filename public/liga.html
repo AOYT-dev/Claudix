@@ -392,7 +392,7 @@ Claudix.ready(function () {
 
   var ARENA = 36;
   // прокачка в лобби: сила множит весь урон героя, радиус множит дальность ударов, взрывов и способностей
-  var PWR_MAX = 25, RAD_MAX = 20;
+  var PWR_MAX = 25, RAD_MAX = 20, SPD_MAX = 15;
   var CAM_Y = 17, CAM_Z = 13;
   var BAR_PITCH = -Math.atan2(CAM_Y, CAM_Z);
 
@@ -439,11 +439,13 @@ Claudix.ready(function () {
         save.rad = Math.min(RAD_MAX, Math.max(0, Math.floor(+d.rad || 0)));
         save.pk = Math.max(0, Math.floor(+d.pk || 0));
         save.sp = Math.max(0, Math.min(999, Math.floor(+d.sp || 0)));
+        save.spd = Math.min(SPD_MAX, Math.max(0, Math.floor(+d.spd || 0)));
       }
     } catch (e) { /* хранилище недоступно */ }
   }
   function persist() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); } catch (e) { /* ничего */ } if (SESSION) Claudix.push("liga"); }
   function pwrMul() { return duel ? 1 : 1 + 0.1 * save.pwr; }
+  function spdMul() { return duel ? 1 : 1 + 0.03 * (save.spd || 0); }
   function rm() { return duel ? 1 : 1 + 0.04 * save.rad; }
   function upCost(lvl) { return Math.round(100 * Math.pow(1.35, lvl) / 10) * 10; }
   function fmt(n) { return Math.floor(n).toLocaleString(CLX.LOCALE); }
@@ -1318,7 +1320,7 @@ Claudix.ready(function () {
       speedNow = 10 * rm() / d.dur;
       if (d.t >= d.dur) p.dash = null;
     } else {
-      var spd = def.speed * (p.invis > 0 ? 1.35 : 1);
+      var spd = def.speed * spdMul() * (p.invis > 0 ? 1.35 : 1);
       p.pos.x += mv.x * spd * dt; p.pos.z += mv.z * spd * dt; clampPos(p.pos);
       speedNow = spd * moving;
       if (moving > 0.15) p.face = turn(p.face, Math.atan2(mv.x, mv.z), dt * 14);
@@ -1498,6 +1500,15 @@ Claudix.ready(function () {
     var pulseM = new THREE.MeshBasicMaterial({ color: 0x35e0ff, transparent: true, opacity: 0.6, side: THREE.DoubleSide, depthWrite: false });
     var pulse = new THREE.Mesh(RING, pulseM); pulse.rotation.x = -Math.PI / 2; pulse.position.y = 0.1; rd.group.add(pulse);
     rd.tick = function (t) { dish.rotation.y = t * 1.6; var k = (t * 0.5) % 1; pulse.scale.setScalar(Math.max(0.01, 3.5 * k)); pulseM.opacity = 0.6 * (1 - k); };
+    // беговая дорожка скорости
+    var sd = lobbyStation({ id: "speed", where: "solo", x: 0, z: 15, r: 3.4, solid: 1.6, color: 0x7dff6a, label: TR("Скорость") });
+    part(BOX, dark, 2.4, 0.5, 4, 0, 0.25, 0, sd.group);
+    var belt = part(BOX, lam(0x1a1d26), 2, 0.1, 3.6, 0, 0.55, 0, sd.group);
+    [-1.1, 1.1].forEach(function (x) { part(BOX, metal, 0.15, 1.6, 0.15, x, 1.3, -1.6, sd.group); });
+    part(BOX, metal, 2.4, 0.15, 0.5, 0, 2.1, -1.6, sd.group);
+    var stripes = []; for (var si = 0; si < 4; si++) stripes.push(part(BOX, new THREE.MeshBasicMaterial({ color: 0x7dff6a }), 1.8, 0.02, 0.15, 0, 0.62, -1.5 + si * 1, sd.group));
+    sd.tick = function (t) { stripes.forEach(function (m, k) { m.position.z = -1.6 + ((t * 2.5 + k) % 4) * 0.8; }); };
+    void belt;
     // витрина героев
     var hr = lobbyStation({ id: "heroes", x: -14, z: 12, r: 3.6, solid: 1.9, color: 0xb48cff, label: TR("Герои") });
     part(BOX, dark, 3.2, 0.6, 3.2, 0, 0.3, 0, hr.group);
@@ -1804,12 +1815,13 @@ Claudix.ready(function () {
     var btn = $("lpBtn"), lv = panel.querySelector(".lv"), meter = panel.querySelector(".meter");
     $("lpBtn2").hidden = true; $("lpBtn2").onclick = null;
     lv.hidden = meter.hidden = false;
-    if (st.id === "power" || st.id === "radius") {
-      var pow = st.id === "power", lvl = pow ? save.pwr : save.rad, max = pow ? PWR_MAX : RAD_MAX;
-      var cur = pow ? pwrMul() : rm(), nxt = pow ? 1 + 0.1 * (lvl + 1) : 1 + 0.04 * (lvl + 1), cost = upCost(lvl);
-      $("lpTitle").textContent = pow ? TR("Сила") : TR("Радиус");
-      $("lpDesc").textContent = pow ? TR("Весь урон героя растёт: удары, способности и огонь.") : TR("Удары, взрывы и способности достают дальше.");
-      lvlRow(TR("Уровень "), lvl, max, (pow ? TR("Урон ") : TR("Дальность ")) + mulTxt(cur) + (lvl < max ? " → " + mulTxt(nxt) : ""));
+    if (st.id === "power" || st.id === "radius" || st.id === "speed") {
+      var pow = st.id === "power", isSp = st.id === "speed";
+      var lvl = pow ? save.pwr : isSp ? (save.spd || 0) : save.rad, max = pow ? PWR_MAX : isSp ? SPD_MAX : RAD_MAX;
+      var cur = pow ? pwrMul() : isSp ? spdMul() : rm(), nxt = pow ? 1 + 0.1 * (lvl + 1) : isSp ? 1 + 0.03 * (lvl + 1) : 1 + 0.04 * (lvl + 1), cost = upCost(lvl);
+      $("lpTitle").textContent = pow ? TR("Сила") : isSp ? TR("Скорость") : TR("Радиус");
+      $("lpDesc").textContent = pow ? TR("Весь урон героя растёт: удары, способности и огонь.") : isSp ? TR("Герой бегает быстрее в бою: легче уворачиваться и догонять.") : TR("Удары, взрывы и способности достают дальше.");
+      lvlRow(TR("Уровень "), lvl, max, (pow ? TR("Урон ") : isSp ? TR("Бег ") : TR("Дальность ")) + mulTxt(cur) + (lvl < max ? " → " + mulTxt(nxt) : ""));
       if (lvl >= max) { btn.textContent = TR("Максимум"); btn.disabled = true; }
       else { btn.disabled = save.money < cost; btn.textContent = (save.money < cost ? TR("Нужно ") : TR("Прокачать за ")) + fmt(cost); }
       btn.onclick = function () { buyUpgrade(st.id); };
@@ -1863,14 +1875,14 @@ Claudix.ready(function () {
     }
   }
   function buyUpgrade(id, bySp) {
-    var pow = id === "power", lvl = pow ? save.pwr : save.rad, max = pow ? PWR_MAX : RAD_MAX, cost = upCost(lvl);
+    var pow = id === "power", isSp = id === "speed", lvl = pow ? save.pwr : isSp ? (save.spd || 0) : save.rad, max = pow ? PWR_MAX : isSp ? SPD_MAX : RAD_MAX, cost = upCost(lvl);
     if (lvl >= max) return;
     if (bySp) { if (!(save.sp > 0)) return; save.sp--; }
     else { if (save.money < cost) return; save.money -= cost; }
-    if (pow) save.pwr++; else save.rad++;
+    if (pow) save.pwr++; else if (isSp) save.spd = (save.spd || 0) + 1; else save.rad++;
     persist(); renderMoney(); renderPanel();
     var st = lobby.near || { color: 0xffffff };
-    popText(player.pos.x, 3.4, player.pos.z, TR("Ур. ") + (pow ? save.pwr : save.rad), "#ffc933", true);
+    popText(player.pos.x, 3.4, player.pos.z, TR("Ур. ") + (pow ? save.pwr : isSp ? save.spd : save.rad), "#ffc933", true);
     ringFx(player.pos.x, player.pos.z, 4, 0.5, st.color, 0.9);
     burst(player.pos.x, 1.6, player.pos.z, st.color, 18, 6, 0.8, 0.22, 1);
   }
