@@ -109,11 +109,9 @@ function scoreOf(game, str) {
     }
     if (game === "liga") return Math.min(Math.max(0, Math.floor(+o.best || 0)), 1e6);
     if (game === "viraj") {
-      // Вираж-9: сначала звёзды кампании (до 24), при равенстве уровень быстрых гонок
-      let stars = 0;
-      if (Array.isArray(o.camp)) o.camp.slice(0, 8).forEach((v) => { stars += Math.min(3, Math.max(0, Math.floor(+v || 0))); });
-      const q = Math.min(999, Math.max(0, Math.floor(+o.qlvl || 0)));
-      return stars * 1000 + q;
+      // Вираж-9: лучший круг на трассе «Закат». Таблица сортирует по убыванию, поэтому храним 100000 / секунды.
+      const t = o.bests && typeof o.bests === "object" ? +o.bests["0"] : 0;
+      return Number.isFinite(t) && t >= 20 && t < 3600 ? 100000 / t : 0; // быстрее 20 секунд круг не проехать
     }
   } catch (e) { /* ниже */ }
   return 0;

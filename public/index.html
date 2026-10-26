@@ -403,7 +403,8 @@ html, body { touch-action: manipulation; -webkit-tap-highlight-color: transparen
     }
     if (V && (V.coins > 0 || (Array.isArray(V.camp) && V.camp.some(function (x) { return x > 0; })))) {
       var vs = 0; (V.camp || []).forEach(function (x) { vs += x | 0; });
-      $("statViraj").innerHTML = TR("Звёзд: <b>") + vs + TR(" из 24</b> · монет <b>$") + big(+V.coins || 0) + "</b>";
+      var vb = V.bests && +V.bests["0"];
+      $("statViraj").innerHTML = TR("Звёзд: <b>") + vs + TR(" из 24</b> · монет <b>$") + big(+V.coins || 0) + "</b>" + (vb ? TR(" · круг <b>") + lapFmt(vb) + "</b>" : "");
     }
     var L = read(saveKey(LEMON, u));
     if (L && (L.lemons > 0 || L.clickLvl > 0 || (L.gens && L.gens.some(function (g) { return g > 0; })))) {
@@ -521,10 +522,11 @@ html, body { touch-action: manipulation; -webkit-tap-highlight-color: transparen
 
   // ---------- таблица лидеров ----------
   var boardGame = "lemon";
-  function fmtScore(game, v) { return game === "lemon" ? "×" + big(v) : game === "viraj" ? Math.floor(v / 1000) + "★ · " + TR("ур. ") + (Math.floor(v % 1000) + 1) : TR("волна ") + Math.floor(v); }
+  function lapFmt(t) { var m = Math.floor(t / 60), s = t - m * 60; return m + ":" + (s < 10 ? "0" : "") + s.toFixed(2).replace(".", CLX.DEC); }
+  function fmtScore(game, v) { return game === "lemon" ? "×" + big(v) : game === "viraj" ? lapFmt(100000 / v) : TR("волна ") + Math.floor(v); }
   function paintBoard() {
     var game = boardGame, list = $("board"), me = $("boardMe");
-    $("boardNote").textContent = game === "lemon" ? TR("Лимонный Икс: у кого больше общий икс.") : game === "viraj" ? TR("Вираж-9: у кого больше звёзд в кампании, при равенстве — уровень быстрых гонок.") : TR("Лига Улиц: у кого дальше волна.");
+    $("boardNote").textContent = game === "lemon" ? TR("Лимонный Икс: у кого больше общий икс.") : game === "viraj" ? TR("Вираж-9: лучший круг на трассе «Закат».") : TR("Лига Улиц: у кого дальше волна.");
     C.top(game).then(function (r) {
       if (game !== boardGame) return;
       list.innerHTML = ""; me.textContent = "";

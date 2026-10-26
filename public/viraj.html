@@ -477,7 +477,9 @@ body.touchy #nitro { display: none; }
     if (SESSION && window.Claudix) Claudix.flushAll(true);
     setTimeout(function () { location.reload(); }, SESSION ? 400 : 0);
   });
-  var keys = {}, touch = { l: false, r: false, g: false, b: false, n: false, h: false }, bestLap = parseFloat(store("viraj-best") || "0") || 0;
+  var keys = {}, touch = { l: false, r: false, g: false, b: false, n: false, h: false }, bestLap = 0;
+  // рекорд круга у каждой трассы свой; «Закат» идёт в таблицу лидеров Claudix
+  function bests() { if (!SAVE.bests || typeof SAVE.bests !== "object") SAVE.bests = {}; return SAVE.bests; }
   var NAMES = ["Макс", "Рэй", "Зина", "Бро", "Ласка", "Тоха"];
   function nearestIdx(x, z, around, span) {
     var best = 0, bd = 1e12, from = around === undefined ? 0 : around - span, to = around === undefined ? TOTAL - 1 : around + span;
@@ -498,7 +500,7 @@ body.touchy #nitro { display: none; }
     others.forEach(function (m, i) { var rc = mkRacer(m, false, nm[i]); rc.skill = rnd(RIVAL - 0.04, RIVAL + 0.02); rc.pow = 1 + 0.12 * DIFF; racers.push(rc); });
     racers.forEach(function (r, i) { grid(r, i); });
     state = "count"; countdown = 3.6; raceT = 0; finishOrder = []; shake = 0;
-    $("menu").hidden = true; $("result").hidden = true; $("tName").textContent = TRACKS[curTrack].name + (mode === "camp" ? " · заезд " + (curEvent + 1) + "/" + EVENTS.length : ""); $("bestT").textContent = "Лучший: " + (bestLap ? fmt(bestLap) : "—");
+    $("menu").hidden = true; $("result").hidden = true; $("tName").textContent = TRACKS[curTrack].name + (mode === "camp" ? " · заезд " + (curEvent + 1) + "/" + EVENTS.length : ""); bestLap = +bests()[curTrack] || 0; $("bestT").textContent = "Лучший: " + (bestLap ? fmt(bestLap) : "—");
     $("posT").textContent = racers.length;
   }
   function fmt(t) { var m = Math.floor(t / 60), s = t - m * 60; return m + ":" + (s < 10 ? "0" : "") + s.toFixed(1); }
@@ -582,7 +584,7 @@ body.touchy #nitro { display: none; }
   }
   function lapDone(r) {
     if (r.lap >= 2) {
-      var lt = raceT - r.lapStart; if (lt > 5 && r.cp >= r.lap - 1) { r.best = Math.min(r.best, lt); if (r === player) { toast("Круг " + fmt(lt)); if (!bestLap || lt < bestLap) { bestLap = lt; store("viraj-best", String(lt)); $("bestT").textContent = "Лучший: " + fmt(lt); toast("Новый рекорд " + fmt(lt)); } } }
+      var lt = raceT - r.lapStart; if (lt > 5 && r.cp >= r.lap - 1) { r.best = Math.min(r.best, lt); if (r === player) { toast("Круг " + fmt(lt)); if (!bestLap || lt < bestLap) { bestLap = lt; bests()[curTrack] = Math.round(lt * 1000) / 1000; persist(); $("bestT").textContent = "Лучший: " + fmt(lt); toast("Новый рекорд " + fmt(lt)); } } }
     }
     r.lapStart = raceT;
     if (r.lap > LAPS && !r.finished) {
@@ -651,7 +653,7 @@ body.touchy #nitro { display: none; }
       coins += rew; store("viraj-coins", String(coins));
       $("resTitle").textContent = title;
       $("resTable").innerHTML = rk.map(function (r, i) { return '<tr class="' + (r === player ? "me" : "") + '"><td>' + (i + 1) + "</td><td>" + r.name + "</td><td class='t'>" + (r.finished ? fmt(r.finishT) : "едет") + "</td></tr>"; }).join("");
-      $("resBest").textContent = extra + "Награда +$" + rew + " · всего $" + coins + " · лучший круг: " + (bestLap ? fmt(bestLap) : "—");
+      $("resBest").textContent = extra + "Награда +$" + rew + " · всего $" + coins + " · рекорд круга на трассе «" + TRACKS[curTrack].name + "»: " + (bestLap ? fmt(bestLap) : "—") + (curTrack === 0 ? " (идёт в таблицу лидеров)" : "");
       $("result").hidden = false;
     }, 1200);
   }
