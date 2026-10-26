@@ -2050,7 +2050,8 @@ Claudix.ready(function () {
   // пока ивент на проверке, зайти могут только эти игроки (ники в нижнем регистре); пустой список = открыто всем
   var ADV_ALLOW = ["claudix_dev1"];
   function advAllowed() { return ADV_OFFLINE || !ADV_ALLOW.length || !!(SESSION && ADV_ALLOW.indexOf(SESSION.user) >= 0); }
-  var adv = null, advSel = null, advQ = false;
+  var adv = null, advSel = null, advQ = false, advQT = 0;
+  setInterval(function () { if (advQ && !$("advOv").hidden) renderAdvUi(); }, 1000);
   var MON = {
     zombie:  { name: TR("Зомби"), hp: 260, speed: 3.2, dmg: 16, range: 1.7, cd: 1.2, wind: 0.35, scale: 1.1, kb: 0.8, suit: 0x4d5a3c, pants: 0x3a3226, skin: 0x86a86a, accent: 0x2a2a1e },
     skel:    { name: TR("Скелет"), hp: 170, speed: 3.0, dmg: 13, range: 0, cd: 1.6, wind: 0, scale: 1, kb: 1, suit: 0xe6e1d3, pants: 0xd4cfc0, skin: 0xefeadc, accent: 0x9a9384, ranged: true, shot: 0xf3eedd },
@@ -2715,10 +2716,11 @@ Claudix.ready(function () {
       h += '<button class="act sec' + (advSel === d.id ? " on" : "") + '" data-id="' + d.id + '" type="button"' + (advQ ? " disabled" : "") + ">" + figSvg(d) + "<span>" + d.name + "</span></button>";
     });
     $("aHeroes").innerHTML = h;
-    $("aStat").textContent = advQ ? TR("Ищем напарника… Пусть друг тоже нажмёт «Искать напарника».")
+    var waitS = advQ ? Math.floor((Date.now() - advQT) / 1000) : 0;
+    $("aStat").textContent = advQ ? (waitS >= 8 ? TR("Пока никого нет. Жми «Идти одному» или подожди друга (") + waitS + TR(" с)") : TR("Ищем напарника… Пусть друг тоже нажмёт «Искать напарника»."))
       : TR("3 этажа очень сильных монстров и Тыквенный король на третьем. Прокачка силы и радиуса работает. Вдвоём проще.") + (save.pk ? TR(" Король повержен: ") + save.pk : "");
-    $("aGo").textContent = ADV_OFFLINE ? TR("С ботом-напарником") : advQ ? TR("Отмена") : TR("Искать напарника");
-    $("aSolo").disabled = advQ;
+    $("aGo").textContent = ADV_OFFLINE ? TR("С ботом-напарником") : advQ ? TR("Отменить поиск") : TR("Искать напарника");
+    $("aSolo").disabled = false;
   }
   $("aHeroes").addEventListener("click", function (e) {
     var b = e.target.closest("button"); if (!b || advQ) return;
@@ -2727,13 +2729,15 @@ Claudix.ready(function () {
   $("aGo").addEventListener("click", function () {
     if (ADV_OFFLINE) { startAdv({ s: 0, o: null, bot: true }); return; }
     if (advQ) { advQ = false; netSend({ t: "aqc" }); }
-    else { advQ = true; netSend({ t: "aq", id: advSel || save.sel, p: save.pwr }); }
+    else { advQ = true; advQT = Date.now(); netSend({ t: "aq", id: advSel || save.sel, p: save.pwr }); }
     renderAdvUi();
   });
   $("aSolo").addEventListener("click", function () {
     if (ADV_OFFLINE) { startAdv({ s: 0, o: null }); return; }
-    if (advQ) return;
+    // можно сразу из поиска: сервер снимет игрока с очереди и пустит одного
+    if (advQ) { advQ = false; netSend({ t: "aqc" }); }
     netSend({ t: "aq", id: advSel || save.sel, p: save.pwr, solo: 1 });
+    $("aStat").textContent = TR("Заходим…");
   });
   $("aClose").addEventListener("click", function () { setAdvOpen(false); });
 
