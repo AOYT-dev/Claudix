@@ -6,6 +6,8 @@
   var EN = {
 "3D-экшен": "3D action",
 "Гонки": "Racing",
+"Тыква вместо лимона": "Pumpkin instead of lemon",
+"Вернуть лимон": "Bring the lemon back",
 "Вираж-9: лучший круг на трассе «Закат».": "Viraj-9: best lap on the Sunset track.",
 " · круг <b>": " · lap <b>",
 "Вираж-9": "Viraj-9",

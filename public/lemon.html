@@ -178,6 +178,11 @@ h1 {
   -webkit-tap-highlight-color: transparent;
   border-radius: 50%;
 }
+.lemon svg.pumpkin { display: none; }
+.lemon.pk svg { display: none; }
+.lemon.pk svg.pumpkin { display: block; }
+.skinbtn { margin-top: 10px; padding: 8px 14px; border-radius: 999px; border: 1px solid rgba(242, 122, 18, .6); background: rgba(242, 122, 18, .14); color: inherit; font: inherit; font-size: .9rem; cursor: pointer; }
+.skinbtn:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
 .lemon svg { display: block; width: 100%; height: 100%; filter: drop-shadow(0 14px 14px rgba(0, 0, 0, 0.22)); pointer-events: none; }
 .ground { width: 52%; height: 16px; border-radius: 50%; background: var(--fg); opacity: 0.13; filter: blur(7px); margin-top: -2px; }
 .click-info { margin: 14px 0 0; font-size: 1rem; }
@@ -330,6 +335,19 @@ html, body { touch-action: manipulation; -webkit-tap-highlight-color: transparen
 })();
 </script>
 <script>document.addEventListener("gesturestart", function (e) { e.preventDefault(); });</script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  var btn = document.getElementById("skinBtn"), lem = document.getElementById("lemon");
+  function apply(pk) {
+    lem.classList.toggle("pk", pk);
+    btn.textContent = pk ? (window.TR ? TR("Вернуть лимон") : "Вернуть лимон") : (window.TR ? TR("Тыква вместо лимона") : "Тыква вместо лимона");
+    lem.setAttribute("aria-label", pk ? "Тыква. Жми, чтобы собирать лимоны" : "Лимон. Жми, чтобы собирать лимоны");
+  }
+  var pk = false; try { pk = localStorage.getItem("lemon-skin") === "pumpkin"; } catch (e) { /* ничего */ }
+  apply(pk);
+  btn.addEventListener("click", function () { pk = !pk; try { localStorage.setItem("lemon-skin", pk ? "pumpkin" : "lemon"); } catch (e) { /* ничего */ } apply(pk); });
+});
+</script>
 </head>
 <body>
 <div class="app">
@@ -368,8 +386,22 @@ html, body { touch-action: manipulation; -webkit-tap-highlight-color: transparen
               <path d="M126 53 C144 42 160 34 178 28" fill="none" stroke="#ffffff" stroke-width="1.6" opacity="0.4" stroke-linecap="round"></path>
             </g>
           </svg>
+          <svg class="pumpkin" viewBox="0 0 240 240" aria-hidden="true">
+            <defs>
+              <radialGradient id="pg" cx="40%" cy="35%" r="75%"><stop offset="0" stop-color="#ffb04a"></stop><stop offset="0.6" stop-color="#f27a12"></stop><stop offset="1" stop-color="#c4560a"></stop></radialGradient>
+            </defs>
+            <ellipse cx="72" cy="140" rx="46" ry="68" fill="url(#pg)" stroke="#b04c08" stroke-width="3"></ellipse>
+            <ellipse cx="168" cy="140" rx="46" ry="68" fill="url(#pg)" stroke="#b04c08" stroke-width="3"></ellipse>
+            <ellipse cx="96" cy="140" rx="40" ry="72" fill="url(#pg)" stroke="#b04c08" stroke-width="3"></ellipse>
+            <ellipse cx="144" cy="140" rx="40" ry="72" fill="url(#pg)" stroke="#b04c08" stroke-width="3"></ellipse>
+            <ellipse cx="120" cy="140" rx="36" ry="74" fill="url(#pg)" stroke="#b04c08" stroke-width="3"></ellipse>
+            <ellipse cx="96" cy="104" rx="14" ry="26" transform="rotate(-20 96 104)" fill="#ffffff" opacity="0.25"></ellipse>
+            <path d="M112 72 C110 54 114 40 126 30 L136 36 C128 46 126 58 128 72 Z" fill="#4a7a2a" stroke="#2f5a18" stroke-width="2.5" stroke-linejoin="round"></path>
+            <path d="M128 50 C146 40 164 44 172 56" fill="none" stroke="#5f9a35" stroke-width="4" stroke-linecap="round"></path>
+          </svg>
         </button>
       </div>
+      <button class="skinbtn" id="skinBtn" type="button">Тыква вместо лимона</button>
       <div class="ground"></div>
       <p class="click-info"><strong id="pc">+1</strong> за клик</p>
       <p class="hint">Общий икс множит и клики, и всё, что растёт само. На клавиатуре клик — клавиша E.</p>
