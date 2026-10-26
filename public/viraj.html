@@ -287,12 +287,12 @@ body.touchy #nitro { display: none; }
 
   // ---------- трассы ----------
   var KERB = 2.4, STEP = 6, W = 24, WALL = W / 2 + KERB;
-  var TR = [], TOTAL = 0, LENGTH = 0, SL = null, trackGroup = null, curTrack = -1, sunBase = 0.95;
+  var TR = [], TOTAL = 0, LENGTH = 0, SL = null, trackGroup = null, curTrack = -1, sunBase = 0.95, ghosts = [];
   var TRACKS = [
     { name: "Закат", sky: 0xf2a46e, night: false, base: 270, harm: [[2, 95, 0.6], [3, 55, 1.3]], w: 24, K: 12, ground: 0x5b6a50 },
     { name: "Дельта", sky: 0x8ec5f0, night: false, base: 330, harm: [[2, 80, 2.0], [3, 60, 0.4], [5, 22, 1.0]], w: 28, K: 16, ground: 0x6a7f5a },
     { name: "Каньон", sky: 0xe9b27a, night: false, base: 260, harm: [[3, 60, 0.2], [4, 36, 1.7], [5, 14, 2.4]], w: 22, K: 18, ground: 0x8a6a4a },
-    { name: "Ночной круг", sky: 0x0a0f1e, night: true, base: 290, harm: [[2, 100, 1.1], [3, 55, 0.3], [4, 30, 2.2]], w: 24, K: 16, ground: 0x24342b },
+    { name: "Ночной круг", halloween: true, sky: 0x0a0f1e, night: true, base: 290, harm: [[2, 100, 1.1], [3, 55, 0.3], [4, 30, 2.2]], w: 24, K: 16, ground: 0x24342b },
     { name: "Финал", sky: 0x1b1230, night: true, base: 310, harm: [[3, 85, 0.9], [4, 55, 2.0], [6, 22, 0.5]], w: 22, K: 20, ground: 0x2a2535 }
   ];
   var wrapI = function (i) { return ((i % TOTAL) + TOTAL) % TOTAL; };
@@ -303,7 +303,7 @@ body.touchy #nitro { display: none; }
   function buildTrack(ti) {
     var def = TRACKS[ti]; curTrack = ti;
     if (trackGroup) scene.remove(trackGroup);
-    var tg = trackGroup = new THREE.Group(); scene.add(tg);
+    var tg = trackGroup = new THREE.Group(); scene.add(tg); ghosts = [];
     W = def.w; WALL = W / 2 + KERB;
     var ctrl = [], K = def.K;
     for (var k = 0; k < K; k++) {
@@ -395,12 +395,48 @@ body.touchy #nitro { display: none; }
       var rm = new THREE.Mesh(new THREE.BoxGeometry(rnd(2, 8), rnd(1, ti === 2 ? 9 : 4), rnd(2, 8)), rockM); rm.position.set(rp.x + rp.nx * ro, 1, rp.z + rp.nz * ro); rm.rotation.y = rnd(0, 3); rm.castShadow = true; tg.add(rm);
     }
     if (def.night) {
-      var pm = new THREE.MeshLambertMaterial({ color: 0x2c3038 }), gm = new THREE.MeshBasicMaterial({ color: 0xfff1c0 });
+      var pm = new THREE.MeshLambertMaterial({ color: 0x2c3038 }), gm = new THREE.MeshBasicMaterial({ color: ti === 3 ? 0xffa040 : 0xfff1c0 });
       for (var li = 0; li < TOTAL; li += 6) {
         var lp = TR[li], ls = (li / 6) % 2 ? 1 : -1, lo = ls * (WALL + 3);
         var pole = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.2, 8, 6), pm); pole.position.set(lp.x + lp.nx * lo, 4, lp.z + lp.nz * lo); tg.add(pole);
         var lamp = new THREE.Mesh(new THREE.SphereGeometry(0.6, 8, 6), gm); lamp.position.set(lp.x + lp.nx * lo, 8.2, lp.z + lp.nz * lo); tg.add(lamp);
       }
+    }
+    if (ti === 3) {
+      // Хеллоуин на «Ночном круге»: тыквы с лицами, могилы, призраки над обочиной и арка на старте
+      var pkG = new THREE.SphereGeometry(1, 12, 9), stemG = new THREE.CylinderGeometry(0.12, 0.16, 0.5, 5), faceG = new THREE.BoxGeometry(0.45, 0.32, 0.1), mouthG = new THREE.BoxGeometry(1.1, 0.2, 0.1);
+      var orM = new THREE.MeshLambertMaterial({ color: 0xff7a1a }), stM = new THREE.MeshLambertMaterial({ color: 0x3f7a2a }), litM = new THREE.MeshBasicMaterial({ color: 0xffd23f });
+      var stoneM = new THREE.MeshLambertMaterial({ color: 0x6a6874 }), ghostM = new THREE.MeshBasicMaterial({ color: 0xe8eeff, transparent: true, opacity: 0.55 }), eyeM = new THREE.MeshBasicMaterial({ color: 0x111111 });
+      var stoneG = new THREE.BoxGeometry(1.4, 2, 0.4), ghostG = new THREE.ConeGeometry(1.1, 3, 8), ghostHead = new THREE.SphereGeometry(0.75, 10, 8), eyeG = new THREE.BoxGeometry(0.18, 0.26, 0.05);
+      function pumpkin(x, z, sc, face) {
+        var g = new THREE.Group(); g.position.set(x, 0, z); g.scale.setScalar(sc); g.rotation.y = face;
+        var b = new THREE.Mesh(pkG, orM); b.scale.set(1, 0.75, 1); b.position.y = 0.75; g.add(b);
+        var st = new THREE.Mesh(stemG, stM); st.position.y = 1.55; g.add(st);
+        [-0.35, 0.35].forEach(function (ex) { var e = new THREE.Mesh(faceG, litM); e.position.set(ex, 0.95, 0.95); g.add(e); });
+        var m = new THREE.Mesh(mouthG, litM); m.position.set(0, 0.55, 0.95); g.add(m);
+        tg.add(g); return g;
+      }
+      for (var hi = 3; hi < TOTAL; hi += 9) {
+        var hp = TR[hi], side = (hi / 9) % 2 < 1 ? 1 : -1, off = side * (WALL + 2.2), face = Math.atan2(-hp.nx * side, -hp.nz * side);
+        pumpkin(hp.x + hp.nx * off, hp.z + hp.nz * off, rnd(0.9, 1.6), face);
+        if (hi % 27 === 3) {
+          var go = -side * (WALL + 5), gh = new THREE.Group(); gh.position.set(hp.x + hp.nx * go, rnd(4, 6), hp.z + hp.nz * go); gh.rotation.y = face + Math.PI;
+          var body = new THREE.Mesh(ghostG, ghostM); body.rotation.x = Math.PI; body.position.y = -0.6; gh.add(body);
+          var head = new THREE.Mesh(ghostHead, ghostM); head.position.y = 1.1; gh.add(head);
+          [-0.25, 0.25].forEach(function (ex) { var e = new THREE.Mesh(eyeG, eyeM); e.position.set(ex, 1.2, 0.7); gh.add(e); });
+          tg.add(gh); ghosts.push({ g: gh, y: gh.position.y, ph: rnd(0, 6) });
+        }
+        if (hi % 18 === 12) for (var gs = 0; gs < 3; gs++) {
+          var so = -side * (WALL + 4 + gs * 2.5), stn = new THREE.Mesh(stoneG, stoneM); stn.position.set(hp.x + hp.nx * so + hp.tx * (gs - 1) * 1.8, 1, hp.z + hp.nz * so + hp.tz * (gs - 1) * 1.8); stn.rotation.y = face; tg.add(stn);
+        }
+      }
+      // арка из тыкв над стартом
+      var s0 = TR[0];
+      [-1, 1].forEach(function (sd2) {
+        var px = s0.x + s0.nx * sd2 * (W / 2 + 1.5), pz = s0.z + s0.nz * sd2 * (W / 2 + 1.5);
+        for (var k = 0; k < 4; k++) pumpkin(px, pz, 1.15 - k * 0.1, s0.h).position.y = k * 1.7;
+      });
+      for (var ar = -3; ar <= 3; ar++) pumpkin(s0.x + s0.nx * ar * (W / 7), s0.z + s0.nz * ar * (W / 7), 0.95, s0.h).position.y = 7;
     }
     scene.background.setHex(def.sky); scene.fog.color.setHex(def.sky); scene.fog.near = def.night ? 60 : 140; scene.fog.far = def.night ? 380 : 650;
     hemi.intensity = def.night ? 0.5 : 0.95; hemi.color.setHex(def.night ? 0x7f93c8 : 0xffe6c8);
@@ -822,6 +858,7 @@ body.touchy #nitro { display: none; }
     requestAnimationFrame(loop);
     var dt = Math.min(0.05, (now - last) / 1000); last = now; if (dt <= 0) return;
     resize(); if (!paused) step(dt); $("pauseBtn").hidden = !(state === "race" || state === "count") || paused; updateCars(dt); updateCamera(dt); updateHud(dt); updateAudio();
+    var gt = now / 1000; ghosts.forEach(function (g) { g.g.position.y = g.y + Math.sin(gt * 1.6 + g.ph) * 0.6; g.g.rotation.z = Math.sin(gt + g.ph) * 0.12; });
     renderer.render(scene, camera);
   }
   // стартовый вид: камера над стартом
