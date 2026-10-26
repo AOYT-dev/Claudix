@@ -2091,7 +2091,7 @@ Claudix.ready(function () {
   var ADV_UNTIL = Date.UTC(2026, 10, 9);          // ивент идёт до 8 ноября включительно
   var ADV_OFFLINE = !!window.__ADV_OFFLINE__;     // сборка-артефакт: без сервера, соло или с ботом
   // пока ивент на проверке, зайти могут только эти игроки (ники в нижнем регистре); пустой список = открыто всем
-  var ADV_ALLOW = ["claudix_dev1"];
+  var ADV_ALLOW = [];
   function advAllowed() { return ADV_OFFLINE || !ADV_ALLOW.length || !!(SESSION && ADV_ALLOW.indexOf(SESSION.user) >= 0); }
   var adv = null, advSel = null, advQ = false, advQT = 0;
   setInterval(function () { if (advQ && !$("advOv").hidden) renderAdvUi(); }, 1000);

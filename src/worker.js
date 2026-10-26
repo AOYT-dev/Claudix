@@ -269,7 +269,7 @@ const HERO_IDS = ["cobalt", "storm", "shade", "graviton", "flame", "abyss"];
 const ROOM_MAX = 24;
 const ADV_RELAY = ["ap", "ae", "ah", "ax", "aa", "ar"];
 // Halloween Adventure пока на проверке: в очередь пускаем только этих игроков (uid). Пустой список = всех.
-const ADV_ALLOW = ["claudix_dev1"];
+const ADV_ALLOW = [];
 const lim = (v, l) => (Number.isFinite(v) ? Math.max(-l, Math.min(l, v)) : 0);
 const pub = (a) => ({ u: a.u, n: a.n, h: a.h, x: a.x, z: a.z, f: a.f, m: a.m });
 
