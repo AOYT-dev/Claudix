@@ -1795,8 +1795,8 @@ Claudix.ready(function () {
       $("lpTitle").textContent = TR("Онлайн");
       lv.hidden = meter.hidden = true;
       if (ADV_OFFLINE) {
-        $("lpDesc").textContent = "В артефакте нет сервера Claudix, поэтому онлайн-портал тут ведёт сразу в Halloween Adventure (тест: соло или с ботом).";
-        btn.disabled = false; btn.textContent = "Halloween Adventure"; btn.onclick = function () { setAdvOpen(true); };
+        $("lpDesc").textContent = "Тестовая онлайн-комната без сервера: других игроков нет, но станция Хеллоуин работает.";
+        btn.disabled = false; btn.textContent = TR("Войти онлайн"); btn.onclick = fakeOnline;
       } else if (SESSION && SESSION.token) {
         $("lpDesc").textContent = TR("Общая комната, где можно тусоваться с другими игроками.");
         btn.disabled = false; btn.textContent = TR("Войти онлайн"); btn.onclick = goOnline;
@@ -1806,7 +1806,7 @@ Claudix.ready(function () {
       }
     } else if (st.id === "duel") {
       $("lpTitle").textContent = TR("Дуэль");
-      $("lpDesc").textContent = TR("Бой 1 на 1 с живым игроком. Герой любой, даже некупленный.");
+      $("lpDesc").textContent = ADV_OFFLINE ? "В тесте без сервера соперников нет." : TR("Бой 1 на 1 с живым игроком. Герой любой, даже некупленный.");
       lv.hidden = meter.hidden = true;
       btn.disabled = false; btn.textContent = TR("Выбрать героя"); btn.onclick = function () { setDuelOpen(true); };
     } else if (st.id === "adv") {
@@ -2728,9 +2728,18 @@ Claudix.ready(function () {
   });
   $("aClose").addEventListener("click", function () { setAdvOpen(false); });
 
+  // артефакт: онлайн-комната без сервера, чтобы проверить путь «портал Онлайн → станция Хеллоуин»
+  function fakeOnline() {
+    if (mode !== "lobby" || lobby.online) return;
+    lobby.online = true; heroOpen = false; $("heroOv").hidden = true;
+    clearRemotes(); net.selfEl = nickEl(TR("Ты"), true);
+    if (player) { player.pos.set(0, 0, 7); player.face = Math.PI; }
+    applyLobbyScene(); snapCamera();
+    banner(TR("Онлайн"), "Тест без сервера · станция Хеллоуин слева");
+  }
   // станция в лобби: тёмная арка с тыквами
   (function buildAdvStation() {
-    var where = Date.now() < ADV_UNTIL && !ADV_OFFLINE ? "online" : "never";
+    var where = Date.now() < ADV_UNTIL ? "online" : "never";
     var at = { x: -14, z: 12 };
     var st = lobbyStation({ id: "adv", where: where, x: at.x, z: at.z, r: 3.8, solid: 1.6, color: 0xff7a1a, label: TR("Хеллоуин"), labelY: 7 });
     var stone = lam(0x2e2838);
