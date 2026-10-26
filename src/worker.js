@@ -265,6 +265,7 @@ async function route(req, env) {
 // ---- онлайн-лобби: одна общая комната на всех (Durable Object, WebSocket) ----
 const HERO_IDS = ["cobalt", "storm", "shade", "graviton", "flame", "abyss"];
 const ROOM_MAX = 24;
+const ADV_RELAY = ["ap", "ae", "ah", "ax", "aa", "ar"];
 const lim = (v, l) => (Number.isFinite(v) ? Math.max(-l, Math.min(l, v)) : 0);
 const pub = (a) => ({ u: a.u, n: a.n, h: a.h, x: a.x, z: a.z, f: a.f, m: a.m });
 
@@ -272,6 +273,7 @@ export class Room {
   constructor(ctx, env) {
     this.ctx = ctx;
     this.env = env;
+    this.rl = new Map();
     try { ctx.setWebSocketAutoResponse(new WebSocketRequestResponsePair("ping", "pong")); } catch (e) { /* не критично */ }
   }
   live() {
@@ -297,11 +299,39 @@ export class Room {
     if (oWs && oWs.deserializeAttachment().d === a.u) fin(oWs);
     void oppUid;
   }
+  // Хеллоуинское приключение: пати из 1–2 игроков. Сервер только сводит пары и пересылает сообщения внутри пати,
+  // врагов считает один из игроков (хост).
+  tryMatchAdv(ws) {
+    const a = ws.deserializeAttachment();
+    for (const w of this.live()) {
+      const b = w.deserializeAttachment();
+      if (b.u === a.u || !b.aq || b.d || b.a) continue;
+      a.aq = 0; b.aq = 0; a.a = b.u; b.a = a.u;
+      ws.serializeAttachment(a); w.serializeAttachment(b);
+      this.broadcast({ t: "l", u: a.u });
+      this.broadcast({ t: "l", u: b.u });
+      this.sendTo(ws, { t: "as", s: 0, o: { u: b.u, n: b.n, h: b.ah, p: b.ap } });
+      this.sendTo(w, { t: "as", s: 1, o: { u: a.u, n: a.n, h: a.ah, p: a.ap } });
+      return;
+    }
+  }
+  // игрок вышел из подземелья (сам или обрыв связи): напарник продолжает один
+  endAdv(ws, back) {
+    const a = ws.deserializeAttachment();
+    if (!a || !a.a) return;
+    const mate = a.a !== "@" ? this.sockOf(a.a) : null;
+    a.a = ""; a.aq = 0; ws.serializeAttachment(a);
+    if (back) this.broadcast({ t: "j", p: pub(a) }, a.u);
+    if (mate) {
+      const b = mate.deserializeAttachment();
+      if (b && b.a === a.u) { b.a = "@"; mate.serializeAttachment(b); this.sendTo(mate, { t: "aend", r: "left" }); }
+    }
+  }
   tryMatch(ws) {
     const a = ws.deserializeAttachment();
     for (const w of this.live()) {
       const b = w.deserializeAttachment();
-      if (b.u === a.u || !b.q || b.d) continue;
+      if (b.u === a.u || !b.q || b.d || b.a) continue;
       a.q = 0; b.q = 0; a.d = b.u; b.d = a.u; a.dl = Date.now(); b.dl = a.dl;
       ws.serializeAttachment(a); w.serializeAttachment(b);
       // обоих убираем из общей комнаты
@@ -333,18 +363,44 @@ export class Room {
     const pair = new WebSocketPair();
     const client = pair[0], server = pair[1];
     this.ctx.acceptWebSocket(server);
-    const me = { u: uid, n: name, h: "cobalt", x: 0, z: 6, f: Math.PI, m: 0, ts: 0, q: 0, d: "", dh: "cobalt", dl: 0, hs: 0 };
+    const me = { u: uid, n: name, h: "cobalt", x: 0, z: 6, f: Math.PI, m: 0, ts: 0, q: 0, d: "", dh: "cobalt", dl: 0, hs: 0, a: "", aq: 0, ah: "cobalt", ap: 0 };
     server.serializeAttachment(me);
-    server.send(JSON.stringify({ t: "hello", you: uid, players: others.map((w) => w.deserializeAttachment()).filter((x) => !x.d).map(pub) }));
+    server.send(JSON.stringify({ t: "hello", you: uid, players: others.map((w) => w.deserializeAttachment()).filter((x) => !x.d && !x.a).map(pub) }));
     this.broadcast({ t: "j", p: pub(me) }, uid);
     return new Response(null, { status: 101, webSocket: client, headers: proto ? { "Sec-WebSocket-Protocol": proto } : {} });
   }
   webSocketMessage(ws, data) {
-    if (typeof data !== "string" || data.length > 300) return;
+    if (typeof data !== "string" || data.length > 2400) return;
     let m;
     try { m = JSON.parse(data); } catch (e) { return; }
     const a = ws.deserializeAttachment();
-    if (!a || a.dead || !m) return;
+    if (!a || a.dead || !m || typeof m.t !== "string") return;
+    if (ADV_RELAY.includes(m.t)) {
+      // внутри пати пересылаем как есть, позицию и снимок врагов не чаще ~20 раз в секунду
+      if (!a.a || a.a === "@") return;
+      if (m.t === "ap" || m.t === "ae") {
+        const k = a.u + m.t, now = Date.now();
+        if (now - (this.rl.get(k) || 0) < 45) return;
+        this.rl.set(k, now);
+      }
+      const o = this.sockOf(a.a);
+      if (o && o.deserializeAttachment().a === a.u) { try { o.send(data); } catch (e) { /* сокет уже закрыт */ } }
+      return;
+    }
+    if (data.length > 300) return;
+    if (m.t === "aq" && HERO_IDS.includes(m.id)) {
+      if (a.d || a.a) return;
+      a.ah = m.id; a.ap = Math.max(0, Math.min(25, Math.floor(+m.p || 0)));
+      if (m.solo) {
+        a.a = "@"; a.aq = 0; ws.serializeAttachment(a);
+        this.broadcast({ t: "l", u: a.u }, a.u);
+        this.sendTo(ws, { t: "as", s: 0, o: null });
+      } else { a.aq = 1; ws.serializeAttachment(a); this.tryMatchAdv(ws); }
+      return;
+    }
+    if (m.t === "aqc") { if (a.aq) { a.aq = 0; ws.serializeAttachment(a); } return; }
+    if (m.t === "aend") { this.endAdv(ws, true); return; }
+    if (a.a) return; // в подземелье общая комната игрока не видит
     if (m.t === "p") {
       const now = Date.now();
       if (now - a.ts < 50) return; // не чаще 20 раз в секунду
@@ -365,7 +421,7 @@ export class Room {
       ws.serializeAttachment(a);
       this.broadcast({ t: "h", u: a.u, h: a.h }, a.u);
     } else if (m.t === "q" && HERO_IDS.includes(m.id)) {
-      if (a.d) return;
+      if (a.d || a.a) return;
       a.q = 1; a.dh = m.id;
       ws.serializeAttachment(a);
       this.tryMatch(ws);
@@ -392,6 +448,7 @@ export class Room {
   }
   drop(ws) {
     const a = ws.deserializeAttachment();
+    if (a && !a.dead && a.a) { this.endAdv(ws, false); ws.serializeAttachment({ ...ws.deserializeAttachment(), dead: true }); this.broadcast({ t: "l", u: a.u }, a.u); return; }
     if (a && !a.dead) {
       if (a.d) {
         const o = this.sockOf(a.d);

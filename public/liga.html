@@ -273,6 +273,7 @@ html, body { touch-action: manipulation; -webkit-tap-highlight-color: transparen
       <div class="hname" id="hName">Герой</div>
       <div class="bar"><i id="hpFill"></i></div>
       <div class="hptxt mono" id="hpTxt"></div>
+      <div class="hptxt mono" id="mateTxt" hidden></div>
     </div>
     <div class="wave"><b id="waveEl">Волна 1</b><span id="foeEl"></span></div>
     <div class="right">
@@ -321,6 +322,17 @@ html, body { touch-action: manipulation; -webkit-tap-highlight-color: transparen
     <div class="dgrid" id="dHeroes"></div>
     <button class="act" id="dGo" type="button"></button>
     <button class="act sec" id="dClose" type="button">Закрыть</button>
+  </div>
+</div>
+
+<div class="layer scrim" id="advOv" hidden>
+  <div class="ddlg">
+    <h2>Halloween Adventure</h2>
+    <p id="aStat"></p>
+    <div class="dgrid" id="aHeroes"></div>
+    <button class="act" id="aGo" type="button">Искать напарника</button>
+    <button class="act sec" id="aSolo" type="button">Идти одному</button>
+    <button class="act sec" id="aClose" type="button">Закрыть</button>
   </div>
 </div>
 
@@ -382,7 +394,7 @@ Claudix.ready(function () {
 
   var ETYPES = {
     thug:   { hp: 40,  speed: 3.7, dmg: 9,  range: 1.6, cd: 1.1, wind: 0.32, reward: 10, scale: 1,    kb: 1,   suit: 0x555b66, pants: 0x2d3139, skin: 0xd9a67a, accent: 0x20232a },
-    gunman: { hp: 28,  speed: 3.1, dmg: 7,  range: 0,   cd: 1.8, wind: 0,    reward: 14, scale: 1,    kb: 1.1, suit: 0xa8323a, pants: 0x2b2f3a, skin: 0xcf9a70, accent: 0x1b1d22 },
+    gunman: { ranged: true, hp: 28,  speed: 3.1, dmg: 7,  range: 0,   cd: 1.8, wind: 0,    reward: 14, scale: 1,    kb: 1.1, suit: 0xa8323a, pants: 0x2b2f3a, skin: 0xcf9a70, accent: 0x1b1d22 },
     brute:  { hp: 150, speed: 2.5, dmg: 20, range: 2.1, cd: 1.6, wind: 0.5,  reward: 40, scale: 1.45, kb: 0.5, suit: 0x6b7a3a, pants: 0x3d3f2a, skin: 0xc78f66, accent: 0x2a2a22 },
     boss:   { hp: 900, speed: 2.9, dmg: 28, range: 2.9, cd: 1.4, wind: 0.45, reward: 400, scale: 2.1, kb: 0.2, suit: 0x5b2a7a, pants: 0x2a1a3a, skin: 0xc08a64, accent: 0xffd23f }
   };
@@ -403,6 +415,7 @@ Claudix.ready(function () {
         save.best = Math.max(0, Math.floor(+d.best || 0));
         save.pwr = Math.min(PWR_MAX, Math.max(0, Math.floor(+d.pwr || 0)));
         save.rad = Math.min(RAD_MAX, Math.max(0, Math.floor(+d.rad || 0)));
+        save.pk = Math.max(0, Math.floor(+d.pk || 0));
       }
     } catch (e) { /* хранилище недоступно */ }
   }
@@ -546,6 +559,7 @@ Claudix.ready(function () {
     }
   }
   buildWorld();
+  var worldBits = scene.children.filter(function (c) { return !c.isLight && c !== cityG; });
 
   // ---------- персонаж ----------
   function makeChar(o) {
@@ -628,6 +642,44 @@ Claudix.ready(function () {
         part(BOX, mAcc, 0.62, 0.05, 0.3, 0, 0.27, 0.4, head);
         part(BOX, mk(0x222222), 0.12, 0.5, 0.14, 0, -1.0, 0, armR);
         armR.rotation.x = -1.4; break;
+      case "zombie":
+        part(BOX, mkb(0xff3a2a), 0.09, 0.09, 0.03, -0.13, 0.04, 0.29, head);
+        part(BOX, mkb(0xff3a2a), 0.09, 0.09, 0.03, 0.13, 0.04, 0.29, head);
+        part(BOX, mk(0x2a2a1e), 0.3, 0.06, 0.03, 0, -0.14, 0.29, head);
+        part(BOX, mk(0x6b5a3a), 0.5, 0.3, 0.05, 0.15, 1.25, 0.27, body);
+        eyes = false; break;
+      case "skel":
+        part(BOX, mk(0x1a1a1a), 0.14, 0.14, 0.03, -0.13, 0.04, 0.29, head);
+        part(BOX, mk(0x1a1a1a), 0.14, 0.14, 0.03, 0.13, 0.04, 0.29, head);
+        part(BOX, mk(0x1a1a1a), 0.32, 0.05, 0.03, 0, -0.16, 0.29, head);
+        [1.75, 1.55, 1.35].forEach(function (y) { part(BOX, mk(0x8f887a), 0.8, 0.05, 0.03, 0, y, 0.27, body); });
+        part(BOX, mk(0x7a5a3a), 0.08, 1.3, 0.08, 0, -0.9, 0.15, armL);
+        eyes = false; break;
+      case "ghost":
+        part(BOX, mSuit, 1.15, 1.9, 0.75, 0, 1.25, 0, body);
+        part(BOX, mSuit, 0.7, 0.3, 0.6, 0, 0.3, 0, head);
+        part(BOX, mk(0x10121a), 0.14, 0.2, 0.03, -0.14, 0, 0.29, head);
+        part(BOX, mk(0x10121a), 0.14, 0.2, 0.03, 0.14, 0, 0.29, head);
+        part(BOX, mk(0x10121a), 0.18, 0.18, 0.03, 0, -0.2, 0.29, head);
+        legL.visible = false; legR.visible = false;
+        eyes = false; break;
+      case "butcher":
+        part(BOX, mAcc, 0.8, 1.0, 0.05, 0, 1.3, 0.28, body);
+        part(BOX, mk(0x8a1a1a), 0.3, 0.25, 0.06, 0.15, 1.45, 0.29, body);
+        part(BOX, mk(0xcfd6dd), 0.08, 0.5, 0.42, 0, -1.05, 0.15, armR);
+        part(BOX, mk(0x4a3020), 0.1, 0.25, 0.1, 0, -0.85, 0, armR);
+        break;
+      case "pking":
+        part(SPH, mSkin, 0.98, 0.82, 0.98, 0, 0.12, 0, head);
+        part(SPH, mk(0xe0650f), 0.6, 0.8, 1.04, 0.22, 0.12, 0, head);
+        part(SPH, mk(0xe0650f), 0.6, 0.8, 1.04, -0.22, 0.12, 0, head);
+        part(BOX, mAcc, 0.12, 0.3, 0.12, 0, 0.62, 0, head);
+        part(BOX, mkb(0xffe14a), 0.18, 0.14, 0.04, -0.2, 0.2, 0.47, head);
+        part(BOX, mkb(0xffe14a), 0.18, 0.14, 0.04, 0.2, 0.2, 0.47, head);
+        part(BOX, mkb(0xffe14a), 0.46, 0.09, 0.04, 0, -0.06, 0.47, head);
+        [-0.24, 0, 0.24].forEach(function (x) { part(CONE, mkb(0x8a4dff), 0.14, 0.28, 0.14, x, 0.62, 0.05, head); });
+        mkCape(mk(0x241238), 1.1, 1.5);
+        eyes = false; break;
       case "boss":
         part(BOX, mk(0x15151a), 0.6, 0.6, 0.6, 0, 0, 0, head);
         part(BOX, mSkin, 0.4, 0.1, 0.02, 0, 0.06, 0.31, head);
@@ -813,14 +865,22 @@ Claudix.ready(function () {
     e.dead = true; run.kills++;
     var rew = Math.round(e.reward * (1 + 0.12 * (run.wave - 1)));
     run.earn += rew;
-    popText(e.pos.x, e.pos.y + 3, e.pos.z, "+" + rew, "#ffc933", e.type === "boss");
+    if (rew) popText(e.pos.x, e.pos.y + 3, e.pos.z, "+" + rew, "#ffc933", e.type === "boss");
     burst(e.pos.x, e.pos.y + 1.4, e.pos.z, e.T.suit, 14, 6, 0.7, 0.28, 1);
     disposeChar(e.c);
   }
   function hurtEnemy(e, dmg, o) {
     if (e.dead) return;
     o = o || {};
-    dmg *= pwrMul();
+    if (!o.raw) dmg *= pwrMul();
+    if (e.phased) { if (!o.silent) popText(e.pos.x, e.pos.y + 2.8, e.pos.z, TR("мимо"), "#9fb3ff", false); return; }
+    if (e.proxy) {
+      var pd = Math.min(500, Math.round(dmg));
+      e.flash = 0.12;
+      if (!o.silent) { popText(e.pos.x, e.pos.y + 2.8 * e.scale, e.pos.z, String(pd), o.color || "#ffffff", o.big); burst(e.pos.x, e.pos.y + 1.5, e.pos.z, 0xffffff, 3, 4, 0.25, 0.14, 0.6); }
+      netSend({ t: "ah", i: e.id, d: pd, kx: +(o.kx || 0).toFixed(1), kz: +(o.kz || 0).toFixed(1), st: o.stun || 0, bn: o.burn || 0, bd: o.burnDps || 0 });
+      return;
+    }
     if (e.duel) {
       var dd = Math.min(150, Math.round(dmg));
       e.flash = 0.12;
@@ -840,7 +900,7 @@ Claudix.ready(function () {
     e.barFg.scale.x = Math.max(0.02, e.hp / e.maxHp);
   }
   function updateEnemy(e, dt) {
-    var p = player, T = e.T;
+    var p = adv ? advTarget(e) : player, T = e.T, AR = adv ? adv.R : ARENA;
     e.flash = Math.max(0, e.flash - dt);
     var fl = e.flash > 0 ? 0.9 : 0;
     for (var i = 0; i < e.c.mats.length; i++) { var m = e.c.mats[i]; if (m.emissive) m.emissive.setRGB(fl, fl, fl); }
@@ -886,10 +946,10 @@ Claudix.ready(function () {
     e.cd -= dt;
     if (!tgt) {
       e.wanderT -= dt;
-      if (e.wanderT <= 0) { e.wanderT = rnd(2, 4); e.wander.set(rnd(-ARENA + 4, ARENA - 4), 0, rnd(-ARENA + 4, ARENA - 4)); }
+      if (e.wanderT <= 0) { e.wanderT = rnd(2, 4); e.wander.set(rnd(-AR + 4, AR - 4), 0, rnd(-AR + 4, AR - 4)); }
       var wx = e.wander.x - e.pos.x, wz = e.wander.z - e.pos.z, wd = Math.hypot(wx, wz);
       if (wd > 1) { mvx = wx / wd; mvz = wz / wd; speedNow = e.speed * 0.45; e.face = turn(e.face, Math.atan2(mvx, mvz), dt * 6); }
-    } else if (e.type === "gunman") {
+    } else if (T.ranged) {
       e.face = turn(e.face, Math.atan2(dx, dz), dt * 8);
       var nx = dx / dist, nz = dz / dist;
       if (dist > 11) { mvx = nx; mvz = nz; speedNow = e.speed; }
@@ -898,7 +958,7 @@ Claudix.ready(function () {
       if (e.cd <= 0 && dist < 16) {
         e.cd = T.cd * rnd(0.85, 1.2);
         var ax = nx + rnd(-0.08, 0.08), az = nz + rnd(-0.08, 0.08), al = Math.hypot(ax, az);
-        shoot({ x: e.pos.x + nx * 0.6, z: e.pos.z + nz * 0.6, y: 1.8, dx: ax / al, dz: az / al, speed: 11, dmg: e.dmg, life: 2.2, friendly: false, color: 0xffe066, size: 0.28, r: 0.3 });
+        shoot({ x: e.pos.x + nx * 0.6, z: e.pos.z + nz * 0.6, y: 1.8, dx: ax / al, dz: az / al, speed: 11, dmg: e.dmg, life: 2.2, friendly: false, color: T.shot || 0xffe066, size: T.shot ? 0.36 : 0.28, r: 0.3 });
         e.c.armR.rotation.x = -1.8;
       }
     } else {
@@ -910,7 +970,7 @@ Claudix.ready(function () {
         e.c.armR.rotation.x = -2.7 * pr; e.c.armL.rotation.x = -2.7 * pr;
         if (e.wind <= 0) {
           e.swing = 0.18;
-          if (Math.hypot(p.pos.x - e.pos.x, p.pos.z - e.pos.z) < T.range + 0.9) hurtPlayer(e.dmg, e.pos.x, e.pos.z);
+          if (p && Math.hypot(p.pos.x - e.pos.x, p.pos.z - e.pos.z) < T.range + 0.9) { if (p.mate) advHitMate(e.dmg, e.pos.x, e.pos.z); else hurtPlayer(e.dmg, e.pos.x, e.pos.z); }
         }
       } else if (dist > reach) { mvx = dx / dist; mvz = dz / dist; speedNow = e.speed; }
       else if (e.cd <= 0) { e.cd = T.cd; e.wind = e.windMax; }
@@ -928,11 +988,11 @@ Claudix.ready(function () {
       e.swing -= dt; e.c.armR.rotation.x = 0.3; e.c.armL.rotation.x = 0.3;
     } else if (e.wind <= 0) {
       animWalk(e.c, dt, speedNow);
-      if (e.type === "gunman") e.c.armR.rotation.x += (-1.4 - e.c.armR.rotation.x) * Math.min(1, dt * 10);
+      if (T.ranged) e.c.armR.rotation.x += (-1.4 - e.c.armR.rotation.x) * Math.min(1, dt * 10);
     }
   }
   function clampPos(v) {
-    var L = duel ? 13 : ARENA - 0.5;
+    var L = duel ? 13 : adv ? adv.R - 0.6 : ARENA - 0.5;
     if (v.x > L) v.x = L; else if (v.x < -L) v.x = -L;
     if (v.z > L) v.z = L; else if (v.z < -L) v.z = -L;
   }
@@ -949,8 +1009,9 @@ Claudix.ready(function () {
     m.scale.setScalar(o.size || 0.5);
     var y = o.y || 1.7;
     m.position.set(o.x, y, o.z); scene.add(m);
+    if (adv && adv.host && !o.friendly && !o.vis) advShotOut(o);
     projs.push({ m: m, x: o.x, y: y, z: o.z, vx: o.dx * o.speed, vz: o.dz * o.speed, dmg: o.dmg, life: o.life,
-      friendly: o.friendly, r: o.r || 0.5, pierce: !!o.pierce, splash: o.splash || 0, burn: o.burn || 0, knock: o.knock || 0,
+      friendly: o.friendly, vis: !!o.vis, r: o.r || 0.5, pierce: !!o.pierce, splash: o.splash || 0, burn: o.burn || 0, knock: o.knock || 0,
       color: o.color, hit: [] });
   }
   function removeProj(i) {
@@ -975,7 +1036,9 @@ Claudix.ready(function () {
       p.life -= dt; p.x += p.vx * dt; p.z += p.vz * dt;
       p.m.position.set(p.x, p.y, p.z);
       var dead = p.life <= 0 || Math.abs(p.x) > ARENA + 8 || Math.abs(p.z) > ARENA + 8;
-      if (p.friendly) {
+      if (p.friendly && p.vis) {
+        if (Math.random() < 0.6) burst(p.x, p.y, p.z, p.color, 1, 1.5, 0.25, 0.14, 0.2);
+      } else if (p.friendly) {
         if (Math.random() < 0.6) burst(p.x, p.y, p.z, p.color, 1, 1.5, 0.25, 0.14, 0.2);
         for (var j = 0; j < enemies.length; j++) {
           var e = enemies[j];
@@ -988,8 +1051,12 @@ Claudix.ready(function () {
             if (!p.pierce) { dead = true; break; }
           }
         }
-      } else if (player && Math.hypot(player.pos.x - p.x, player.pos.z - p.z) < 0.8 + p.r) {
+      } else if (p.vis) {
+        if (player && !player.dead && Math.hypot(player.pos.x - p.x, player.pos.z - p.z) < 0.8 + p.r) dead = true;
+      } else if (player && !player.dead && Math.hypot(player.pos.x - p.x, player.pos.z - p.z) < 0.8 + p.r) {
         hurtPlayer(p.dmg, p.x - p.vx, p.z - p.vz); dead = true;
+      } else if (adv && adv.mate && !adv.mate.dead && Math.hypot(adv.mate.pos.x - p.x, adv.mate.pos.z - p.z) < 0.8 + p.r) {
+        advHitMate(p.dmg, p.x - p.vx, p.z - p.vz); dead = true;
       }
       if (dead) removeProj(i);
     }
@@ -1020,6 +1087,11 @@ Claudix.ready(function () {
       p.pos.x += kx / kd * 0.6; p.pos.z += kz / kd * 0.6; clampPos(p.pos);
     }
     if (p.invis > 0) p.invis = 0;
+    if (p.hp <= 0 && adv) {
+      p.hp = 0; p.dead = true; p.dash = null; setGhost(false); burst(p.pos.x, 1.5, p.pos.z, p.def.suit, 24, 7, 0.9, 0.3, 1); p.c.root.visible = false;
+      banner(TR("Ты пал"), adv.mate && !adv.mate.dead ? TR("Напарник ещё бьётся. В следующей комнате ты вернёшься") : "");
+      return;
+    }
     if (p.hp <= 0) { p.hp = 0; p.dead = true; mode = "dead"; deadT = duel ? 1e9 : 1.3; if (duel) netSend({ t: "dd" }); setGhost(false); burst(p.pos.x, 1.5, p.pos.z, p.def.suit, 24, 7, 0.9, 0.3, 1); p.c.root.visible = false; }
   }
   function nearest(x, z, maxD) {
@@ -1232,10 +1304,11 @@ Claudix.ready(function () {
     if (wantAtk && p.atkT <= 0 && !p.dash) {
       ATK[def.id](p); p.atkT = def.atkCd; p.atkAnim = 0.22;
       if (duel) netSend({ t: "da", k: 0, f: +p.face.toFixed(2), x: +p.pos.x.toFixed(2), z: +p.pos.z.toFixed(2) });
+      else if (adv && adv.mate && !adv.mate.bot) netSend({ t: "aa", k: 0, f: +p.face.toFixed(2), x: +p.pos.x.toFixed(2), z: +p.pos.z.toFixed(2) });
     }
     if (input.abil) {
       input.abil = false;
-      if (p.abilT <= 0 && !p.dash) { ABIL[def.id](p); p.abilT = def.cd; p.atkAnim = 0.25; if (duel) netSend({ t: "da", k: 1, f: +p.face.toFixed(2), x: +p.pos.x.toFixed(2), z: +p.pos.z.toFixed(2) }); }
+      if (p.abilT <= 0 && !p.dash) { ABIL[def.id](p); p.abilT = def.cd; p.atkAnim = 0.25; if (duel) netSend({ t: "da", k: 1, f: +p.face.toFixed(2), x: +p.pos.x.toFixed(2), z: +p.pos.z.toFixed(2) }); else if (adv && adv.mate && !adv.mate.bot) netSend({ t: "aa", k: 1, f: +p.face.toFixed(2), x: +p.pos.x.toFixed(2), z: +p.pos.z.toFixed(2) }); }
     }
     p.c.root.rotation.y = 0; p.c.body.rotation.y = p.face;
     p.c.armBusy = p.atkAnim > 0;
@@ -1272,7 +1345,7 @@ Claudix.ready(function () {
   }
   function updateRun(dt) {
     var r = run;
-    if (r.state === "duel") return;
+    if (r.state === "duel" || r.state === "adv") return;
     if (r.state === "break") { r.timer -= dt; if (r.timer <= 0) beginWave(); }
     else {
       r.spawnT -= dt;
@@ -1295,7 +1368,15 @@ Claudix.ready(function () {
     hpFill.style.transform = "scaleX(" + Math.max(0, r).toFixed(3) + ")";
     hpFill.classList.toggle("low", r < 0.3);
     hpTxt.textContent = Math.ceil(p.hp) + " / " + p.maxHp;
-    if (duel) {
+    if (adv) {
+      earnEl.textContent = fmt(adv.earn);
+      waveEl.textContent = TR("Этаж ") + adv.floor + " · " + (ROOMS[adv.room].boss ? TR("Босс") : TR("Комната ") + (adv.room % 2 + 1));
+      var bossE = null; enemies.forEach(function (e) { if (!e.dead && e.T && e.T.boss) bossE = e; });
+      foeEl.textContent = bossE ? TR("Тыквенный король · ") + Math.ceil(100 * (bossE.proxy ? bossE.hpF : bossE.hp / bossE.maxHp)) + "%"
+        : adv.state === "gate" ? TR("Ворота открыты ↑") : adv.state === "won" ? TR("Победа!") : TR("Врагов: ") + (aliveCount() + (adv.host ? adv.queue.length : 0));
+      if (adv.mate) $("mateTxt").textContent = adv.mate.n + " · " + (adv.mate.dead ? TR("пал") : Math.ceil(adv.mate.hp) + " / " + adv.mate.mh);
+      if (p.dead) hpTxt.textContent = TR("пал · ждёт следующей комнаты");
+    } else if (duel) {
       earnEl.textContent = "—"; waveEl.textContent = TR("Дуэль");
       foeEl.textContent = duel.opp.n + " · " + Math.ceil(duel.fhp) + " / " + duel.opp.def.hp * DUEL_HP;
     } else {
@@ -1474,7 +1555,7 @@ Claudix.ready(function () {
     if (net.remotes[p.u]) removeRemote(p.u);
     var def = HERO_BY_ID[p.h] || HERO_BY_ID.cobalt, c = heroChar(def);
     scene.add(c.root); c.root.position.set(p.x, 0, p.z);
-    var vis = !duel; c.root.visible = vis;
+    var vis = !duel && !adv; c.root.visible = vis;
     net.remotes[p.u] = { u: p.u, name: p.n, hero: def.id, c: c, x: p.x, z: p.z, f: p.f, tx: p.x, tz: p.z, tf: p.f, el: nickEl(p.n, false) };
   }
   function removeRemote(u) { var r = net.remotes[u]; if (!r) return; disposeChar(r.c); r.el.remove(); delete net.remotes[u]; }
@@ -1499,6 +1580,19 @@ Claudix.ready(function () {
       banner(TR("Онлайн"), TR("Тут можно тусоваться с другими игроками"));
     } else if (m.t === "j" && m.p) { addRemote(m.p); }
     else if (m.t === "l") { removeRemote(m.u); }
+    else if (m.t === "as") { advQ = false; $("advOv").hidden = true; startAdv(m); }
+    else if (m.t === "ap" && adv && adv.mate && !adv.mate.bot) {
+      var am = adv.mate; am.tx = +m.x || 0; am.tz = +m.z || 0; am.tf = +m.f || 0; am.mv = m.m; am.mh = Math.max(1, +m.mh || am.mh); am.hp = Math.max(0, +m.hp || 0); am.dead = am.hp <= 0; am.invis = m.iv ? 1 : 0;
+    }
+    else if (m.t === "ae" && adv && !adv.host && Array.isArray(m.e)) advApplySnap(m.e);
+    else if (m.t === "ah" && adv && adv.host) {
+      var he = advById(m.i);
+      if (he && !he.proxy) hurtEnemy(he, Math.max(0, Math.min(500, +m.d || 0)), { raw: true, kx: Math.max(-30, Math.min(30, +m.kx || 0)), kz: Math.max(-30, Math.min(30, +m.kz || 0)), stun: Math.min(1.5, +m.st || 0), burn: Math.min(4, +m.bn || 0), burnDps: Math.min(10, +m.bd || 0), color: "#9fd8ff" });
+    }
+    else if (m.t === "ax" && adv && player && !player.dead && !adv.over) hurtPlayer(Math.max(0, Math.min(200, +m.d || 0)), +m.x || 0, +m.z || 0);
+    else if (m.t === "aa" && adv) mateAttackFx(m);
+    else if (m.t === "ar" && adv) advOnEvent(m);
+    else if (m.t === "aend" && adv) advMateLeft();
     else if (m.t === "ds" && m.o) { dq = false; $("duelOv").hidden = true; startDuel(m); }
     else if (m.t === "dp" && duel) { var f = duel.foe; f.tx = m.x; f.tz = m.z; f.tf = m.f; f.mv = m.m; duel.fhp = m.hp; }
     else if (m.t === "da" && duel) {
@@ -1533,6 +1627,8 @@ Claudix.ready(function () {
     };
   }
   function leaveOnline(lost) {
+    if (adv) { commitAdv(); cleanupAdv(); showLobby(); }
+    advQ = false; $("advOv").hidden = true;
     if (duel) { duel = null; cleanupRun(); resetResultDlg(); showLobby(); }
     dq = false; $("duelOv").hidden = true;
     var ws = net.ws; net.ws = null; net.ready = false;
@@ -1710,6 +1806,11 @@ Claudix.ready(function () {
       $("lpDesc").textContent = TR("Бой 1 на 1 с живым игроком. Герой любой, даже некупленный.");
       lv.hidden = meter.hidden = true;
       btn.disabled = false; btn.textContent = TR("Выбрать героя"); btn.onclick = function () { setDuelOpen(true); };
+    } else if (st.id === "adv") {
+      $("lpTitle").textContent = "Halloween Adventure";
+      $("lpDesc").textContent = TR("Подземелье на двоих: 3 этажа сильных монстров, на третьем Тыквенный король.") + (save.pk ? TR(" Король повержен: ") + save.pk : "");
+      lv.hidden = meter.hidden = true;
+      btn.disabled = false; btn.textContent = TR("Собрать отряд"); btn.onclick = function () { setAdvOpen(true); };
     } else if (st.id === "exit") {
       $("lpTitle").textContent = TR("Выход");
       $("lpDesc").textContent = TR("Вернуться в своё лобби.");
@@ -1837,14 +1938,14 @@ Claudix.ready(function () {
   function quitToMenu() { commitRun(); cleanupRun(); showLobby(); }
   function setPause(on) {
     if (mode !== "play") return;
-    if (duel) { $("pauseOv").hidden = !on; if (on) input.btnAtk = false; return; }
+    if (duel || adv) { $("pauseOv").hidden = !on; if (on) input.btnAtk = false; return; }
     paused = on; $("pauseOv").hidden = !on;
     if (on) { input.btnAtk = false; input.keys = {}; joyEnd(); }
   }
     $("pauseBtn").addEventListener("click", function () { setPause(true); });
   $("resumeBtn").addEventListener("click", function () { setPause(false); });
-  $("quitBtn").addEventListener("click", function () { if (duel) { $("pauseOv").hidden = true; netSend({ t: "dq" }); } else quitToMenu(); });
-  $("resBtn").addEventListener("click", function () { if (duel) leaveDuel(); else { cleanupRun(); showLobby(); } });
+  $("quitBtn").addEventListener("click", function () { if (adv) { $("pauseOv").hidden = true; leaveAdv(); } else if (duel) { $("pauseOv").hidden = true; netSend({ t: "dq" }); } else quitToMenu(); });
+  $("resBtn").addEventListener("click", function () { if (adv) leaveAdv(); else if (duel) leaveDuel(); else { cleanupRun(); showLobby(); } });
   document.addEventListener("visibilitychange", function () { if (document.hidden) setPause(true); });
 
   // ---------- управление ----------
@@ -1886,7 +1987,7 @@ Claudix.ready(function () {
   window.addEventListener("keydown", function (e) {
     if (mode === "lobby") {
       var kl = e.code;
-      if (kl === "Escape" && heroOpen) { if (!$("duelOv").hidden) setDuelOpen(false); else setHeroOpen(false); return; }
+      if (kl === "Escape" && heroOpen) { if (!$("duelOv").hidden) setDuelOpen(false); else if (!$("advOv").hidden) setAdvOpen(false); else setHeroOpen(false); return; }
       if (heroOpen) return;
       if (kl === "ArrowUp" || kl === "ArrowDown" || kl === "ArrowLeft" || kl === "ArrowRight" || kl === "Space") e.preventDefault();
       if (kl === "KeyE" || kl === "Enter") { var b = $("lpBtn"); if (!$("lpanel").hidden && !b.disabled) b.click(); return; }
@@ -1907,6 +2008,7 @@ Claudix.ready(function () {
   function camScale() { var a = camera.aspect; return a < 1.25 ? Math.min(1.9, 1.25 / a) : 1; }
   function desiredCam() {
     var k = camScale(), x = player ? player.pos.x : 0, z = player ? player.pos.z : 0;
+    if (adv && player && player.dead && adv.mate && !adv.mate.dead) { x = adv.mate.pos.x; z = adv.mate.pos.z; }
     return { px: x, py: CAM_Y * k, pz: z + CAM_Z * k, lx: x, ly: 0, lz: z };
   }
   function snapCamera() {
@@ -1932,6 +2034,620 @@ Claudix.ready(function () {
     snapCamera();
   }
 
+  // ---------- Halloween Adventure: подземелье на двоих ----------
+  // Врагов считает хост (тот, кто первым попал в пару, или игрок в одиночку). Второй игрок видит снимки врагов
+  // и отправляет хосту свои удары. Сервер только пересылает сообщения внутри пати.
+  var ADV_UNTIL = Date.UTC(2026, 10, 9);          // ивент идёт до 8 ноября включительно
+  var ADV_OFFLINE = !!window.__ADV_OFFLINE__;     // сборка-артефакт: без сервера, соло или с ботом
+  var adv = null, advSel = null, advQ = false;
+  var MON = {
+    zombie:  { name: TR("Зомби"), hp: 260, speed: 3.2, dmg: 16, range: 1.7, cd: 1.2, wind: 0.35, scale: 1.1, kb: 0.8, suit: 0x4d5a3c, pants: 0x3a3226, skin: 0x86a86a, accent: 0x2a2a1e },
+    skel:    { name: TR("Скелет"), hp: 170, speed: 3.0, dmg: 13, range: 0, cd: 1.6, wind: 0, scale: 1, kb: 1, suit: 0xe6e1d3, pants: 0xd4cfc0, skin: 0xefeadc, accent: 0x9a9384, ranged: true, shot: 0xf3eedd },
+    ghost:   { name: TR("Призрак"), hp: 180, speed: 5.0, dmg: 12, range: 1.5, cd: 0.9, wind: 0.25, scale: 1, kb: 1.2, suit: 0xdfe8ff, pants: 0xdfe8ff, skin: 0xf2f6ff, accent: 0xb8c8ff, ghost: true },
+    butcher: { name: TR("Мясник"), hp: 700, speed: 2.6, dmg: 30, range: 2.3, cd: 1.7, wind: 0.55, scale: 1.6, kb: 0.35, suit: 0x7a2a2a, pants: 0x2e2622, skin: 0xb98a6a, accent: 0xd9d2c3 },
+    pking:   { name: TR("Тыквенный король"), hp: 3500, speed: 2.8, dmg: 30, range: 3.2, cd: 1.5, wind: 0.6, scale: 2.6, kb: 0.1, suit: 0x3a1f4f, pants: 0x1f1430, skin: 0xff8a1a, accent: 0x6fd14a, boss: true }
+  };
+  var MON_IDS = ["zombie", "skel", "ghost", "butcher", "pking"];
+  var ROOMS = [
+    { f: 1, R: 15, waves: [["zombie", "zombie", "zombie", "zombie", "skel"], ["zombie", "zombie", "zombie", "skel", "skel"]] },
+    { f: 1, R: 15, waves: [["zombie", "zombie", "zombie", "ghost", "ghost", "ghost"], ["butcher", "zombie", "zombie", "zombie"]] },
+    { f: 2, R: 16, waves: [["ghost", "ghost", "ghost", "ghost", "skel", "skel"], ["zombie", "zombie", "zombie", "zombie", "ghost", "ghost"]] },
+    { f: 2, R: 16, waves: [["butcher", "butcher", "skel", "skel", "skel"], ["ghost", "ghost", "ghost", "ghost", "zombie", "zombie", "zombie"]] },
+    { f: 3, R: 16, waves: [["butcher", "butcher", "ghost", "ghost", "ghost", "skel", "skel"], ["zombie", "zombie", "zombie", "zombie", "zombie", "skel", "skel", "skel"]] },
+    { f: 3, R: 19, boss: true, waves: [["pking"]] }
+  ];
+  var hemiL = null;
+  scene.children.forEach(function (c) { if (c.isHemisphereLight) hemiL = c; });
+  var advG = null, advOwnGeo = [], look0 = null;
+  var DISC = new THREE.CircleGeometry(1, 40);
+
+  // ---------- вид подземелья ----------
+  function dungeonLook(on) {
+    if (on && !look0) {
+      look0 = { bg: scene.background.getHex(), fog: scene.fog.color.getHex(), near: scene.fog.near, far: scene.fog.far, hemi: hemiL ? hemiL.intensity : 0, sun: sun.intensity, sunC: sun.color.getHex() };
+      scene.background.setHex(0x0b0912); scene.fog.color.setHex(0x0b0912); scene.fog.near = 24; scene.fog.far = 64;
+      if (hemiL) hemiL.intensity = 0.6; sun.intensity = 0.55; sun.color.setHex(0xffb27a);
+    } else if (!on && look0) {
+      scene.background.setHex(look0.bg); scene.fog.color.setHex(look0.fog); scene.fog.near = look0.near; scene.fog.far = look0.far;
+      if (hemiL) hemiL.intensity = look0.hemi; sun.intensity = look0.sun; sun.color.setHex(look0.sunC);
+      look0 = null;
+    }
+    worldBits.forEach(function (m) { m.visible = !on; });
+    if (cityG) cityG.visible = on ? false : !lobby.online;
+  }
+  function disposeAdvRoom() {
+    if (!advG) return;
+    scene.remove(advG);
+    advG.traverse(function (o) { if (o.material) o.material.dispose(); });
+    advOwnGeo.forEach(function (g) { g.dispose(); });
+    advOwnGeo = []; advG = null;
+  }
+  function makePumpkin(x, z, s, lit, parent) {
+    var g = new THREE.Group(); g.position.set(x, 0, z); g.scale.setScalar(s); g.rotation.y = rnd(-0.6, 0.6);
+    var o1 = lam(0xff7a1a), o2 = lam(0xe0650f);
+    part(SPH, o1, 1, 0.75, 1, 0, 0.38, 0, g); part(SPH, o2, 0.62, 0.72, 1.06, 0.2, 0.38, 0, g); part(SPH, o2, 0.62, 0.72, 1.06, -0.2, 0.38, 0, g);
+    part(BOX, lam(0x3f7a2a), 0.1, 0.26, 0.1, 0, 0.82, 0, g);
+    if (lit) {
+      var y = new THREE.MeshBasicMaterial({ color: 0xffd23f });
+      part(BOX, y, 0.17, 0.13, 0.05, -0.19, 0.5, 0.5, g); part(BOX, y, 0.17, 0.13, 0.05, 0.19, 0.5, 0.5, g); part(BOX, y, 0.42, 0.08, 0.05, 0, 0.28, 0.5, g);
+    }
+    parent.add(g); return g;
+  }
+  function buildAdvRoom(i) {
+    disposeAdvRoom();
+    var D = ROOMS[i], R = D.R, f = D.f;
+    adv.R = R;
+    advG = new THREE.Group(); scene.add(advG);
+    var seed = 77 + i * 131;
+    function sr() { seed = (seed * 1664525 + 1013904223) % 4294967296; return seed / 4294967296; }
+    var floorC = [0x26222e, 0x221f2c, 0x2c1c22][f - 1], wallC = [0x3b3446, 0x332e48, 0x4a2a32][f - 1];
+    var fg = new THREE.PlaneGeometry(R * 2 + 2, R * 2 + 2); advOwnGeo.push(fg);
+    var fl = new THREE.Mesh(fg, lam(D.boss ? 0x2a1418 : floorC)); fl.rotation.x = -Math.PI / 2; fl.position.y = 0.06; advG.add(fl);
+    var seam = lam(0x15121b);
+    for (var k = -R + 3; k < R; k += 3) { part(BOX, seam, 0.07, 0.02, R * 2, k, 0.075, 0, advG); part(BOX, seam, R * 2, 0.02, 0.07, 0, 0.075, k, advG); }
+    var wm = lam(wallC), cap = lam(0x1d1924), H = 3.4;
+    part(BOX, wm, R * 2 + 2, H, 1, 0, H / 2, R + 0.5, advG);
+    part(BOX, wm, 1, H, R * 2 + 2, -R - 0.5, H / 2, 0, advG);
+    part(BOX, wm, 1, H, R * 2 + 2, R + 0.5, H / 2, 0, advG);
+    var seg = R - 3 + 1;
+    part(BOX, wm, seg, H, 1, -3 - seg / 2, H / 2, -R - 0.5, advG);
+    part(BOX, wm, seg, H, 1, 3 + seg / 2, H / 2, -R - 0.5, advG);
+    for (var b = -R; b <= R; b += 2.5) {
+      part(BOX, cap, 0.9, 0.5, 1.1, b, H + 0.25, R + 0.5, advG);
+      part(BOX, cap, 1.1, 0.5, 0.9, -R - 0.5, H + 0.25, b, advG);
+      part(BOX, cap, 1.1, 0.5, 0.9, R + 0.5, H + 0.25, b, advG);
+    }
+    // ворота в следующую комнату (на север)
+    var gateM = lam(0x241f2c), last = i === ROOMS.length - 1;
+    [-3.4, 3.4].forEach(function (x) { part(BOX, gateM, 1, 5.4, 1.4, x, 2.7, -R - 0.5, advG); });
+    part(BOX, gateM, 7.8, 1, 1.4, 0, 5.6, -R - 0.5, advG);
+    var portalM = new THREE.MeshBasicMaterial({ color: 0xff7a1a, transparent: true, opacity: 0, side: THREE.DoubleSide, depthWrite: false });
+    var pg = new THREE.PlaneGeometry(5.8, 5); advOwnGeo.push(pg);
+    var portal = new THREE.Mesh(pg, portalM); portal.position.set(0, 2.6, -R - 0.4); advG.add(portal);
+    var barM = lam(0x5a5866), bars = [];
+    if (!last) for (var bx = -2.4; bx <= 2.41; bx += 1.2) bars.push(part(BOX, barM, 0.18, 5, 0.18, bx, 2.5, -R - 0.5, advG));
+    var padM = new THREE.MeshBasicMaterial({ color: 0xff7a1a, transparent: true, opacity: 0, depthWrite: false });
+    var pad = new THREE.Mesh(DISC, padM); pad.rotation.x = -Math.PI / 2; pad.scale.setScalar(2.8); pad.position.set(0, 0.09, -R + 1.8); advG.add(pad);
+    // факелы
+    var torches = [], poleM = lam(0x2a2430), flameM = new THREE.MeshBasicMaterial({ color: 0xffa23a });
+    var tpos = [[-R + 0.2, -R / 2], [-R + 0.2, R / 2], [R - 0.2, -R / 2], [R - 0.2, R / 2], [-6.5, -R + 0.2], [6.5, -R + 0.2]];
+    tpos.forEach(function (p) {
+      part(BOX, poleM, 0.25, 0.9, 0.25, p[0], 2.2, p[1], advG);
+      var fl2 = part(CONE, flameM, 0.4, 0.75, 0.4, p[0], 2.95, p[1], advG); torches.push(fl2);
+    });
+    // тыквы, кости, свечи
+    for (var n = 0; n < 8; n++) {
+      var side = Math.floor(sr() * 3), u = (sr() * 2 - 1) * (R - 2), e = R - 1.3, x = side === 0 ? -e : side === 1 ? e : u, z = side === 2 ? e : u;
+      if (Math.abs(x) < 4.5 && z < -R + 4) continue;
+      makePumpkin(x, z, 0.8 + sr() * 0.9, sr() < 0.6, advG);
+    }
+    var boneM = lam(0xd8d2c2);
+    for (var q = 0; q < 6; q++) { var bb = part(BOX, boneM, 0.9, 0.12, 0.14, (sr() * 2 - 1) * (R - 3), 0.12, (sr() * 2 - 1) * (R - 3), advG); bb.rotation.y = sr() * 3; }
+    if (D.boss) {
+      var runeM = new THREE.MeshBasicMaterial({ color: 0xff3a2a, transparent: true, opacity: 0.45, side: THREE.DoubleSide, depthWrite: false });
+      var rg = new THREE.RingGeometry(6.6, 7, 64); advOwnGeo.push(rg);
+      var rune = new THREE.Mesh(rg, runeM); rune.rotation.x = -Math.PI / 2; rune.position.set(0, 0.08, -2); advG.add(rune);
+      var candM = lam(0xefe6d0), wick = new THREE.MeshBasicMaterial({ color: 0xffc04a });
+      for (var c = 0; c < 10; c++) { var a = c / 10 * Math.PI * 2, cx = Math.cos(a) * 6.8, cz = -2 + Math.sin(a) * 6.8; part(BOX, candM, 0.22, 0.6, 0.22, cx, 0.3, cz, advG); part(SPH, wick, 0.16, 0.24, 0.16, cx, 0.72, cz, advG); }
+      makePumpkin(-R + 2, -R + 2, 2.2, true, advG); makePumpkin(R - 2, -R + 2, 2.2, true, advG);
+    }
+    adv.gate = { portalM: portalM, bars: bars, padM: padM, open: false, torches: torches, last: last };
+  }
+  function openGate() {
+    if (!adv.gate || adv.gate.open) return;
+    adv.gate.open = true;
+    adv.gate.bars.forEach(function (b) { b.visible = false; });
+    burst(0, 2.5, -adv.R + 0.5, 0xff7a1a, 18, 5, 0.8, 0.25, 1);
+  }
+  function tickRoom(dt) {
+    var g = adv.gate; if (!g) return;
+    g.torches.forEach(function (t, i) { var s = 0.85 + Math.sin(tAll * 11 + i * 1.7) * 0.15; t.scale.set(0.4 * s, 0.75 * (0.9 + Math.sin(tAll * 7 + i) * 0.15), 0.4 * s); });
+    if (g.open) { g.portalM.opacity = 0.45 + Math.sin(tAll * 3) * 0.12; g.padM.opacity = 0.28 + Math.sin(tAll * 4) * 0.1; }
+  }
+  function warnCircle(x, z, r, life) {
+    var m = new THREE.MeshBasicMaterial({ color: 0xff3a2a, transparent: true, opacity: 0.2, depthWrite: false });
+    var d = new THREE.Mesh(DISC, m); d.rotation.x = -Math.PI / 2; d.position.set(x, 0.1, z); d.scale.setScalar(r); scene.add(d);
+    addFx(life, function (k) { m.opacity = 0.16 + 0.26 * k + Math.sin(k * 28) * 0.05; }, function () { scene.remove(d); m.dispose(); });
+  }
+
+  // ---------- монстры ----------
+  function advById(id) { for (var i = 0; i < enemies.length; i++) if (enemies[i].id === id && !enemies[i].dead) return enemies[i]; return null; }
+  function spawnMon(type, x, z, id, proxy) {
+    var B = MON[type], f = adv.floor;
+    var hpMul = [1, 1.4, 1.9][f - 1] * (adv.party > 1 ? 1.75 : 1) * adv.pScale, dmgMul = 1 + 0.2 * (f - 1);
+    var c = makeChar({ kind: type, suit: B.suit, pants: B.pants, skin: B.skin, accent: B.accent, scale: B.scale });
+    if (B.ghost) c.mats.forEach(function (m) { m.transparent = true; m.opacity = 0.62; m.depthWrite = false; });
+    c.root.position.set(x, 0, z);
+    var bar = new THREE.Group(); bar.position.set(0, 3.15, 0); bar.rotation.x = BAR_PITCH;
+    var bg = new THREE.Mesh(BAR_BG_G, BAR_BG_M); bg.renderOrder = 10;
+    var fgm = new THREE.Mesh(BAR_FG_G, BAR_FG_M); fgm.position.set(-0.57, 0, 0.01); fgm.renderOrder = 11;
+    bar.add(bg); bar.add(fgm); bar.visible = false; c.root.add(bar);
+    scene.add(c.root);
+    var hp = B.hp * hpMul;
+    var e = { type: type, T: B, c: c, root: c.root, pos: c.root.position, scale: B.scale, r: 0.6 * B.scale,
+      hp: hp, maxHp: hp, speed: B.speed, dmg: B.dmg * dmgMul, dmgMul: dmgMul, kb: B.kb, reward: 0,
+      face: Math.atan2(-x, -z), kv: { x: 0, z: 0 }, flash: 0, stun: 0, burn: 0, burnDps: 0, burnTick: 0,
+      cd: rnd(0.6, 1.4), wind: 0, windMax: B.wind, liftT: 0, liftDur: 0, dead: false, bar: bar, barFg: fgm,
+      wander: new THREE.Vector3(x, 0, z), wanderT: 0, strafe: Math.random() < 0.5 ? 1 : -1, moveSpd: 0, swing: 0,
+      id: id, proxy: !!proxy, phased: false, phT: rnd(2, 4), sp: 3, slam: 0, alt: false, summoned: 0,
+      tx: x, tz: z, tf: 0, ty: 0, hpF: 1, fl: 0 };
+    if (B.boss) e.bar.scale.set(2.2, 1.6, 1);
+    enemies.push(e);
+    burst(x, 1, z, B.ghost ? 0xdfe8ff : 0x6a5a7a, 10, 4, 0.6, 0.22, 1);
+    return e;
+  }
+  function advTarget(e) {
+    var best = null, bd = 1e9, m = adv.mate;
+    if (player && !player.dead) { bd = Math.hypot(player.pos.x - e.pos.x, player.pos.z - e.pos.z); best = player; }
+    if (m && !m.dead) { var d = Math.hypot(m.pos.x - e.pos.x, m.pos.z - e.pos.z); if (d < bd) best = m; }
+    return best;
+  }
+  function advHitMate(d, fx, fz) {
+    var m = adv.mate; if (!m || m.dead) return;
+    burst(m.pos.x, 1.6, m.pos.z, 0xff4a5c, 5, 4, 0.3, 0.16, 0.8);
+    if (m.bot) { botHurt(d); return; }
+    netSend({ t: "ax", d: Math.round(d), x: +fx.toFixed(2), z: +fz.toFixed(2) });
+  }
+  function advEvent(o) { if (adv && adv.host && !adv.solo && !adv.mateBot) netSend(Object.assign({ t: "ar" }, o)); }
+  function advShotOut(o) {
+    advEvent({ k: "sh", x: +o.x.toFixed(1), z: +o.z.toFixed(1), y: o.y || 1.7, dx: +o.dx.toFixed(3), dz: +o.dz.toFixed(3), s: o.speed, c: o.color, sz: o.size, l: o.life });
+  }
+  // особые умения: призраки исчезают, король кидает тыквы и бьёт по площади. true = обычный ИИ в этот кадр не нужен
+  function monSpecial(e, dt) {
+    var T = e.T;
+    if (T.ghost) {
+      e.phT -= dt;
+      if (e.phT <= 0) { e.phased = !e.phased; e.phT = e.phased ? 1.3 : rnd(2.5, 4); }
+      var op = e.phased ? 0.16 : 0.62;
+      for (var i = 0; i < e.c.mats.length; i++) e.c.mats[i].opacity = op;
+    }
+    if (!T.boss || e.liftDur > 0) return false;
+    var hpF = e.hp / e.maxHp, t;
+    if ((e.summoned === 0 && hpF < 0.7) || (e.summoned === 1 && hpF < 0.4)) {
+      e.summoned++;
+      banner(TR("Тыквенный король"), TR("зовёт подмогу!")); advEvent({ k: "ban", a: "Тыквенный король", b: "зовёт подмогу!" });
+      ["zombie", "ghost", "zombie", e.summoned === 2 ? "butcher" : "skel"].forEach(function (ty, k) {
+        var a = k / 4 * Math.PI * 2 + 0.4;
+        var sx = Math.max(-adv.R + 2, Math.min(adv.R - 2, e.pos.x + Math.cos(a) * 5)), sz = Math.max(-adv.R + 2, Math.min(adv.R - 2, e.pos.z + Math.sin(a) * 5));
+        spawnMon(ty, sx, sz, adv.nextId++);
+      });
+    }
+    if (e.slam > 0) {
+      e.slam -= dt;
+      var pr = 1 - Math.max(0, e.slam) / 1.1;
+      e.c.armR.rotation.x = -2.9 * pr; e.c.armL.rotation.x = -2.9 * pr;
+      if (e.slam <= 0) {
+        e.swing = 0.3; shake = Math.max(shake, 0.5);
+        ringFx(e.pos.x, e.pos.z, 7.5, 0.45, 0xff6a2a, 0.9); burst(e.pos.x, 0.5, e.pos.z, 0xff7a1a, 22, 8, 0.7, 0.3, 1);
+        advEvent({ k: "ring", x: +e.pos.x.toFixed(1), z: +e.pos.z.toFixed(1), r: 7.5, l: 0.45, c: 0xff6a2a });
+        var dmg = 26 * e.dmgMul;
+        if (player && !player.dead && Math.hypot(player.pos.x - e.pos.x, player.pos.z - e.pos.z) < 7.5) hurtPlayer(dmg, e.pos.x, e.pos.z);
+        var m = adv.mate;
+        if (m && !m.dead && Math.hypot(m.pos.x - e.pos.x, m.pos.z - e.pos.z) < 7.5) advHitMate(dmg, e.pos.x, e.pos.z);
+      }
+      return true;
+    }
+    if (e.stun > 0) return false;
+    e.sp -= dt;
+    if (e.sp <= 0 && (t = advTarget(e))) {
+      e.sp = hpF < 0.5 ? 4.2 : 5.5;
+      e.alt = !e.alt;
+      if (e.alt) {
+        var base = Math.atan2(t.pos.x - e.pos.x, t.pos.z - e.pos.z);
+        e.face = base; e.c.armR.rotation.x = -2;
+        for (var k = -3; k <= 3; k++) {
+          var a2 = base + k * 0.2;
+          shoot({ x: e.pos.x + Math.sin(a2) * 2.2, z: e.pos.z + Math.cos(a2) * 2.2, y: 2.2, dx: Math.sin(a2), dz: Math.cos(a2), speed: 10, dmg: 14 * e.dmgMul, life: 2.6, friendly: false, color: 0xff7a1a, size: 0.75, r: 0.45 });
+        }
+      } else {
+        e.slam = 1.1; e.wind = 0;
+        warnCircle(e.pos.x, e.pos.z, 7.5, 1.1);
+        advEvent({ k: "warn", x: +e.pos.x.toFixed(1), z: +e.pos.z.toFixed(1), r: 7.5, l: 1.1 });
+        return true;
+      }
+    }
+    return false;
+  }
+  function updateMonster(e, dt) {
+    if (adv && monSpecial(e, dt)) { clampPos(e.pos); return; }
+    if (!e.dead) updateEnemy(e, dt);
+    if (adv && e.T.ghost && !e.dead) e.c.body.position.y = 0.3 + Math.sin(tAll * 3 + e.id) * 0.15;
+  }
+
+  // ---------- снимки врагов для второго игрока ----------
+  function advSnap() {
+    var arr = [];
+    enemies.forEach(function (e) {
+      if (e.dead || e.proxy || !adv) return;
+      arr.push([e.id, MON_IDS.indexOf(e.type), Math.round(e.pos.x * 10), Math.round(e.pos.z * 10), Math.round(e.face * 100), Math.round(e.hp / e.maxHp * 100),
+        (e.wind > 0 ? 1 : 0) | (e.swing > 0 ? 2 : 0) | (e.phased ? 4 : 0) | (e.stun > 0 ? 8 : 0) | (e.slam > 0 ? 16 : 0), Math.round(e.pos.y * 10)]);
+    });
+    netSend({ t: "ae", e: arr });
+  }
+  function advApplySnap(list) {
+    var seen = {};
+    list.forEach(function (r) {
+      if (!Array.isArray(r) || r.length < 7) return;
+      var id = r[0], e = advById(id);
+      if (!e) e = spawnMon(MON_IDS[r[1]] || "zombie", r[2] / 10, r[3] / 10, id, true);
+      seen[id] = 1;
+      e.tx = r[2] / 10; e.tz = r[3] / 10; e.tf = r[4] / 100; e.hpF = Math.max(0, r[5] / 100); e.fl = r[6] | 0; e.ty = (r[7] || 0) / 10;
+      e.phased = !!(e.fl & 4);
+      if (e.hpF < 1) { e.bar.visible = true; e.barFg.scale.x = Math.max(0.02, e.hpF); }
+    });
+    enemies.forEach(function (e) {
+      if (e.proxy && !e.dead && !seen[e.id]) {
+        e.dead = true; run.kills++;
+        burst(e.pos.x, e.pos.y + 1.4, e.pos.z, e.T.suit, 14, 6, 0.7, 0.28, 1);
+        disposeChar(e.c);
+      }
+    });
+  }
+  function advUpdateProxies(dt) {
+    var k = 1 - Math.exp(-dt * 12);
+    enemies.forEach(function (e) {
+      if (!e.proxy || e.dead) return;
+      var ox = e.pos.x, oz = e.pos.z;
+      e.pos.x += (e.tx - e.pos.x) * k; e.pos.z += (e.tz - e.pos.z) * k; e.pos.y += (e.ty - e.pos.y) * k;
+      e.face = turn(e.face, e.tf, dt * 14);
+      e.c.root.rotation.y = 0; e.c.body.rotation.y = e.face;
+      e.flash = Math.max(0, e.flash - dt);
+      var fl = e.flash > 0 ? 0.9 : 0;
+      for (var i = 0; i < e.c.mats.length; i++) { var m = e.c.mats[i]; if (m.emissive) m.emissive.setRGB(fl, fl, fl); if (e.T.ghost) m.opacity = e.phased ? 0.16 : 0.62; }
+      if (e.T.ghost) e.c.body.position.y = 0.3 + Math.sin(tAll * 3 + e.id) * 0.15;
+      if (e.fl & 17) { e.c.armR.rotation.x += (-2.8 - e.c.armR.rotation.x) * k; e.c.armL.rotation.x += (-2.8 - e.c.armL.rotation.x) * k; }
+      else if (e.fl & 2) { e.c.armR.rotation.x = 0.3; e.c.armL.rotation.x = 0.3; }
+      else animWalk(e.c, dt, Math.hypot(e.pos.x - ox, e.pos.z - oz) / Math.max(dt, 0.001) > 0.4 ? e.T.speed : 0);
+    });
+  }
+
+  // ---------- напарник ----------
+  function makeMate(o, def) {
+    var c = heroChar(def); scene.add(c.root);
+    return { u: o.u, n: o.n, def: def, c: c, pos: c.root.position, tx: 0, tz: 0, tf: Math.PI, face: Math.PI, hp: def.hp, mh: def.hp, dead: false, invis: 0, mate: true, atk: 0, mv: 0 };
+  }
+  function disposeMate() { if (adv && adv.mate) { disposeChar(adv.mate.c); adv.mate = null; } }
+  function mateAttackFx(m) {
+    var mt = adv.mate; if (!mt) return;
+    mt.atk = 0.25;
+    var def = mt.def, x = +m.x || 0, z = +m.z || 0, f = +m.f || 0;
+    if (m.k) { ringFx(x, z, 6, 0.4, def.accent, 0.8); return; }
+    if (def.id === "flame" || def.id === "abyss") {
+      shoot({ x: x + Math.sin(f) * 0.8, z: z + Math.cos(f) * 0.8, y: 1.6, dx: Math.sin(f), dz: Math.cos(f), speed: def.id === "flame" ? 15 : 20, dmg: 0, life: 1, friendly: true, vis: true, color: def.id === "flame" ? 0xff7a1a : 0x9b4dff, size: 0.6, r: 0.5 });
+    } else if (def.id === "storm") {
+      var n = nearest(x, z, 14);
+      boltFx(new THREE.Vector3(x, 1.8, z), n ? new THREE.Vector3(n.e.pos.x, 1.6, n.e.pos.z) : new THREE.Vector3(x + Math.sin(f) * 8, 1.5, z + Math.cos(f) * 8), 0x9ff3ff);
+    } else slashFx(x, z, f, def.id === "graviton" ? 5.4 : 3, def.accent);
+  }
+  function updateMate(dt) {
+    var m = adv.mate; if (!m) return;
+    if (m.bot) { updateBot(dt); return; }
+    var k = 1 - Math.exp(-dt * 12);
+    m.pos.x += (m.tx - m.pos.x) * k; m.pos.z += (m.tz - m.pos.z) * k; m.face = turn(m.face, m.tf, dt * 14);
+    animMate(m, dt, Math.hypot(m.tx - m.pos.x, m.tz - m.pos.z) > 0.08 || m.mv ? 7 : 0);
+  }
+  function animMate(m, dt, spd) {
+    m.atk = Math.max(0, m.atk - dt);
+    m.c.root.visible = !m.dead;
+    m.c.root.rotation.y = 0; m.c.body.rotation.y = m.face;
+    m.c.armBusy = m.atk > 0;
+    animWalk(m.c, dt, spd);
+    if (m.atk > 0) { var a = Math.sin((1 - m.atk / 0.25) * Math.PI); m.c.armR.rotation.x = -1.7 * a; m.c.armL.rotation.x = -0.6 * a; }
+    var op = m.invis > 0 ? 0.3 : 1;
+    if (m.c.mats[0].opacity !== op) m.c.mats.forEach(function (mm) { mm.transparent = op < 1; mm.opacity = op; mm.needsUpdate = true; });
+  }
+  // бот-напарник для артефакта: бежит к ближайшему врагу и бьёт, как его герой
+  function makeBot() {
+    var ids = HEROES.map(function (h) { return h.id; }).filter(function (id) { return id !== player.def.id; });
+    var def = HERO_BY_ID[ids[Math.floor(Math.random() * ids.length)]];
+    var m = makeMate({ u: "bot", n: TR("Бот") + " " + def.name }, def);
+    m.bot = true; m.hp = m.mh = def.hp; m.atkT = 1; m.abilT = 4; m.iframes = 0;
+    return m;
+  }
+  function botHurt(d) {
+    var m = adv.mate; if (!m || m.dead || m.iframes > 0) return;
+    m.hp -= d; m.iframes = 0.25;
+    popText(m.pos.x, 3.2, m.pos.z, "-" + Math.round(d), "#ffb0b8", false);
+    if (m.hp <= 0) { m.hp = 0; m.dead = true; burst(m.pos.x, 1.5, m.pos.z, m.def.suit, 20, 6, 0.8, 0.28, 1); banner(m.n, TR("пал. Вернётся в следующей комнате")); }
+  }
+  function updateBot(dt) {
+    var m = adv.mate, def = m.def;
+    m.iframes = Math.max(0, m.iframes - dt); m.atkT -= dt; m.abilT -= dt;
+    if (m.dead) { animMate(m, dt, 0); return; }
+    var tgt = null, bd = 1e9;
+    enemies.forEach(function (e) { if (e.dead) return; var d = Math.hypot(e.pos.x - m.pos.x, e.pos.z - m.pos.z); if (d < bd) { bd = d; tgt = e; } });
+    var ranged = def.id === "storm" || def.id === "flame" || def.id === "abyss", want = ranged ? 8 : 1.8, spd = 0, gx = 0, gz = 0;
+    if (tgt) { gx = tgt.pos.x; gz = tgt.pos.z; }
+    else if (adv.state === "gate") { gx = 0; gz = -adv.R + 1.5; want = 0.5; }
+    else if (player) { gx = player.pos.x + 2.5; gz = player.pos.z + 1.5; want = 1.5; }
+    var dx = gx - m.pos.x, dz = gz - m.pos.z, d = Math.hypot(dx, dz) || 0.001;
+    if (d > want) { m.pos.x += dx / d * def.speed * dt; m.pos.z += dz / d * def.speed * dt; spd = def.speed; }
+    else if (ranged && tgt && d < want - 2.5) { m.pos.x -= dx / d * def.speed * 0.6 * dt; m.pos.z -= dz / d * def.speed * 0.6 * dt; spd = def.speed * 0.6; }
+    clampPos(m.pos);
+    if (d > 0.05) m.face = turn(m.face, Math.atan2(dx, dz), dt * 12);
+    if (tgt && m.atkT <= 0 && bd < (ranged ? 14 : 3.2)) {
+      m.atkT = def.atkCd * 1.15;
+      var dmg = { cobalt: 20, storm: 14, shade: 18, graviton: 12, flame: 22, abyss: 28 }[def.id] * 1.6;
+      mateAttackFx({ k: 0, f: m.face, x: m.pos.x, z: m.pos.z });
+      if (!ranged) {
+        enemies.forEach(function (e) {
+          if (e.dead) return;
+          var ex = e.pos.x - m.pos.x, ez = e.pos.z - m.pos.z, ed = Math.hypot(ex, ez) || 0.001;
+          if (ed - e.r < (def.id === "graviton" ? 5 : 3)) hurtEnemy(e, dmg, { raw: true, kx: ex / ed * 6 * e.kb, kz: ez / ed * 6 * e.kb, color: "#9fd8ff" });
+        });
+      } else hurtEnemy(tgt, dmg, { raw: true, color: "#9fd8ff", burn: def.id === "flame" ? 2 : 0, burnDps: 7 });
+    }
+    if (tgt && m.abilT <= 0 && bd < 7) {
+      m.abilT = def.cd * 1.4;
+      mateAttackFx({ k: 1, f: m.face, x: m.pos.x, z: m.pos.z });
+      enemies.forEach(function (e) { if (!e.dead && Math.hypot(e.pos.x - m.pos.x, e.pos.z - m.pos.z) < 7 + e.r) hurtEnemy(e, 40, { raw: true, color: "#9fd8ff", big: true, stun: 0.5 }); });
+    }
+    animMate(m, dt, spd);
+  }
+
+  // ---------- комнаты ----------
+  function advPlaceStart() {
+    var R = adv.R, sx = adv.mate ? (adv.host ? -2.2 : 2.2) : 0;
+    if (player) {
+      player.pos.set(sx, 0, R - 3); player.face = Math.PI; player.iframes = 1; player.dash = null;
+      if (player.dead) { player.dead = false; player.hp = Math.round(player.maxHp * 0.5); player.c.root.visible = true; popText(player.pos.x, 3.4, player.pos.z, TR("Снова в бою"), "#7dffb0", true); }
+    }
+    var m = adv.mate;
+    if (m) {
+      m.pos.set(-sx, 0, R - 3); m.tx = -sx; m.tz = R - 3; m.face = m.tf = Math.PI;
+      if (m.bot && m.dead) { m.dead = false; m.hp = Math.round(m.mh * 0.5); }
+    }
+    snapCamera();
+  }
+  function advBeginRoom(i) {
+    while (projs.length) removeProj(projs.length - 1);
+    enemies.forEach(function (e) { if (!e.dead) { e.dead = true; disposeChar(e.c); } });
+    enemies.length = 0;
+    var newFloor = !adv.started || ROOMS[i].f !== adv.floor;
+    adv.started = true;
+    adv.room = i; adv.floor = ROOMS[i].f; adv.waveI = -1; adv.queue = []; adv.state = "fight"; adv.spawnT = 1.4;
+    buildAdvRoom(i); advPlaceStart();
+    if (ROOMS[i].boss) banner(TR("БОСС"), TR("Тыквенный король ждёт"));
+    else banner(newFloor ? TR("Этаж ") + adv.floor : TR("Комната ") + (i % 2 + 1), newFloor ? TR("Комната 1 из 2") : TR("Дальше только страшнее"));
+    if (adv.host) { advEvent({ k: "room", i: i }); advNextWave(); }
+  }
+  function advNextWave() { adv.waveI++; adv.queue = ROOMS[adv.room].waves[adv.waveI].slice(); adv.spawnT = adv.waveI ? 0.8 : 1.4; }
+  function advSpawnPoint(type) {
+    var R = adv.R;
+    if (type === "pking") return { x: 0, z: -4 };
+    var best = null;
+    for (var t = 0; t < 12; t++) {
+      var side = Math.floor(Math.random() * 3), u = rnd(-R + 2, R - 2), E = R - 1.5;
+      var x = side === 0 ? -E : side === 1 ? E : u, z = side === 2 ? -E : (side < 2 ? rnd(-R + 2, R * 0.3) : u);
+      var far = 99;
+      if (player && !player.dead) far = Math.min(far, Math.hypot(x - player.pos.x, z - player.pos.z));
+      if (adv.mate && !adv.mate.dead) far = Math.min(far, Math.hypot(x - adv.mate.pos.x, z - adv.mate.pos.z));
+      best = { x: x, z: z };
+      if (far > 9) break;
+    }
+    return best;
+  }
+  function advRoomClear() {
+    var last = adv.room === ROOMS.length - 1, bonus = last ? 2500 : 120 + 80 * adv.room;
+    advEvent({ k: "clear", b: bonus, w: last ? 1 : 0 });
+    advOnClear(bonus, last);
+  }
+  function advOnClear(bonus, last) {
+    if (adv.state !== "fight") return;
+    adv.state = last ? "won" : "gate"; adv.cleared++;
+    adv.earn += bonus;
+    if (player && !player.dead) { player.hp = Math.min(player.maxHp, player.hp + player.maxHp * 0.4); popText(player.pos.x, 3.6, player.pos.z, "+" + bonus, "#ffc933", true); }
+    if (last) {
+      var first = !save.pk;
+      save.pk = (save.pk || 0) + 1;
+      if (first) adv.earn += 3000;
+      banner(TR("ПОБЕДА"), TR("Тыквенный король повержен!") + (first ? TR(" +3000 за первую победу") : ""));
+      setTimeout(function () { if (adv && !adv.over) advResult(true); }, 2600);
+    } else {
+      openGate();
+      banner(TR("Комната зачищена"), "+" + bonus + TR(" · иди в ворота наверху"));
+    }
+  }
+  function advMateLeft() {
+    if (!adv || adv.over) return;
+    var name = adv.mate ? adv.mate.n : "";
+    disposeMate(); adv.solo = true;
+    if (!adv.host) {
+      // хост ушёл: дальше врагов считаем сами
+      adv.host = true;
+      enemies.forEach(function (e) { if (e.proxy && !e.dead) { e.proxy = false; e.hp = Math.max(1, e.hpF * e.maxHp); } });
+      if (adv.state === "fight") { adv.waveI = ROOMS[adv.room].waves.length - 1; adv.queue = []; }
+    }
+    banner(TR("Напарник ушёл"), (name ? name + " · " : "") + TR("дальше в одиночку"));
+  }
+  function advOnEvent(m) {
+    if (!adv || adv.over) return;
+    if (m.k === "room" && !adv.host) advBeginRoom(Math.max(0, Math.min(ROOMS.length - 1, m.i | 0)));
+    else if (m.k === "ban") banner(TR(String(m.a || "")), TR(String(m.b || "")));
+    else if (m.k === "clear") advOnClear(Math.max(0, Math.min(5000, +m.b || 0)), !!m.w);
+    else if (m.k === "lose") advResult(false);
+    else if (m.k === "ring") ringFx(+m.x || 0, +m.z || 0, Math.min(12, +m.r || 5), Math.min(2, +m.l || 0.4), m.c || 0xff6a2a, 0.9);
+    else if (m.k === "warn") warnCircle(+m.x || 0, +m.z || 0, Math.min(12, +m.r || 5), Math.min(2, +m.l || 1));
+    else if (m.k === "sh") shoot({ x: +m.x || 0, z: +m.z || 0, y: +m.y || 1.7, dx: +m.dx || 0, dz: +m.dz || 1, speed: Math.min(30, +m.s || 10), dmg: 0, life: Math.min(3, +m.l || 2), friendly: false, vis: true, color: m.c || 0xffffff, size: Math.min(1, +m.sz || 0.4), r: 0.4 });
+  }
+  function updateAdv(dt) {
+    if (adv.over) return;
+    tickRoom(dt);
+    updateMate(dt);
+    var m = adv.mate;
+    if (m && !m.bot) {
+      adv.sendT += dt;
+      if (adv.sendT >= 0.1 && player) {
+        adv.sendT = 0;
+        var mv = Math.hypot(player.pos.x - adv.lx, player.pos.z - adv.lz) > 0.05 ? 1 : 0;
+        adv.lx = player.pos.x; adv.lz = player.pos.z;
+        netSend({ t: "ap", x: +player.pos.x.toFixed(2), z: +player.pos.z.toFixed(2), f: +player.face.toFixed(2), m: mv, hp: player.dead ? 0 : Math.max(1, Math.round(player.hp)), mh: player.maxHp, iv: player.invis > 0 ? 1 : 0 });
+      }
+    }
+    if (!adv.host) { advUpdateProxies(dt); return; }
+    if (m && !m.bot) { adv.snapT += dt; if (adv.snapT >= 0.1) { adv.snapT = 0; advSnap(); } }
+    var D = ROOMS[adv.room];
+    if (adv.state === "fight") {
+      adv.spawnT -= dt;
+      if (adv.queue.length && adv.spawnT <= 0 && aliveCount() < 8) {
+        var ty = adv.queue.shift(), sp = advSpawnPoint(ty);
+        spawnMon(ty, sp.x, sp.z, adv.nextId++);
+        adv.spawnT = ty === "pking" ? 2 : 0.45;
+      }
+      if (!adv.queue.length && aliveCount() === 0) {
+        if (adv.waveI < D.waves.length - 1) { advNextWave(); banner(TR("Ещё волна"), TR("Держитесь!")); advEvent({ k: "ban", a: "Ещё волна", b: "Держитесь!" }); }
+        else advRoomClear();
+      }
+    } else if (adv.state === "gate") {
+      var inG = function (o) { return Math.abs(o.pos.x) < 3.2 && o.pos.z < -adv.R + 3.4; };
+      var pOk = player.dead || inG(player), mOk = !m || m.dead || inG(m);
+      if (pOk && mOk && !(player.dead && (!m || m.dead))) advBeginRoom(adv.room + 1);
+    }
+    if (adv.state !== "won" && player.dead && (!m || m.dead)) { advEvent({ k: "lose" }); advResult(false); }
+  }
+
+  // ---------- старт, итог, выход ----------
+  var RES_LABELS = Array.prototype.map.call($("resultOv").querySelectorAll("li span"), function (s) { return s.textContent; });
+  var RES_IDS = ["resWave", "resKills", "resEarn", "resTotal"];
+  function startAdv(m) {
+    if (mode !== "lobby" || duel || adv) return;
+    var def = HERO_BY_ID[advSel] || HERO_BY_ID[save.sel];
+    heroOpen = false; $("heroOv").hidden = true; $("advOv").hidden = true; advQ = false;
+    lobby.group.visible = false; $("slabels").hidden = true; $("lpanel").hidden = true; lobby.near = null;
+    if (player) { disposeChar(player.c); player = null; }
+    var myP = pwrMul(), mateP = m.o ? 1 + 0.1 * Math.max(0, Math.min(25, +m.o.p || 0)) : myP;
+    adv = { host: m.s === 0, solo: !m.o && !m.bot, mateBot: !!m.bot, party: m.o || m.bot ? 2 : 1, mate: null, room: 0, floor: 1, R: 15, state: "fight", waveI: -1, queue: [],
+      spawnT: 0, nextId: 1, sendT: 0, snapT: 0, earn: 0, cleared: 0, over: false, committed: false, started: false,
+      pScale: 0.6 + 0.4 * (myP + mateP) / 2, lx: 0, lz: 0, gate: null };
+    setRemotesVisible(false); dungeonLook(true);
+    player = makePlayer(def);
+    if (m.o) adv.mate = makeMate(m.o, HERO_BY_ID[m.o.h] || HERO_BY_ID.cobalt);
+    else if (m.bot) adv.mate = makeBot();
+    run = { wave: 1, state: "adv", timer: 0, queue: [], spawnT: 0, earn: 0, kills: 0, cap: 0, committed: true };
+    mode = "play"; paused = false;
+    input.jx = input.jy = 0; input.btnAtk = false; input.abil = false; input.keys = {};
+    $("hName").textContent = def.name; $("abilLbl").textContent = def.abilName;
+    $("quitBtn").textContent = TR("Покинуть подземелье");
+    $("lobby").hidden = true; $("hud").hidden = false; $("hud").classList.remove("lobby"); $("resultOv").hidden = true; $("pauseOv").hidden = true;
+    $("mateTxt").hidden = !adv.mate;
+    resetJoy();
+    advBeginRoom(0);
+    banner("Halloween Adventure", adv.mate ? TR("Вместе с ") + adv.mate.n : TR("В одиночку. Удачи"));
+    updateHud();
+  }
+  function commitAdv() {
+    if (!adv || adv.committed) return;
+    adv.committed = true;
+    save.money += adv.earn;
+    persist(); renderMoney();
+  }
+  function advResult(win) {
+    if (!adv || adv.over) return;
+    adv.over = true;
+    commitAdv();
+    mode = "dead"; deadT = 1e9; input.btnAtk = false; input.keys = {}; joyEnd();
+    $("pauseOv").hidden = true;
+    $("resTitle").textContent = win ? TR("Победа! Тыквенный король повержен") : TR("Подземелье оказалось сильнее");
+    var rows = [[TR("Комнат пройдено"), adv.cleared + " / " + ROOMS.length], [TR("Дошли до этажа"), String(adv.floor)], [TR("Заработано монет"), fmt(adv.earn)], [TR("Всего монет"), fmt(save.money)]];
+    $("resultOv").querySelectorAll("li span").forEach(function (s, i) { s.textContent = rows[i][0]; });
+    RES_IDS.forEach(function (id, i) { $(id).textContent = rows[i][1]; });
+    $("resultOv").querySelector("ul").style.display = "";
+    $("resBtn").textContent = ADV_OFFLINE ? TR("В лобби") : TR("Вернуться в комнату");
+    $("hud").hidden = true; $("resultOv").hidden = false;
+  }
+  function cleanupAdv() {
+    if (!adv) return;
+    disposeMate();
+    cleanupRun();
+    disposeAdvRoom();
+    adv = null;
+    dungeonLook(false);
+    $("mateTxt").hidden = true;
+    $("resultOv").querySelectorAll("li span").forEach(function (s, i) { s.textContent = RES_LABELS[i]; });
+    resetResultDlg();
+  }
+  function leaveAdv() {
+    if (!adv) return;
+    commitAdv();
+    if (!ADV_OFFLINE) netSend({ t: "aend" });
+    cleanupAdv();
+    showLobby();
+    setRemotesVisible(true);
+    net.lx = 1e9; net.lm = -1;
+    if (lobby.online && player) { player.pos.set(-14, 0, 7); player.face = Math.PI; snapCamera(); }
+  }
+
+  // ---------- окно выбора ----------
+  function setAdvOpen(on) {
+    heroOpen = on; $("advOv").hidden = !on;
+    if (on) { input.keys = {}; joyEnd(); if (!advSel || save.owned.indexOf(advSel) < 0) advSel = save.sel; renderAdvUi(); }
+    else { if (advQ) { advQ = false; netSend({ t: "aqc" }); } renderPanel(); }
+  }
+  function renderAdvUi() {
+    var h = "";
+    HEROES.forEach(function (d) {
+      if (save.owned.indexOf(d.id) < 0) return;
+      h += '<button class="act sec' + (advSel === d.id ? " on" : "") + '" data-id="' + d.id + '" type="button"' + (advQ ? " disabled" : "") + ">" + figSvg(d) + "<span>" + d.name + "</span></button>";
+    });
+    $("aHeroes").innerHTML = h;
+    $("aStat").textContent = advQ ? TR("Ищем напарника… Пусть друг тоже нажмёт «Искать напарника».")
+      : TR("3 этажа очень сильных монстров и Тыквенный король на третьем. Прокачка силы и радиуса работает. Вдвоём проще.") + (save.pk ? TR(" Король повержен: ") + save.pk : "");
+    $("aGo").textContent = ADV_OFFLINE ? TR("С ботом-напарником") : advQ ? TR("Отмена") : TR("Искать напарника");
+    $("aSolo").disabled = advQ;
+  }
+  $("aHeroes").addEventListener("click", function (e) {
+    var b = e.target.closest("button"); if (!b || advQ) return;
+    advSel = b.getAttribute("data-id"); renderAdvUi();
+  });
+  $("aGo").addEventListener("click", function () {
+    if (ADV_OFFLINE) { startAdv({ s: 0, o: null, bot: true }); return; }
+    if (advQ) { advQ = false; netSend({ t: "aqc" }); }
+    else { advQ = true; netSend({ t: "aq", id: advSel || save.sel, p: save.pwr }); }
+    renderAdvUi();
+  });
+  $("aSolo").addEventListener("click", function () {
+    if (ADV_OFFLINE) { startAdv({ s: 0, o: null }); return; }
+    if (advQ) return;
+    netSend({ t: "aq", id: advSel || save.sel, p: save.pwr, solo: 1 });
+  });
+  $("aClose").addEventListener("click", function () { setAdvOpen(false); });
+
+  // станция в лобби: тёмная арка с тыквами
+  (function buildAdvStation() {
+    var where = Date.now() < ADV_UNTIL ? (ADV_OFFLINE ? "solo" : "online") : "never";
+    var at = ADV_OFFLINE ? { x: 0, z: 18 } : { x: -14, z: 12 };
+    var st = lobbyStation({ id: "adv", where: where, x: at.x, z: at.z, r: 3.8, solid: 1.6, color: 0xff7a1a, label: TR("Хеллоуин"), labelY: 7 });
+    var stone = lam(0x2e2838);
+    [-2.2, 2.2].forEach(function (x) { part(BOX, stone, 0.9, 4.6, 0.9, x, 2.3, 0, st.group); });
+    part(BOX, stone, 5.3, 0.9, 0.9, 0, 4.9, 0, st.group);
+    var swM = new THREE.MeshBasicMaterial({ color: 0xff7a1a, transparent: true, opacity: 0.45, side: THREE.DoubleSide, depthWrite: false });
+    var sw = new THREE.Mesh(new THREE.PlaneGeometry(3.5, 4.4), swM); sw.position.set(0, 2.3, 0); st.group.add(sw);
+    makePumpkin(-2.9, 1.1, 1.1, true, st.group); makePumpkin(2.9, 1.1, 0.9, true, st.group); makePumpkin(0, 0, 1.2, true, st.group).position.set(0, 5.35, 0);
+    st.tick = function (t) { swM.opacity = 0.38 + Math.sin(t * 3) * 0.12; };
+  })();
+
+  if (window.__LG_TEST__) window.__lg = { adv: function () { return adv; }, enemies: function () { return enemies; }, player: function () { return player; }, save: function () { return save; },
+    hurt: hurtEnemy, mode: function () { return mode; }, projs: function () { return projs; }, ROOMS: ROOMS, net: net };
   // ---------- главный цикл ----------
   var lastT = performance.now();
   function loop(now) {
@@ -1945,10 +2661,11 @@ Claudix.ready(function () {
       if (mode === "lobby") {
         updateLobby(dt);
       } else if (mode === "play") {
-        updatePlayer(dt);
+        if (!(adv && player.dead)) updatePlayer(dt);
         if (mode === "play") updateRun(dt);
-        for (var i = 0; i < enemies.length; i++) if (!enemies[i].dead && !enemies[i].duel) updateEnemy(enemies[i], dt);
+        for (var i = 0; i < enemies.length; i++) if (!enemies[i].dead && !enemies[i].duel && !enemies[i].proxy) updateMonster(enemies[i], dt);
         if (duel) updateDuel(dt);
+        if (adv && mode === "play") updateAdv(dt);
         for (var j = enemies.length - 1; j >= 0; j--) if (enemies[j].dead) enemies.splice(j, 1);
         updateProjs(dt); updateFx(dt);
         if (player) updateHud();
