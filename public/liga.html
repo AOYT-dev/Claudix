@@ -1811,9 +1811,14 @@ Claudix.ready(function () {
       btn.disabled = false; btn.textContent = TR("Выбрать героя"); btn.onclick = function () { setDuelOpen(true); };
     } else if (st.id === "adv") {
       $("lpTitle").textContent = "Halloween Adventure";
-      $("lpDesc").textContent = TR("Подземелье на двоих: 3 этажа сильных монстров, на третьем Тыквенный король.") + (save.pk ? TR(" Король повержен: ") + save.pk : "");
       lv.hidden = meter.hidden = true;
-      btn.disabled = false; btn.textContent = TR("Собрать отряд"); btn.onclick = function () { setAdvOpen(true); };
+      if (!advAllowed()) {
+        $("lpDesc").textContent = TR("Ивент скоро откроется. Пока поместье Тыквенного короля закрыто на проверку.");
+        btn.disabled = true; btn.textContent = TR("Закрыто"); btn.onclick = null;
+      } else {
+        $("lpDesc").textContent = TR("Трёхэтажное поместье: сильные монстры в каждой комнате, наверху Тыквенный король.") + (save.pk ? TR(" Король повержен: ") + save.pk : "");
+        btn.disabled = false; btn.textContent = TR("Собрать отряд"); btn.onclick = function () { setAdvOpen(true); };
+      }
     } else if (st.id === "exit") {
       $("lpTitle").textContent = TR("Выход");
       $("lpDesc").textContent = TR("Вернуться в своё лобби.");
@@ -2042,6 +2047,9 @@ Claudix.ready(function () {
   // и отправляет хосту свои удары. Сервер только пересылает сообщения внутри пати.
   var ADV_UNTIL = Date.UTC(2026, 10, 9);          // ивент идёт до 8 ноября включительно
   var ADV_OFFLINE = !!window.__ADV_OFFLINE__;     // сборка-артефакт: без сервера, соло или с ботом
+  // пока ивент на проверке, зайти могут только эти игроки (ники в нижнем регистре); пустой список = открыто всем
+  var ADV_ALLOW = ["__NICK__"];
+  function advAllowed() { return ADV_OFFLINE || !ADV_ALLOW.length || !!(SESSION && ADV_ALLOW.indexOf(SESSION.user) >= 0); }
   var adv = null, advSel = null, advQ = false;
   var MON = {
     zombie:  { name: TR("Зомби"), hp: 260, speed: 3.2, dmg: 16, range: 1.7, cd: 1.2, wind: 0.35, scale: 1.1, kb: 0.8, suit: 0x4d5a3c, pants: 0x3a3226, skin: 0x86a86a, accent: 0x2a2a1e },
@@ -2695,6 +2703,7 @@ Claudix.ready(function () {
 
   // ---------- окно выбора ----------
   function setAdvOpen(on) {
+    if (on && !advAllowed()) return;
     heroOpen = on; $("advOv").hidden = !on;
     if (on) { input.keys = {}; joyEnd(); if (!advSel || save.owned.indexOf(advSel) < 0) advSel = save.sel; renderAdvUi(); }
     else { if (advQ) { advQ = false; netSend({ t: "aqc" }); } renderPanel(); }

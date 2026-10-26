@@ -266,6 +266,8 @@ async function route(req, env) {
 const HERO_IDS = ["cobalt", "storm", "shade", "graviton", "flame", "abyss"];
 const ROOM_MAX = 24;
 const ADV_RELAY = ["ap", "ae", "ah", "ax", "aa", "ar"];
+// Halloween Adventure пока на проверке: в очередь пускаем только этих игроков (uid). Пустой список = всех.
+const ADV_ALLOW = ["__NICK__"];
 const lim = (v, l) => (Number.isFinite(v) ? Math.max(-l, Math.min(l, v)) : 0);
 const pub = (a) => ({ u: a.u, n: a.n, h: a.h, x: a.x, z: a.z, f: a.f, m: a.m });
 
@@ -389,7 +391,7 @@ export class Room {
     }
     if (data.length > 300) return;
     if (m.t === "aq" && HERO_IDS.includes(m.id)) {
-      if (a.d || a.a) return;
+      if (a.d || a.a || (ADV_ALLOW.length && !ADV_ALLOW.includes(a.u))) return;
       a.ah = m.id; a.ap = Math.max(0, Math.min(25, Math.floor(+m.p || 0)));
       if (m.solo) {
         a.a = "@"; a.aq = 0; ws.serializeAttachment(a);
