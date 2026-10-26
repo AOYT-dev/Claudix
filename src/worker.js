@@ -197,14 +197,16 @@ async function route(req, env) {
     return json({ token: await startSession(env, uid), user: uid, name: u.name });
   }
 
-  if (path === "/api/room") {
+  if (path === "/api/room" || path === "/api/race") {
     // WebSocket не умеет слать заголовок Authorization, поэтому токен едет как подпротокол.
     if (req.headers.get("upgrade") !== "websocket") return fail("expected_websocket", 426);
     const proto = (req.headers.get("sec-websocket-protocol") || "").split(",")[0].trim();
     const who = await authToken(env, proto);
     if (!who) return fail("unauthorized", 401);
-    return env.ROOM.get(env.ROOM.idFromName("main")).fetch("https://room.internal/ws", {
-      headers: { upgrade: "websocket", "x-uid": who.uid, "x-name": who.name, "x-proto": proto },
+    // гонки Виража живут в отдельном экземпляре комнаты, чтобы не смешиваться с лобби Лиги
+    const race = path === "/api/race";
+    return env.ROOM.get(env.ROOM.idFromName(race ? "race" : "main")).fetch("https://room.internal/ws", {
+      headers: { upgrade: "websocket", "x-uid": who.uid, "x-name": who.name, "x-proto": proto, "x-mode": race ? "race" : "" },
     });
   }
 
@@ -353,7 +355,7 @@ export class Room {
   }
   async fetch(req) {
     if (req.headers.get("upgrade") !== "websocket") return new Response("expected websocket", { status: 426 });
-    const uid = req.headers.get("x-uid"), name = req.headers.get("x-name"), proto = req.headers.get("x-proto");
+    const uid = req.headers.get("x-uid"), name = req.headers.get("x-name"), proto = req.headers.get("x-proto"), raceMode = req.headers.get("x-mode") === "race";
     if (!uid || !name) return new Response("unauthorized", { status: 401 });
     // тот же аккаунт открыл вторую вкладку: старую выкидываем
     for (const w of this.ctx.getWebSockets()) {
@@ -365,6 +367,11 @@ export class Room {
     const pair = new WebSocketPair();
     const client = pair[0], server = pair[1];
     this.ctx.acceptWebSocket(server);
+    if (raceMode) {
+      server.serializeAttachment({ g: "race", u: uid, n: name, rq: 0, car: "junk", mt: "", mm: [], ts: 0 });
+      server.send(JSON.stringify({ t: "hello", you: uid }));
+      return new Response(null, { status: 101, webSocket: client, headers: proto ? { "Sec-WebSocket-Protocol": proto } : {} });
+    }
     const me = { u: uid, n: name, h: "cobalt", x: 0, z: 6, f: Math.PI, m: 0, ts: 0, q: 0, d: "", dh: "cobalt", dl: 0, hs: 0, a: "", aq: 0, ah: "cobalt", ap: 0 };
     server.serializeAttachment(me);
     server.send(JSON.stringify({ t: "hello", you: uid, players: others.map((w) => w.deserializeAttachment()).filter((x) => !x.d && !x.a).map(pub) }));
@@ -377,6 +384,7 @@ export class Room {
     try { m = JSON.parse(data); } catch (e) { return; }
     const a = ws.deserializeAttachment();
     if (!a || a.dead || !m || typeof m.t !== "string") return;
+    if (a.g === "race") { this.raceMsg(ws, a, m, data); return; }
     if (ADV_RELAY.includes(m.t)) {
       // внутри пати пересылаем как есть, позицию и снимок врагов не чаще ~20 раз в секунду
       if (!a.a || a.a === "@") return;
@@ -448,8 +456,51 @@ export class Room {
       this.endDuel(ws, a.d, "quit");
     }
   }
+  // ---- онлайн-гонки Виража: очередь на 2–4 игроков, дальше сервер только пересылает положение машин ----
+  raceSockets(uids) { return this.live().filter((w) => uids.includes(w.deserializeAttachment().u)); }
+  raceQueueInfo(n) {
+    const q = this.live().filter((w) => { const b = w.deserializeAttachment(); return b.g === "race" && b.rq === n && !b.mt; });
+    for (const w of q) this.sendTo(w, { t: "rw", n, have: q.length });
+    return q;
+  }
+  raceMsg(ws, a, m, data) {
+    if (m.t === "rq" && [2, 3, 4].includes(m.n)) {
+      if (a.mt) return;
+      a.rq = m.n; a.car = /^[a-z]{1,8}$/.test(m.car || "") ? m.car : "junk";
+      ws.serializeAttachment(a);
+      const q = this.raceQueueInfo(m.n);
+      if (q.length >= m.n) {
+        const group = q.slice(0, m.n), id = Math.random().toString(36).slice(2, 10), track = Math.floor(Math.random() * 5);
+        const players = group.map((w) => { const b = w.deserializeAttachment(); return { u: b.u, n: b.n, car: b.car }; });
+        const uids = players.map((p) => p.u);
+        group.forEach((w, slot) => {
+          const b = w.deserializeAttachment(); b.rq = 0; b.mt = id; b.mm = uids; w.serializeAttachment(b);
+          this.sendTo(w, { t: "rs", id, track, laps: 3, slot, players, in: 4000 });
+        });
+        this.raceQueueInfo(m.n);
+      }
+      return;
+    }
+    if (m.t === "rqc") { const n = a.rq; a.rq = 0; ws.serializeAttachment(a); if (n) this.raceQueueInfo(n); return; }
+    if (!a.mt) return;
+    if (m.t === "rp" || m.t === "rf") {
+      if (m.t === "rp") { const now = Date.now(); if (now - a.ts < 45) return; a.ts = now; ws.serializeAttachment(a); }
+      if (data.length > 400) return;
+      const msg = JSON.stringify(Object.assign({}, m, { u: a.u }));
+      for (const w of this.raceSockets(a.mm)) if (w !== ws && w.deserializeAttachment().mt === a.mt) { try { w.send(msg); } catch (e) { /* закрыт */ } }
+      return;
+    }
+    if (m.t === "rl") this.raceLeave(ws);
+  }
+  raceLeave(ws) {
+    const a = ws.deserializeAttachment();
+    if (!a || !a.mt) return;
+    for (const w of this.raceSockets(a.mm)) if (w !== ws && w.deserializeAttachment().mt === a.mt) this.sendTo(w, { t: "rx", u: a.u });
+    a.mt = ""; a.mm = []; ws.serializeAttachment(a);
+  }
   drop(ws) {
     const a = ws.deserializeAttachment();
+    if (a && a.g === "race") { const n = a.rq; this.raceLeave(ws); ws.serializeAttachment({ ...ws.deserializeAttachment(), dead: true, rq: 0 }); if (n) this.raceQueueInfo(n); return; }
     if (a && !a.dead && a.a) { this.endAdv(ws, false); ws.serializeAttachment({ ...ws.deserializeAttachment(), dead: true }); this.broadcast({ t: "l", u: a.u }, a.u); return; }
     if (a && !a.dead) {
       if (a.d) {

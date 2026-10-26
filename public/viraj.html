@@ -163,9 +163,10 @@ body.touchy #nitro { display: none; }
     <p id="coinsP"></p>
     <p><button type="button" id="resetBtn" style="background:none;border:1px solid currentColor;color:inherit;border-radius:8px;padding:6px 12px;opacity:.7;cursor:pointer">Сбросить прогресс</button></p>
     <div class="cars" id="cars"></div>
-    <div class="row"><button class="btn" id="tabCamp" type="button">Кампания</button><button class="btn sec" id="tabQuick" type="button">Быстрая гонка</button><button class="btn sec" id="tabTune" type="button">Тюнинг</button></div>
+    <div class="row"><button class="btn" id="tabCamp" type="button">Кампания</button><button class="btn sec" id="tabQuick" type="button">Быстрая гонка</button><button class="btn sec" id="tabTune" type="button">Тюнинг</button><button class="btn sec" id="tabOnline" type="button">Онлайн</button></div>
     <div id="campWrap"><p id="seasonP"></p><div class="events" id="events"></div></div>
     <div id="quickWrap" hidden><p>Закатная трасса, три круга. Просто погонять.</p><div class="row"><button class="btn" id="goBtn" type="button">Старт гонки</button></div></div>
+    <div id="onlineWrap" hidden><p id="onP"></p><div class="row"><button class="btn" id="on2" type="button">1 на 1</button><button class="btn" id="on3" type="button">1v1v1</button><button class="btn" id="on4" type="button">1v1v1v1</button><button class="btn sec" id="onCancel" type="button" hidden>Отменить поиск</button></div></div>
     <div id="tuneWrap" hidden><p id="tuneP"></p><div class="ups" id="ups"></div></div>
     <ul class="keys" style="list-style:none;padding:0">
       <li style="display:contents"><kbd>W S / ↑ ↓</kbd><span>газ и тормоз</span></li>
@@ -574,10 +575,11 @@ body.touchy #nitro { display: none; }
   function startCampaign(i) { mode = "camp"; curEvent = i; var e = EVENTS[i]; startRace({ track: e.track, laps: e.laps, skill: e.skill, diff: i / (EVENTS.length - 1) }); }
   function quickCfg(t) { return { track: t, laps: 3, skill: Math.min(1.05, 0.75 + 0.035 * qlvl), diff: Math.min(1, qlvl / 8) }; }
   function setTab(t) {
-    [["camp", "tabCamp"], ["quick", "tabQuick"], ["tune", "tabTune"]].forEach(function (p) { $(p[0] + "Wrap").hidden = t !== p[0]; $(p[1]).className = "btn" + (t === p[0] ? "" : " sec"); });
+    [["camp", "tabCamp"], ["quick", "tabQuick"], ["tune", "tabTune"], ["online", "tabOnline"]].forEach(function (p) { $(p[0] + "Wrap").hidden = t !== p[0]; $(p[1]).className = "btn" + (t === p[0] ? "" : " sec"); });
     if (t === "tune") renderTune();
+    if (t === "online") renderOnline();
   }
-  $("tabCamp").addEventListener("click", function () { setTab("camp"); }); $("tabQuick").addEventListener("click", function () { setTab("quick"); }); $("tabTune").addEventListener("click", function () { setTab("tune"); });
+  $("tabCamp").addEventListener("click", function () { setTab("camp"); }); $("tabQuick").addEventListener("click", function () { setTab("quick"); }); $("tabTune").addEventListener("click", function () { setTab("tune"); }); $("tabOnline").addEventListener("click", function () { setTab("online"); });
 
   // ---------- физика ----------
   function drive(r, th, st, hand, nit, dt) {
@@ -651,10 +653,11 @@ body.touchy #nitro { display: none; }
     }
   }
   function step(dt) {
+    if (mode === "online") netTick(dt);
     if (state === "count") {
       countdown -= dt; var n = Math.ceil(countdown - 0.6);
       var big = $("big"); big.hidden = false; big.textContent = n > 0 ? n : "ГО!"; if (countdown <= 0.6) { state = "race"; setTimeout(function () { big.hidden = true; }, 700); }
-      racers.forEach(function (r) { track(r, dt); });
+      racers.forEach(function (r) { if (!r.net) track(r, dt); });
       return;
     }
     if (state !== "race" && state !== "done") return;
@@ -665,14 +668,17 @@ body.touchy #nitro { display: none; }
         var st = (keys.KeyA || keys.ArrowLeft || touch.l ? 1 : 0) - (keys.KeyD || keys.ArrowRight || touch.r ? 1 : 0);
         drive(r, th, st, keys.Space || touch.h, keys.ShiftLeft || keys.ShiftRight || touch.n, dt);
       } else if (r === player) drive(r, 0, 0, true, false, dt);
+      else if (r.net) netCar(r, dt);
       else ai(r, dt);
     });
     collide();
-    racers.forEach(function (r) { track(r, dt); });
+    racers.forEach(function (r) { if (!r.net) track(r, dt); });
   }
   function ranking() { return racers.slice().sort(function (a, b) { if (a.finished !== b.finished) return a.finished ? -1 : 1; if (a.finished) return a.finishT - b.finishT; return (b.progress || 0) - (a.progress || 0); }); }
   function endRace() {
     state = "done";
+    if (mode === "online") { onlineFinished(); maybeShowOnline(); return; }
+    $("againBtn").textContent = "Ещё раз";
     setTimeout(function () {
       var rk = ranking(), pl = rk.indexOf(player) + 1, rew = Math.round(([150, 90, 50, 20][pl - 1] || 20) * (mode === "camp" ? 1 : 0.5)), extra = "", title = pl === 1 ? "Победа!" : pl + " место";
       $("nextBtn").hidden = true;
@@ -798,7 +804,7 @@ body.touchy #nitro { display: none; }
   });
   function toastMenu(t) { $("coinsP").textContent = t + ". Монеты: $" + coins; setTimeout(renderCars, 1400); }
   $("goBtn").addEventListener("click", function () { audioStart(); mode = "quick"; curEvent = -1; startRace(quickCfg(0)); });
-  $("againBtn").addEventListener("click", function () { if (mode === "camp") startCampaign(curEvent); else startRace(quickCfg(curTrack)); });
+  $("againBtn").addEventListener("click", function () { if (mode === "online") { $("result").hidden = true; $("menu").hidden = false; state = "menu"; renderCars(); setTab("online"); return; } if (mode === "camp") startCampaign(curEvent); else startRace(quickCfg(curTrack)); });
   $("nextBtn").addEventListener("click", function () { if (curEvent < EVENTS.length - 1 && unlocked(curEvent + 1)) startCampaign(curEvent + 1); });
   $("menuBtn").addEventListener("click", function () { $("result").hidden = true; $("menu").hidden = false; state = "menu"; renderCars(); renderEvents(); });
   $("tuneBtn").addEventListener("click", function () { $("result").hidden = true; $("menu").hidden = false; state = "menu"; renderCars(); renderEvents(); setTab("tune"); });
@@ -821,6 +827,8 @@ body.touchy #nitro { display: none; }
   var paused = false;
   function pause() {
     if (paused || !(state === "race" || state === "count")) return;
+    $("restartBtn").hidden = mode === "online";
+    if (mode === "online") { $("pauseP").textContent = "Онлайн-гонка не останавливается: соперники едут дальше. Если выйдешь, награды не будет."; $("pause").hidden = false; return; }
     paused = true; keys = {}; for (var k in touch) touch[k] = false; document.querySelectorAll("#touch .on").forEach(function (b) { b.classList.remove("on"); });
     $("pauseP").textContent = (mode === "camp" ? "Заезд " + (curEvent + 1) + " · " + EVENTS[curEvent].name : "Быстрая гонка") + ". Если выйдешь, награды не будет.";
     $("pause").hidden = false; $("resumeBtn").focus();
@@ -830,6 +838,7 @@ body.touchy #nitro { display: none; }
   $("resumeBtn").addEventListener("click", resume);
   $("restartBtn").addEventListener("click", function () { resume(); if (mode === "camp") startCampaign(curEvent); else startRace(quickCfg(curTrack)); });
   $("quitBtn").addEventListener("click", function () {
+    if (mode === "online") leaveOnlineRace();
     resume(); state = "menu"; $("big").hidden = true; $("menu").hidden = false; renderCars(); renderEvents();
   });
   document.addEventListener("visibilitychange", function () { if (document.hidden) pause(); });
@@ -851,6 +860,143 @@ body.touchy #nitro { display: none; }
     osc.frequency.value = 50 + v * 3.1 + (player.boosting ? 40 : 0); gain.gain.value = on ? 0.05 + Math.min(0.05, v * 0.001) : 0;
   }
 
+  // ---------- онлайн-гонки: 1v1, 1v1v1, 1v1v1v1 ----------
+  // Каждый считает свою машину сам и шлёт положение; чужие машины плавно догоняют присланные точки.
+  var net = { ws: null, ready: false, you: null, queue: 0, match: null, sendT: 0, endT: 0 };
+  function netSend(o) { if (net.ws && net.ready && net.ws.readyState === 1) net.ws.send(JSON.stringify(o)); }
+  function onlineStatus(t) { $("onP").textContent = t; }
+  function renderOnline() {
+    var can = !!(SESSION && SESSION.token);
+    ["on2", "on3", "on4"].forEach(function (id) { $(id).disabled = !can || !!net.queue; });
+    $("onCancel").hidden = !net.queue;
+    if (!can) onlineStatus("Онлайн-гонки только с аккаунтом: войди на главной Claudix и возвращайся.");
+    else if (!net.queue) onlineStatus("Выбери, сколько вас будет. Едешь на выбранной машине со своим тюнингом. Трасса случайная, 3 круга.");
+  }
+  function netConnect(cb) {
+    if (net.ws && net.ready) { cb(); return; }
+    if (net.ws) return;
+    var ws;
+    try { ws = new WebSocket((location.protocol === "https:" ? "wss://" : "ws://") + location.host + "/api/race", [SESSION.token]); }
+    catch (e) { onlineStatus("Не удалось подключиться к серверу."); return; }
+    net.ws = ws; net.ready = false; onlineStatus("Подключаемся…");
+    var timer = setTimeout(function () { if (net.ws === ws && !net.ready) { try { ws.close(); } catch (e) { /* ничего */ } } }, 8000);
+    ws.onmessage = function (ev) {
+      if (net.ws !== ws) return;
+      var m; try { m = JSON.parse(ev.data); } catch (e) { return; }
+      if (m.t === "hello") { net.ready = true; net.you = m.you; clearTimeout(timer); cb(); return; }
+      onRaceNet(m);
+    };
+    ws.onclose = function () {
+      clearTimeout(timer);
+      if (net.ws !== ws) return;
+      net.ws = null; net.ready = false; net.queue = 0;
+      if (net.match && mode === "online" && state !== "menu") { toast("Связь потеряна"); netDropAll(); }
+      net.match = null;
+      if (!$("menu").hidden) { renderOnline(); onlineStatus("Связь с сервером потеряна. Попробуй ещё раз."); }
+    };
+    ws.onerror = function () { /* закроется само */ };
+  }
+  function queueRace(n) {
+    if (!SESSION || !SESSION.token || net.queue) return;
+    audioStart();
+    netConnect(function () {
+      net.queue = n; renderOnline();
+      onlineStatus("Ищем соперников… 1 из " + n);
+      netSend({ t: "rq", n: n, car: MODELS[selected].id });
+    });
+  }
+  function cancelQueue() { if (net.queue) { net.queue = 0; netSend({ t: "rqc" }); } renderOnline(); }
+  function onRaceNet(m) {
+    if (m.t === "rw" && net.queue) onlineStatus("Ищем соперников… " + m.have + " из " + m.n + (m.have < m.n ? ". Позови друзей, пусть тоже выберут этот режим." : ""));
+    else if (m.t === "rs") startOnline(m);
+    else if (m.t === "rp" && net.match) {
+      var r = net.match.byU[m.u]; if (!r || r.left) return;
+      r.nx = +m.x || 0; r.nz = +m.z || 0; r.nh = +m.h || 0; r.vf = +m.v || 0; r.boosting = !!m.b; r.progress = +m.p || 0; r.lap = m.l | 0; r.seen = raceT;
+    }
+    else if (m.t === "rf" && net.match) {
+      var f = net.match.byU[m.u]; if (!f || f.finished) return;
+      f.finished = true; f.finishT = Math.max(1, +m.ft || raceT); finishOrder.push(f);
+      if (f !== player) toast(f.name + " финишировал");
+      if (state === "done") maybeShowOnline();
+    }
+    else if (m.t === "rx" && net.match) {
+      var x = net.match.byU[m.u]; if (!x || x.left) return;
+      x.left = true; x.m.root.visible = false; x.name += " (вышел)"; toast(x.name);
+      if (state === "done") maybeShowOnline();
+    }
+  }
+  function startOnline(m) {
+    if (net.match) return;
+    net.queue = 0;
+    mode = "online"; curEvent = -1; LAPS = m.laps || 3; DIFF = 0;
+    var ti = Math.max(0, Math.min(TRACKS.length - 1, m.track | 0));
+    if (curTrack !== ti) buildTrack(ti);
+    racers.forEach(function (r) { scene.remove(r.m.root); }); racers = [];
+    var byU = {};
+    (m.players || []).forEach(function (p, i) {
+      var r;
+      if (p.u === net.you) { r = player = mkRacer(effModel(MODELS[selected]), true, "Ты"); }
+      else {
+        var mi = 0; MODELS.forEach(function (md, k) { if (md.id === p.car) mi = k; });
+        r = mkRacer(MODELS[mi], false, p.n); r.net = true;
+      }
+      r.u = p.u; byU[p.u] = r; racers.push(r); grid(r, i);
+      r.nx = r.x; r.nz = r.z; r.nh = r.h; r.progress = r.lap * TOTAL + r.idx;
+    });
+    if (!player) return;
+    net.match = { id: m.id, byU: byU, n: racers.length, shown: false };
+    state = "count"; countdown = Math.max(2, Math.min(6, (+m.in || 4000) / 1000)) + 0.6; raceT = 0; finishOrder = []; shake = 0; paused = false;
+    $("menu").hidden = true; $("result").hidden = true; $("pause").hidden = true;
+    $("tName").textContent = TRACKS[curTrack].name + " · онлайн " + racers.map(function () { return "1"; }).join("v");
+    bestLap = +bests()[curTrack] || 0; $("bestT").textContent = "Лучший: " + (bestLap ? fmt(bestLap) : "—");
+    $("posT").textContent = racers.length;
+    toast("Соперники: " + racers.filter(function (r) { return r !== player; }).map(function (r) { return r.name; }).join(", "));
+  }
+  // чужая машина: плавно тянется к последней присланной точке
+  function netCar(r, dt) {
+    if (r.left) return;
+    var k = 1 - Math.exp(-dt * 10);
+    var fx = Math.sin(r.nh), fz = Math.cos(r.nh), lead = (r.vf || 0) * 0.05;
+    r.x += (r.nx + fx * lead - r.x) * k; r.z += (r.nz + fz * lead - r.z) * k; r.h += angDiff(r.nh, r.h) * k;
+    r.vx = fx * (r.vf || 0); r.vz = fz * (r.vf || 0);
+  }
+  function netTick(dt) {
+    if (!net.match || !player) return;
+    net.sendT += dt;
+    if (net.sendT >= 0.066 && (state === "race" || state === "count" || (state === "done" && !player.finished))) {
+      net.sendT = 0;
+      netSend({ t: "rp", x: +player.x.toFixed(2), z: +player.z.toFixed(2), h: +player.h.toFixed(3), v: +(player.vf || 0).toFixed(1), b: player.boosting ? 1 : 0, p: player.progress | 0, l: player.lap });
+    }
+    if (state === "done" && !net.match.shown) { net.endT += dt; if (net.endT > 25) maybeShowOnline(true); }
+  }
+  function netDropAll() { racers.forEach(function (r) { if (r.net && !r.finished) r.left = true; }); if (state === "done") maybeShowOnline(true); }
+  function onlineFinished() { netSend({ t: "rf", ft: +player.finishT.toFixed(3) }); net.endT = 0; }
+  // итог: ждём, пока доедут все (или 25 секунд), и показываем места среди живых игроков
+  function maybeShowOnline(force) {
+    var M = net.match; if (!M || M.shown) return;
+    var waiting = racers.some(function (r) { return r.net && !r.finished && !r.left; });
+    if (waiting && !force) { $("big").hidden = false; $("big").style.fontSize = "2.2rem"; $("big").textContent = "Ждём остальных…"; return; }
+    M.shown = true; $("big").hidden = true; $("big").style.fontSize = "";
+    var rk = racers.slice().sort(function (a, b) {
+      var fa = a.finished && !a.left, fb = b.finished && !b.left;
+      if (fa !== fb) return fa ? -1 : 1; if (fa) return a.finishT - b.finishT;
+      if (!!a.left !== !!b.left) return a.left ? 1 : -1; return (b.progress || 0) - (a.progress || 0);
+    });
+    var pl = rk.indexOf(player) + 1, n = racers.length, rew = pl === 1 ? 80 * n : pl === 2 ? 40 * (n - 1) : 20;
+    coins += rew; store("viraj-coins", String(coins));
+    $("resTitle").textContent = (pl === 1 ? "Победа! " : pl + " место · ") + "онлайн " + racers.map(function () { return "1"; }).join("v");
+    $("resTable").innerHTML = rk.map(function (r, i) { return '<tr class="' + (r === player ? "me" : "") + '"><td>' + (i + 1) + "</td><td>" + r.name + "</td><td class='t'>" + (r.finished && !r.left ? fmt(r.finishT) : r.left ? "вышел" : "не доехал") + "</td></tr>"; }).join("");
+    $("resBest").textContent = "Награда +$" + rew + " · всего $" + coins + " · лучший круг здесь: " + (bestLap ? fmt(bestLap) : "—");
+    $("nextBtn").hidden = true; $("againBtn").textContent = "Ещё онлайн";
+    $("result").hidden = false;
+    netSend({ t: "rl" }); net.match = null;
+  }
+  function leaveOnlineRace() { if (net.match) { netSend({ t: "rl" }); net.match = null; } }
+  $("on2").addEventListener("click", function () { queueRace(2); });
+  $("on3").addEventListener("click", function () { queueRace(3); });
+  $("on4").addEventListener("click", function () { queueRace(4); });
+  $("onCancel").addEventListener("click", cancelQueue);
+
   // ---------- цикл ----------
   var lw = 0, lh = 0, last = performance.now();
   function resize() { var w = window.innerWidth, h = window.innerHeight; if (w === lw && h === lh) return; lw = w; lh = h; renderer.setSize(w, h); camera.aspect = w / h; camera.updateProjectionMatrix(); }
@@ -867,7 +1013,7 @@ body.touchy #nitro { display: none; }
   racers = []; camH = SL.h; camera.position.set(SL.x - Math.sin(SL.h) * 14, 6, SL.z - Math.cos(SL.h) * 14); camera.lookAt(SL.x, 1, SL.z);
   $("who").textContent = SESSION ? "☁ " + (SESSION.name || SESSION.user) + " · прогресс в облаке" : "Гость · войди на главной, чтобы сохранять в облако";
   renderCars(); resize();
-  window.__rc = { paused: function () { return paused; }, TRACKS: TRACKS, build: buildTrack, tr: function () { return TR; }, W: function () { return W; }, camp: function () { return camp; }, startCamp: startCampaign,  ai: ai, racers: function () { return racers; }, step: step, state: function () { return state; }, TOTAL: TOTAL, LENGTH: LENGTH, player: function () { return player; }, keys: keys, finish: function () { return finishOrder; }, raceT: function () { return raceT; } };
+  window.__rc = { paused: function () { return paused; }, net: function () { return net; }, lapDone: lapDone, racersAll: function () { return racers; }, TRACKS: TRACKS, build: buildTrack, tr: function () { return TR; }, W: function () { return W; }, camp: function () { return camp; }, startCamp: startCampaign,  ai: ai, racers: function () { return racers; }, step: step, state: function () { return state; }, TOTAL: TOTAL, LENGTH: LENGTH, player: function () { return player; }, keys: keys, finish: function () { return finishOrder; }, raceT: function () { return raceT; } };
   requestAnimationFrame(loop);
 });
 </script>
