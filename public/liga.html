@@ -144,6 +144,9 @@ button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
   display: flex; align-items: center; gap: 8px; padding: 7px 14px; border-radius: 999px;
   background: var(--panel); border: 1px solid var(--line); font-family: var(--font-display); font-size: 1.1rem;
 }
+.mright { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+.money.sp { color: #ffb347; border-color: rgba(255, 140, 40, .55); font-size: 1rem; padding: 5px 12px; }
+.lpanel .act.sp { background: #ff8a2a; color: #2a1200; }
 .mbot { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
 .cards {
   display: flex; gap: 12px; overflow-x: auto; scroll-snap-type: x proximity; padding: 4px 2px 6px;
@@ -214,7 +217,25 @@ button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 .hdlg { width: 100%; max-width: 920px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
 
 /* ---------- Оверлеи ---------- */
-.scrim { z-index: 6; display: grid; place-items: center; background: rgba(4, 8, 20, 0.66); pointer-events: auto; }
+.scrim { z-index: 6; display: grid; place-items: center; background: rgba(4, 8, 20, 0.66); pointer-events: auto;
+  overflow-y: auto; overscroll-behavior: contain; touch-action: pan-y; padding-block: max(10px, env(safe-area-inset-top, 0px)) max(10px, env(safe-area-inset-bottom, 0px)); }
+.scrim > * { margin: auto; } /* влезает — по центру, не влезает — прокрутка, верх не обрезается */
+/* телефон боком: окна компактнее, чтобы все кнопки помещались */
+@media (max-height: 520px) {
+  .ddlg { padding: 10px 12px; gap: 6px; }
+  .ddlg h2 { font-size: 1.15rem; }
+  .ddlg p { font-size: .85rem; }
+  .dgrid { grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .dgrid .act { padding: 4px 8px; font-size: .85rem; }
+  .dgrid .act svg { width: 18px; height: 26px; }
+  .ddlg > .act { padding: 8px; }
+  #advOv .ddlg { display: grid; grid-template-columns: 1fr 1fr 1fr; }
+  #advOv .ddlg > h2, #advOv .ddlg > p, #advOv .ddlg > .dgrid { grid-column: 1 / -1; }
+  .dlg { padding: 12px 16px; gap: 6px; }
+  .dlg h2 { font-size: 1.2rem; }
+  .dlg li { padding: 3px 0; }
+  .dlg .act { padding: 9px; }
+}
 .scrim[hidden] { display: none; }
 .dlg {
   width: min(100%, 360px); background: var(--panel-solid); border: 1px solid var(--line); border-radius: 16px;
@@ -297,7 +318,7 @@ html, body { touch-action: manipulation; -webkit-tap-highlight-color: transparen
       <h1 class="logo">ЛИГА <span>УЛИЦ</span></h1>
       <div class="tag">Качай героя и прыгай в портал.</div>
     </div>
-    <div class="money"><span class="mono" id="moneyEl">0</span><span class="coin"></span></div>
+    <div class="mright"><div class="money"><span class="mono" id="moneyEl">0</span><span class="coin"></span></div><div class="money sp" id="spEl" hidden><span class="mono" id="spN">0</span><span>★</span></div></div>
   </div>
   <div class="lpanel" id="lpanel" hidden>
     <h3 id="lpTitle"></h3>
@@ -305,6 +326,7 @@ html, body { touch-action: manipulation; -webkit-tap-highlight-color: transparen
     <div class="lv"><span id="lpLvl"></span><b class="mono" id="lpVal"></b></div>
     <div class="meter"><i id="lpBar"></i></div>
     <button class="act" id="lpBtn" type="button"></button>
+    <button class="act sp" id="lpBtn2" type="button" hidden></button>
   </div>
 </div>
 
@@ -416,6 +438,7 @@ Claudix.ready(function () {
         save.pwr = Math.min(PWR_MAX, Math.max(0, Math.floor(+d.pwr || 0)));
         save.rad = Math.min(RAD_MAX, Math.max(0, Math.floor(+d.rad || 0)));
         save.pk = Math.max(0, Math.floor(+d.pk || 0));
+        save.sp = Math.max(0, Math.min(999, Math.floor(+d.sp || 0)));
       }
     } catch (e) { /* хранилище недоступно */ }
   }
@@ -1388,7 +1411,11 @@ Claudix.ready(function () {
     cdFill.style.transform = "scaleY(" + cd.toFixed(3) + ")";
     btnAbil.classList.toggle("ready", p.abilT <= 0);
   }
-  function renderMoney() { $("moneyEl").textContent = fmt(save.money); }
+  function renderMoney() {
+    $("moneyEl").textContent = fmt(save.money);
+    $("spEl").hidden = !save.sp; $("spN").textContent = save.sp || 0;
+    $("spEl").title = TR("Скиллпойнты: тратятся на силу или радиус");
+  }
   function figSvg(d) {
     var s = hex(d.suit), a = hex(d.accent), k = hex(d.skin);
     return '<svg viewBox="0 0 40 56" aria-hidden="true"><path d="M10 20 L4 50 L36 50 L30 20Z" fill="' + a + '" opacity=".55"/>' +
@@ -1775,6 +1802,7 @@ Claudix.ready(function () {
     panel.hidden = false;
     panel.style.setProperty("--hc", hex(st.color));
     var btn = $("lpBtn"), lv = panel.querySelector(".lv"), meter = panel.querySelector(".meter");
+    $("lpBtn2").hidden = true; $("lpBtn2").onclick = null;
     lv.hidden = meter.hidden = false;
     if (st.id === "power" || st.id === "radius") {
       var pow = st.id === "power", lvl = pow ? save.pwr : save.rad, max = pow ? PWR_MAX : RAD_MAX;
@@ -1785,6 +1813,8 @@ Claudix.ready(function () {
       if (lvl >= max) { btn.textContent = TR("Максимум"); btn.disabled = true; }
       else { btn.disabled = save.money < cost; btn.textContent = (save.money < cost ? TR("Нужно ") : TR("Прокачать за ")) + fmt(cost); }
       btn.onclick = function () { buyUpgrade(st.id); };
+      var b2 = $("lpBtn2");
+      if (save.sp > 0 && lvl < max) { b2.hidden = false; b2.textContent = TR("За скиллпойнт ★ (есть ") + save.sp + ")"; b2.onclick = function () { buyUpgrade(st.id, true); }; }
     } else if (st.id === "heroes") {
       $("lpTitle").textContent = TR("Герои");
       $("lpDesc").textContent = TR("Выбери героя или купи нового.");
@@ -1832,10 +1862,11 @@ Claudix.ready(function () {
       btn.onclick = startRun;
     }
   }
-  function buyUpgrade(id) {
+  function buyUpgrade(id, bySp) {
     var pow = id === "power", lvl = pow ? save.pwr : save.rad, max = pow ? PWR_MAX : RAD_MAX, cost = upCost(lvl);
-    if (lvl >= max || save.money < cost) return;
-    save.money -= cost;
+    if (lvl >= max) return;
+    if (bySp) { if (!(save.sp > 0)) return; save.sp--; }
+    else { if (save.money < cost) return; save.money -= cost; }
     if (pow) save.pwr++; else save.rad++;
     persist(); renderMoney(); renderPanel();
     var st = lobby.near || { color: 0xffffff };
@@ -2565,8 +2596,9 @@ Claudix.ready(function () {
     if (last) {
       var first = !save.pk;
       save.pk = (save.pk || 0) + 1;
+      save.sp = (save.sp || 0) + 2; adv.sp = 2;
       if (first) adv.earn += 3000;
-      banner(TR("ПОБЕДА"), TR("Тыквенный король повержен!") + (first ? TR(" +3000 за первую победу") : ""));
+      banner(TR("ПОБЕДА"), TR("Король повержен! +2 скиллпойнта ★") + (first ? TR(" и +3000 монет") : ""));
       setTimeout(function () { if (adv && !adv.over) advResult(true); }, 2600);
     } else {
       openGate();
@@ -2673,7 +2705,7 @@ Claudix.ready(function () {
     mode = "dead"; deadT = 1e9; input.btnAtk = false; input.keys = {}; joyEnd();
     $("pauseOv").hidden = true;
     $("resTitle").textContent = win ? TR("Победа! Тыквенный король повержен") : TR("Подземелье оказалось сильнее");
-    var rows = [[TR("Комнат пройдено"), adv.cleared + " / " + (ROOMS.length - 1)], [TR("Дошли до этажа"), String(adv.floor)], [TR("Заработано монет"), fmt(adv.earn)], [TR("Всего монет"), fmt(save.money)]];
+    var rows = [[TR("Комнат пройдено"), adv.cleared + " / " + (ROOMS.length - 1)], adv.sp ? [TR("Скиллпойнты"), "+" + adv.sp + " ★"] : [TR("Дошли до этажа"), String(adv.floor)], [TR("Заработано монет"), fmt(adv.earn)], [TR("Всего монет"), fmt(save.money)]];
     $("resultOv").querySelectorAll("li span").forEach(function (s, i) { s.textContent = rows[i][0]; });
     RES_IDS.forEach(function (id, i) { $(id).textContent = rows[i][1]; });
     $("resultOv").querySelector("ul").style.display = "";
@@ -2718,7 +2750,7 @@ Claudix.ready(function () {
     $("aHeroes").innerHTML = h;
     var waitS = advQ ? Math.floor((Date.now() - advQT) / 1000) : 0;
     $("aStat").textContent = advQ ? (waitS >= 8 ? TR("Пока никого нет. Жми «Идти одному» или подожди друга (") + waitS + TR(" с)") : TR("Ищем напарника… Пусть друг тоже нажмёт «Искать напарника»."))
-      : TR("3 этажа очень сильных монстров и Тыквенный король на третьем. Прокачка силы и радиуса работает. Вдвоём проще.") + (save.pk ? TR(" Король повержен: ") + save.pk : "");
+      : TR("3 этажа очень сильных монстров и Тыквенный король на третьем. За победу над ним 2 скиллпойнта ★ на силу или радиус.") + (save.pk ? TR(" Король повержен: ") + save.pk : "");
     $("aGo").textContent = ADV_OFFLINE ? TR("С ботом-напарником") : advQ ? TR("Отменить поиск") : TR("Искать напарника");
     $("aSolo").disabled = false;
   }
