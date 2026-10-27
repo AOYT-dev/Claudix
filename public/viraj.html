@@ -1303,6 +1303,9 @@ body.touchy #nitro { display: none; }
   ];
   var camp = [0, 0, 0, 0, 0, 0, 0, 0];
   try { var cs = JSON.parse(store("viraj-camp") || "[]"); if (Array.isArray(cs)) camp = camp.map(function (v, i) { return cs[i] | 0; }); } catch (e) { /* ничего */ }
+  // призы кампании: с каждым этапом больше; за первый проезд ещё бонус
+  function campWin(i) { return 600 + 450 * i; }
+  function campFirst(i) { return 300 + 200 * i; }
   function unlocked(i) { return i === 0 || camp[i - 1] >= 1; }
   function totalStars() { return camp.reduce(function (a, b) { return a + b; }, 0); }
   function grantCars() {
@@ -1316,7 +1319,7 @@ body.touchy #nitro { display: none; }
     $("seasonP").textContent = "Сезон 1 · звёзды " + totalStars() + " из " + EVENTS.length * 3 + ". Финишируй в тройке, чтобы открыть следующий заезд. Стартуешь на развалюхе: «Оса» откроется после 4-го заезда, «Бык» после 6-го, «Стрелу» — только за монеты.";
     $("events").innerHTML = EVENTS.map(function (e, i) {
       var lock = !unlocked(i), st = "★★★".slice(0, camp[i]) + "☆☆☆".slice(0, 3 - camp[i]);
-      return '<button class="ev' + (lock ? " lock" : "") + '" type="button" data-i="' + i + '"' + (lock ? " disabled" : "") + "><span class='n'>" + (i + 1) + "</span><span class='nm'>" + e.name + "<small>" + TRACKS[e.track].name + " · " + e.laps + " кр." + (TRACKS[e.track].night ? " · ночь" : "") + "</small></span><span class='stars'>" + (lock ? "закрыт" : st) + "</span></button>";
+      return '<button class="ev' + (lock ? " lock" : "") + '" type="button" data-i="' + i + '"' + (lock ? " disabled" : "") + "><span class='n'>" + (i + 1) + "</span><span class='nm'>" + e.name + "<small>" + TRACKS[e.track].name + " · " + e.laps + " кр." + (TRACKS[e.track].night ? " · ночь" : "") + " · приз $" + campWin(i) + (camp[i] < 1 ? " +$" + campFirst(i) : "") + "</small></span><span class='stars'>" + (lock ? "закрыт" : st) + "</span></button>";
     }).join("");
   }
   $("events").addEventListener("click", function (e) {
@@ -1432,15 +1435,15 @@ body.touchy #nitro { display: none; }
     if (mode === "online") { onlineFinished(); maybeShowOnline(); return; }
     $("againBtn").textContent = "Ещё раз";
     setTimeout(function () {
-      var rk = ranking(), pl = rk.indexOf(player) + 1, rew = Math.round(([150, 90, 50, 20][pl - 1] || 20) * (mode === "camp" ? 1 : 0.5)), extra = "", title = pl === 1 ? "Победа!" : pl + " место";
+      var rk = ranking(), pl = rk.indexOf(player) + 1, rew = mode === "camp" ? Math.round(campWin(curEvent) * ([1, 0.6, 0.35, 0.1][pl - 1] || 0.1) / 10) * 10 : Math.round(([150, 90, 50, 20][pl - 1] || 20) * 0.5), extra = "", title = pl === 1 ? "Победа!" : pl + " место";
       $("nextBtn").hidden = true;
       if (mode !== "camp") { if (pl === 1) { qlvl++; store("viraj-qlvl", String(qlvl)); extra = "Соперники стали злее · уровень " + (qlvl + 1) + " · "; } else extra = "Уровень соперников " + (qlvl + 1) + " · "; }
       if (mode === "camp") {
         var stars = pl <= 3 ? 4 - pl : 0, first = camp[curEvent] < 1 && stars >= 1;
         if (stars > camp[curEvent]) camp[curEvent] = stars; store("viraj-camp", JSON.stringify(camp));
-        if (first) rew += 100 + 30 * curEvent;
+        if (first) rew += campFirst(curEvent);
         var cars = grantCars();
-        extra = "Звёзды: " + "★★★".slice(0, stars) + "☆☆☆".slice(0, 3 - stars) + (stars ? "" : " · нужна тройка, чтобы открыть дальше") + (first ? " · первый проезд +$" + (100 + 30 * curEvent) : "") + (cars.length ? " · открыта машина: " + cars.join(", ") : "") + " · ";
+        extra = "Звёзды: " + "★★★".slice(0, stars) + "☆☆☆".slice(0, 3 - stars) + (stars ? "" : " · нужна тройка, чтобы открыть дальше") + (first ? " · первый проезд +$" + campFirst(curEvent) : "") + (cars.length ? " · открыта машина: " + cars.join(", ") : "") + " · ";
         if (stars >= 1 && curEvent < EVENTS.length - 1) $("nextBtn").hidden = false;
         if (stars >= 1 && curEvent === EVENTS.length - 1) { title = "Сезон 1 пройден! Звёзд: " + totalStars() + "/" + EVENTS.length * 3; }
       }
