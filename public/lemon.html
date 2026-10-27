@@ -178,6 +178,10 @@ h1 {
   -webkit-tap-highlight-color: transparent;
   border-radius: 50%;
 }
+/* тыквенное оформление: включается вместе с тыквой */
+:root.pumpkin { --bg: #FFF1E2; --surface: #FFF8F0; --line: #F2C9A0; --fg: #2A1406; --muted: #7A4A26; --leaf: #4A7A2A; --lemon: #F27A12; --lemon-hi: #FFB04A; --lemon-lo: #C4560A; --on-lemon: #2A1406; --can-bg: #FFD9B0; --glow: rgba(242, 122, 18, 0.35); }
+@media (prefers-color-scheme: dark) { :root.pumpkin:not([data-theme="light"]) { --bg: #1A0E06; --surface: #26150A; --line: #4A2A12; --fg: #FFEBD6; --muted: #D9A47A; --leaf: #7FBF4A; --lemon: #F27A12; --lemon-hi: #FFB04A; --lemon-lo: #C4560A; --on-lemon: #1A0E06; --can-bg: #4A2A0A; --glow: rgba(242, 122, 18, 0.18); } }
+:root.pumpkin[data-theme="dark"] { --bg: #1A0E06; --surface: #26150A; --line: #4A2A12; --fg: #FFEBD6; --muted: #D9A47A; --leaf: #7FBF4A; --lemon: #F27A12; --lemon-hi: #FFB04A; --lemon-lo: #C4560A; --on-lemon: #1A0E06; --can-bg: #4A2A0A; --glow: rgba(242, 122, 18, 0.18); }
 .lemon svg.pumpkin { display: none; }
 .lemon.pk svg { display: none; }
 .lemon.pk svg.pumpkin { display: block; }
@@ -340,6 +344,7 @@ document.addEventListener("DOMContentLoaded", function () {
   var btn = document.getElementById("skinBtn"), lem = document.getElementById("lemon");
   function apply(pk) {
     lem.classList.toggle("pk", pk);
+    document.documentElement.classList.toggle("pumpkin", pk);
     btn.textContent = pk ? (window.TR ? TR("Вернуть лимон") : "Вернуть лимон") : (window.TR ? TR("Тыква вместо лимона") : "Тыква вместо лимона");
     lem.setAttribute("aria-label", pk ? "Тыква. Жми, чтобы собирать лимоны" : "Лимон. Жми, чтобы собирать лимоны");
   }
