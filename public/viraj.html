@@ -1786,7 +1786,8 @@ body.touchy #nitro { display: none; }
     var near = (G.rivals || []).map(function (r) { return { r: r, d: Math.hypot(r.x - p.x, r.z - p.z) }; }).filter(function (o) { return o.d < 90; }).sort(function (a, b) { return a.d - b.d; }).slice(0, 2);
     S.rivals.forEach(function (e, i) {
       var o = near[i];
-      if (!o || !on) { e.frame(800, 0, false, t, 0); e.who = null; return; }
+      // на старте, пока все стоят, слышно только свою машину
+      if (!o || !on || G.free) { e.frame(800, 0, false, t, 0); e.who = null; return; }
       var r = o.r; if (e.who !== r) { e.setKind(engSpec(r.model)); e.who = r; }
       var rs = engState(r, e.spec, r.th == null ? 1 : r.th, dt, false);
       var dx = r.x - p.x, dz = r.z - p.z, d = o.d || 0.001, ux = dx / d, uz = dz / d;
