@@ -1363,7 +1363,7 @@ body.touchy #nitro { display: none; }
       var sgn = Math.sign(r.lat), over = Math.abs(r.lat) - lim;
       r.x -= p.nx * sgn * over; r.z -= p.nz * sgn * over;
       var vn = r.vx * p.nx + r.vz * p.nz;
-      if (vn * sgn > 0) { var bo = r.model.bounce || 1.4, hk = r.model.hitKeep || 0.93; r.vx -= p.nx * vn * bo; r.vz -= p.nz * vn * bo; r.vx *= hk; r.vz *= hk; if (Math.abs(vn) > 9 && r === player) { shake = 0.5; toast("Удар!"); } if (Math.abs(vn) > 5 && player && Math.hypot(r.x - player.x, r.z - player.z) < 60) sparkBurst(r.x + p.nx * sgn * 1.1, r.z + p.nz * sgn * 1.1, -p.nx * sgn, -p.nz * sgn); }
+      if (vn * sgn > 0) { var bo = r.model.bounce || 1.4, hk = r.model.hitKeep || 0.93; r.vx -= p.nx * vn * bo; r.vz -= p.nz * vn * bo; r.vx *= hk; r.vz *= hk; if (Math.abs(vn) > 9 && r === player) { shake = 0.5; toast("Удар!"); } if (Math.abs(vn) > 5 && r === player) sndHit(Math.abs(vn) / 22, true); if (Math.abs(vn) > 5 && player && Math.hypot(r.x - player.x, r.z - player.z) < 60) sparkBurst(r.x + p.nx * sgn * 1.1, r.z + p.nz * sgn * 1.1, -p.nx * sgn, -p.nz * sgn); }
       var hd = Math.atan2(r.vx, r.vz), ad = angDiff(p.h, r.h); r.h += ad * Math.min(1, dt * 1.5);
     } else if (Math.abs(r.lat) > W / 2) { r.vx *= 1 - 0.4 * dt; r.vz *= 1 - 0.4 * dt; }
     // круги
@@ -1400,7 +1400,7 @@ body.touchy #nitro { display: none; }
         var ma = a.model.mass || 1, mb = b.model.mass || 1, ta = mb / (ma + mb), tb = ma / (ma + mb);
         var nx = dx / d, nz = dz / d, push = 3.6 - d; a.x -= nx * push * ta; a.z -= nz * push * ta; b.x += nx * push * tb; b.z += nz * push * tb;
         var rv = (b.vx - a.vx) * nx + (b.vz - a.vz) * nz;
-        if (rv < 0) { a.vx += nx * rv * ta; a.vz += nz * rv * ta; b.vx -= nx * rv * tb; b.vz -= nz * rv * tb; if (-rv > 8 && (a === player || b === player)) shake = 0.35; }
+        if (rv < 0) { a.vx += nx * rv * ta; a.vz += nz * rv * ta; b.vx -= nx * rv * tb; b.vz -= nz * rv * tb; if (-rv > 8 && (a === player || b === player)) shake = 0.35; if (-rv > 3 && (a === player || b === player)) sndHit(-rv / 20, false); }
       }
     }
   }
@@ -1553,8 +1553,8 @@ body.touchy #nitro { display: none; }
   });
   function toastMenu(t) { $("coinsP").textContent = t + ". Монеты: $" + coins; setTimeout(renderCars, 1400); }
   $("goBtn").addEventListener("click", function () { audioStart(); mode = "quick"; curEvent = -1; startRace(quickCfg(0)); });
-  $("againBtn").addEventListener("click", function () { if (mode === "online") { $("result").hidden = true; $("menu").hidden = false; state = "menu"; renderCars(); setTab("online"); return; } if (mode === "camp") startCampaign(curEvent); else startRace(quickCfg(curTrack)); });
-  $("nextBtn").addEventListener("click", function () { if (curEvent < EVENTS.length - 1 && unlocked(curEvent + 1)) startCampaign(curEvent + 1); });
+  $("againBtn").addEventListener("click", function () { audioStart(); if (mode === "online") { $("result").hidden = true; $("menu").hidden = false; state = "menu"; renderCars(); setTab("online"); return; } if (mode === "camp") startCampaign(curEvent); else startRace(quickCfg(curTrack)); });
+  $("nextBtn").addEventListener("click", function () { audioStart(); if (curEvent < EVENTS.length - 1 && unlocked(curEvent + 1)) startCampaign(curEvent + 1); });
   $("menuBtn").addEventListener("click", function () { $("result").hidden = true; $("menu").hidden = false; state = "menu"; renderCars(); renderEvents(); });
   $("tuneBtn").addEventListener("click", function () { $("result").hidden = true; $("menu").hidden = false; state = "menu"; renderCars(); renderEvents(); setTab("tune"); });
   // ввод
@@ -1594,20 +1594,226 @@ body.touchy #nitro { display: none; }
   function resetCar() {
     var p = TR[player.idx]; player.x = p.x; player.z = p.z; player.h = p.h; player.vx = player.vz = 0; toast("Назад на трассу");
   }
-  // звук двигателя
-  var AC = null, osc = null, gain = null, muted = false;
+  // ---------- звук: синтез двигателя, коробки, шин, ветра, нитро и ударов ----------
+  // Никаких файлов: всё собирается из генераторов Web Audio. Обороты считаются по скорости и передаче,
+  // коробка переключается сама, на сбросе газа — хлопки в выхлопе, у турбомоторов свист и «пшик» блоу-офф.
+  var ENG = {
+    junk: { cyl: 4, idle: 850, red: 5900, n: 4, kind: "i4", turbo: 0, pops: 0.25, vol: 0.9, bright: 0.55 },
+    wasp: { cyl: 4, idle: 950, red: 8300, n: 6, kind: "i4s", turbo: 1, pops: 0.7, vol: 0.85, bright: 0.85 },
+    bull: { cyl: 8, idle: 720, red: 6900, n: 5, kind: "v8", turbo: 0, pops: 1, vol: 1.05, bright: 0.6 },
+    arrow: { cyl: 10, idle: 1100, red: 9100, n: 7, kind: "v10", turbo: 1, pops: 0.8, vol: 0.95, bright: 1 },
+    x: { cyl: 6, idle: 900, red: 8100, n: 6, kind: "v6", turbo: 1, pops: 0.6, vol: 0.9, bright: 0.8 }
+  };
+  function engSpec(model) {
+    var e = Object.assign({}, ENG[model.id] || ENG.x), vmax = (model.maxV || 60) * 1.15;
+    e.tops = []; for (var g = 0; g < e.n; g++) e.tops.push(vmax * Math.pow((g + 1) / e.n, 0.78));
+    return e;
+  }
+  // гармоники за один цикл двигателя (2 оборота коленвала): основная энергия на частоте вспышек (k = число цилиндров)
+  function engineWave(ctx, kind) {
+    var N = 64, re = new Float32Array(N), im = new Float32Array(N), seed = 3;
+    var rnd2 = function () { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
+    var put = function (k, a) { if (k > 0 && k < N) im[k] += a; };
+    var C = { i4: 4, i4s: 4, v8: 8, v10: 10, v6: 6 }[kind];
+    for (var m = 1; m * C < N; m++) put(m * C, 1 / Math.pow(m, kind === "v10" ? 0.55 : kind === "i4s" ? 0.7 : 0.85));
+    if (kind === "v8") { put(4, 0.55); put(2, 0.35); put(6, 0.42); put(12, 0.5); put(1, 0.18); put(3, 0.22); put(5, 0.2); }
+    else if (kind === "v10") { put(5, 0.42); put(15, 0.32); put(25, 0.2); }
+    else if (kind === "v6") { put(3, 0.5); put(9, 0.3); put(15, 0.2); }
+    else { put(2, 0.22); put(6, 0.18); put(1, 0.06); }
+    for (var k = 1; k < N; k++) { im[k] += rnd2() * 0.03; re[k] = (rnd2() - 0.5) * im[k] * 0.4; }
+    return ctx.createPeriodicWave(re, im);
+  }
+  function noiseBuf(ctx) {
+    var len = ctx.sampleRate * 2, b = ctx.createBuffer(1, len, ctx.sampleRate), d = b.getChannelData(0);
+    for (var i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+    return b;
+  }
+  function shaper(ctx, k) {
+    var s = ctx.createWaveShaper(), n = 1024, c = new Float32Array(n);
+    for (var i = 0; i < n; i++) { var x = i / (n - 1) * 2 - 1; c[i] = Math.tanh(x * k) / Math.tanh(k); }
+    s.curve = c; s.oversample = "2x"; return s;
+  }
+  function noiseSrc(ctx, buf) { var s = ctx.createBufferSource(); s.buffer = buf; s.loop = true; s.loopStart = Math.random(); s.start(); return s; }
+  function filt(ctx, type, f, q) { var b = ctx.createBiquadFilter(); b.type = type; b.frequency.value = f; if (q != null) b.Q.value = q; return b; }
+  function gainN(ctx, v) { var g = ctx.createGain(); g.gain.value = v || 0; return g; }
+  function set(p, v, t, tau) { p.setTargetAtTime(v, t, tau || 0.03); }
+
+  // голос двигателя: волна вспышек + низкий гул + «рык» из шума, через перегруз и фильтр
+  function makeEngine(ctx, out, buf, simple) {
+    var E = { ctx: ctx };
+    E.osc = ctx.createOscillator(); E.sub = ctx.createOscillator(); E.sub.type = "sine";
+    E.gOsc = gainN(ctx, 0.6); E.gSub = gainN(ctx, 0.3);
+    E.drive = gainN(ctx, 1.5); E.shape = shaper(ctx, 2.2);
+    E.lp = filt(ctx, "lowpass", 1200, 0.9); E.peak = filt(ctx, "peaking", 400, 1.4); E.peak.gain.value = 5;
+    E.vol = gainN(ctx, 0); E.out = E.vol;
+    E.osc.connect(E.gOsc); E.sub.connect(E.gSub); E.gOsc.connect(E.drive); E.gSub.connect(E.drive);
+    if (!simple) {
+      E.nz = noiseSrc(ctx, buf); E.bpN = filt(ctx, "bandpass", 300, 1.1); E.gN = gainN(ctx, 0.12);
+      E.nz.connect(E.bpN); E.bpN.connect(E.gN); E.gN.connect(E.drive);
+      // впуск: шипение под нагрузкой
+      E.nzI = noiseSrc(ctx, buf); E.bpI = filt(ctx, "bandpass", 1400, 1.6); E.gI = gainN(ctx, 0);
+      E.nzI.connect(E.bpI); E.bpI.connect(E.gI); E.gI.connect(E.vol);
+    }
+    E.drive.connect(E.shape); E.shape.connect(E.peak); E.peak.connect(E.lp); E.lp.connect(E.vol); E.vol.connect(out);
+    E.osc.start(); E.sub.start();
+    E.setKind = function (spec) { E.spec = spec; E.osc.setPeriodicWave(engineWave(ctx, spec.kind)); };
+    E.frame = function (rpm, load, on, t, vol) {
+      if (!E.spec) { set(E.vol.gain, 0, t); return; }
+      var s = E.spec, fc = rpm / 120, hi = (rpm - s.idle) / (s.red - s.idle);
+      set(E.osc.frequency, fc, t, 0.02); set(E.sub.frequency, fc * s.cyl / 2, t, 0.02);
+      set(E.gSub.gain, (s.kind === "v8" ? 0.5 : 0.25) * (1 - hi * 0.6), t);
+      set(E.drive.gain, 1.1 + load * 2.6, t, 0.04);
+      set(E.lp.frequency, 380 + s.bright * (600 + load * 3600) + rpm * 0.35, t, 0.04);
+      set(E.peak.frequency, Math.min(5000, fc * s.cyl * 2), t, 0.03);
+      if (E.gN) { set(E.bpN.frequency, Math.min(4000, fc * s.cyl * 1.5), t); set(E.gN.gain, 0.05 + load * 0.22, t); set(E.bpI.frequency, 900 + hi * 2600, t); set(E.gI.gain, load * hi * 0.07, t); }
+      set(E.vol.gain, on ? vol * s.vol * (0.32 + load * 0.38 + hi * 0.12) : 0, t, 0.05);
+    };
+    return E;
+  }
+
+  var SND = { ctx: null }, muted = false;
+  function buildSound(ctx, dest) {
+    var S = { ctx: ctx, buf: noiseBuf(ctx), last: {}, pops: 0, nosOn: false };
+    S.comp = ctx.createDynamicsCompressor(); S.comp.threshold.value = -14; S.comp.ratio.value = 4; S.comp.attack.value = 0.004; S.comp.release.value = 0.2;
+    S.master = gainN(ctx, 0.55); S.comp.connect(S.master); S.master.connect(dest);
+    var bus = S.bus = gainN(ctx, 1), hp = filt(ctx, "highpass", 32, 0.7); bus.connect(hp); hp.connect(S.comp); // срезаем инфранизы, чтобы не забивали микс
+    S.eng = makeEngine(ctx, bus, S.buf, false);
+    // турбина: свист и блоу-офф
+    S.turbo = ctx.createOscillator(); S.turbo.type = "sine"; S.gTurbo = gainN(ctx, 0); S.turbo.connect(S.gTurbo); S.gTurbo.connect(bus); S.turbo.start();
+    // шины: визг из резонансного шума
+    var nz = noiseSrc(ctx, S.buf);
+    S.sq1 = filt(ctx, "bandpass", 1150, 11); S.sq2 = filt(ctx, "bandpass", 2350, 13); S.gSq = gainN(ctx, 0);
+    nz.connect(S.sq1); nz.connect(S.sq2); S.sq1.connect(S.gSq); S.sq2.connect(S.gSq); S.gSq.connect(bus);
+    // тональная часть визга: два чуть расстроенных генератора с дрожанием частоты
+    S.sqo1 = ctx.createOscillator(); S.sqo1.type = "sawtooth"; S.sqo2 = ctx.createOscillator(); S.sqo2.type = "triangle";
+    S.sqF = filt(ctx, "bandpass", 1500, 2.2); S.gSqT = gainN(ctx, 0);
+    S.sqo1.connect(S.sqF); S.sqo2.connect(S.sqF); S.sqF.connect(S.gSqT); S.gSqT.connect(bus); S.sqo1.start(); S.sqo2.start();
+    // ветер, дорога, обочина, поребрик
+    var nz2 = noiseSrc(ctx, S.buf);
+    S.lpWind = filt(ctx, "lowpass", 600, 0.5); S.gWind = gainN(ctx, 0); nz2.connect(S.lpWind); S.lpWind.connect(S.gWind); S.gWind.connect(bus);
+    S.lpRoad = filt(ctx, "lowpass", 170, 0.7); S.gRoad = gainN(ctx, 0); nz2.connect(S.lpRoad); S.lpRoad.connect(S.gRoad); S.gRoad.connect(bus);
+    S.bpOff = filt(ctx, "bandpass", 650, 0.8); S.gOff = gainN(ctx, 0); nz.connect(S.bpOff); S.bpOff.connect(S.gOff); S.gOff.connect(bus);
+    S.kerbLfo = ctx.createOscillator(); S.kerbLfo.type = "square"; S.kerbLfo.frequency.value = 20;
+    S.lpKerb = filt(ctx, "lowpass", 420, 1); S.gKerbAm = gainN(ctx, 0.5); S.gKerb = gainN(ctx, 0); S.kerbDepth = gainN(ctx, 0.5);
+    S.kerbLfo.connect(S.kerbDepth); S.kerbDepth.connect(S.gKerbAm.gain); nz2.connect(S.lpKerb); S.lpKerb.connect(S.gKerbAm); S.gKerbAm.connect(S.gKerb); S.gKerb.connect(bus); S.kerbLfo.start();
+    // нитро: рёв закиси
+    S.bpNos = filt(ctx, "bandpass", 700, 1.2); S.gNos = gainN(ctx, 0); nz.connect(S.bpNos); S.bpNos.connect(S.gNos); S.gNos.connect(bus);
+    // моторы соперников рядом: два голоса с панорамой и эффектом Доплера
+    S.rivals = [0, 1].map(function () { var pan = ctx.createStereoPanner ? ctx.createStereoPanner() : gainN(ctx, 1); pan.connect(bus); var e = makeEngine(ctx, pan, S.buf, true); e.pan = pan; e.who = null; return e; });
+    return S;
+  }
+  // разовые звуки: огибающая громкости на шуме или тоне
+  function burst(S, t, o) {
+    var ctx = S.ctx, g = gainN(ctx, 0), src;
+    if (o.tone) { src = ctx.createOscillator(); src.type = o.tone; src.frequency.setValueAtTime(o.f, t); if (o.f2) src.frequency.exponentialRampToValueAtTime(o.f2, t + o.dur); }
+    else { src = ctx.createBufferSource(); src.buffer = S.buf; src.playbackRate.value = o.rate || 1; }
+    var node = src;
+    if (o.filter) { var fl = filt(ctx, o.filter, o.ff, o.q || 0.8); src.connect(fl); node = fl; }
+    node.connect(g); g.connect(o.dest || S.bus);
+    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(o.vol, t + (o.att || 0.004)); g.gain.exponentialRampToValueAtTime(0.0008, t + o.dur);
+    src.start(t, o.tone ? 0 : Math.random()); src.stop(t + o.dur + 0.05);
+  }
+  function popSound(S, t, k) { burst(S, t, { filter: "lowpass", ff: 2200 + Math.random() * 1500, vol: 0.55 * k, dur: 0.05 + Math.random() * 0.05, att: 0.002 }); burst(S, t, { tone: "sine", f: 90, f2: 45, vol: 0.4 * k, dur: 0.07 }); }
+  function shiftSound(S, t, up) { burst(S, t, { filter: "bandpass", ff: up ? 1900 : 1200, q: 2, vol: 0.18, dur: 0.035, att: 0.001 }); burst(S, t, { tone: "sine", f: 70, f2: 50, vol: 0.22, dur: 0.06 }); }
+  function hitSound(S, t, k, metal) {
+    burst(S, t, { tone: "sine", f: 85, f2: 38, vol: 0.9 * k, dur: 0.28 });
+    burst(S, t, { filter: "bandpass", ff: 1300, q: 0.7, vol: 0.7 * k, dur: 0.22, att: 0.002 });
+    if (metal) burst(S, t, { filter: "highpass", ff: 3200, vol: 0.35 * k, dur: 0.45 });
+  }
+  function beepSound(S, t, f, dur) { burst(S, t, { tone: "square", f: f, vol: 0.12, dur: dur, att: 0.005, filter: "lowpass", ff: 3000 }); }
+
+  // обороты по скорости и передаче; коробка-автомат с отсечкой газа на переключении
+  function engState(r, spec, thr, dt, free) {
+    var s = r.snd || (r.snd = { g: 0, rpm: spec.idle, load: 0, cut: 0, boost: 0, prevThr: 0, shift: 0 });
+    var v = Math.max(0, r.vf || 0), span = spec.red - spec.idle, target;
+    s.shift = 0;
+    if (free) target = thr > 0 ? spec.red * 0.9 : spec.idle;
+    else {
+      target = spec.idle + span * Math.min(1.04, v / spec.tops[s.g]);
+      if (s.g === 0 && thr > 0) target = Math.max(target, spec.idle + span * 0.42);
+      if (target > spec.red * 0.95 && s.g < spec.n - 1 && s.cut <= 0) { s.g++; s.cut = 0.16; s.shift = 1; }
+      else if (s.g > 0 && v < spec.tops[s.g - 1] * 0.6) { s.g--; s.shift = -1; s.cut = 0.08; }
+    }
+    s.cut -= dt;
+    var lim = target >= spec.red * 0.99;
+    s.rpm += (target - s.rpm) * Math.min(1, dt * (thr > 0 ? 8 : 4.5));
+    if (lim && thr > 0) s.rpm = spec.red * (0.965 + Math.random() * 0.035); // отсечка
+    var want = s.cut > 0 ? 0 : Math.max(0, thr);
+    s.load += (want - s.load) * Math.min(1, dt * 12);
+    s.boost += ((spec.turbo && s.load > 0.5 ? Math.min(1, (s.rpm - spec.idle) / span * 1.3) : 0) - s.boost) * Math.min(1, dt * (s.load > 0.5 ? 1.8 : 6));
+    return s;
+  }
+
   function audioStart() {
-    if (AC) return;
+    if (SND.ctx) { if (SND.ctx.state !== "running" && SND.ctx.state !== "closed") SND.ctx.resume(); return; }
     try {
-      var C = window.AudioContext || window.webkitAudioContext; AC = new C(); osc = AC.createOscillator(); gain = AC.createGain(); var f = AC.createBiquadFilter();
-      osc.type = "sawtooth"; f.type = "lowpass"; f.frequency.value = 700; gain.gain.value = 0; osc.connect(f); f.connect(gain); gain.connect(AC.destination); osc.start();
-    } catch (e) { AC = null; }
+      var C = window.AudioContext || window.webkitAudioContext; var ctx = new C();
+      SND = buildSound(ctx, ctx.destination); SND.ctx = ctx; SND.carId = null;
+    } catch (e) { SND = { ctx: null }; }
   }
-  function updateAudio() {
-    if (!AC || !player) return;
-    var v = Math.abs(player.vf || 0), on = (state === "race" || state === "count") && !muted && !paused;
-    osc.frequency.value = 50 + v * 3.1 + (player.boosting ? 40 : 0); gain.gain.value = on ? 0.05 + Math.min(0.05, v * 0.001) : 0;
+  // кадр звука: realtime берёт время контекста, тест — своё
+  function soundFrame(S, dt, t, G) {
+    var p = G.player, on = G.on;
+    if (!p) { S.eng.frame(800, 0, false, t, 0); S.gSq.gain.setTargetAtTime(0, t, 0.05); S.gWind.gain.setTargetAtTime(0, t, 0.05); S.gRoad.gain.setTargetAtTime(0, t, 0.05); S.gOff.gain.setTargetAtTime(0, t, 0.05); S.gKerb.gain.setTargetAtTime(0, t, 0.05); S.gNos.gain.setTargetAtTime(0, t, 0.05); S.gTurbo.gain.setTargetAtTime(0, t, 0.05); S.rivals.forEach(function (e) { e.frame(800, 0, false, t, 0); }); return; }
+    if (S.carId !== p.model.id) { S.spec = engSpec(p.model); S.eng.setKind(S.spec); S.carId = p.model.id; p.snd = null; }
+    var spec = S.spec, thr = G.thr, st = engState(p, spec, thr, dt, G.free), v = Math.abs(p.vf || 0);
+    var hi = (st.rpm - spec.idle) / (spec.red - spec.idle);
+    S.eng.frame(st.rpm, st.load * (p.boosting ? 1 : 0.92) + (p.boosting ? 0.15 : 0), on, t, 1);
+    if (on && st.shift) { shiftSound(S, t, st.shift > 0); if (st.shift > 0) S.eng.vol.gain.setTargetAtTime(0.08, t, 0.02); }
+    // хлопки на сбросе газа
+    if (on && thr <= 0 && st.prevThr > 0 && hi > 0.45) S.pops = 0.35 + hi * 0.5;
+    if (on && st.shift > 0 && spec.pops > 0.5 && Math.random() < 0.6) popSound(S, t + 0.02, 0.6 * spec.pops);
+    if (on && S.pops > 0) { S.pops -= dt; if (Math.random() < dt * 22 * spec.pops) popSound(S, t + Math.random() * 0.02, (0.4 + Math.random() * 0.6) * spec.pops); }
+    if (on && spec.turbo && thr <= 0 && st.prevThr > 0 && st.boost > 0.35) burst(S, t, { filter: "highpass", ff: 1700, vol: 0.32 * st.boost, dur: 0.42, att: 0.01 });
+    st.prevThr = thr;
+    set(S.turbo.frequency, 1800 + st.boost * 5200, t, 0.05); set(S.gTurbo.gain, on ? st.boost * st.boost * 0.045 : 0, t, 0.08);
+    // шины, ветер, дорога
+    var slip = Math.abs(p.vl || 0) + (p.hand && v > 6 ? 4 : 0), sq = on && v > 4 ? clamp((slip - 3) / 7, 0, 1) : 0;
+    set(S.sq1.frequency, 1150 * (0.95 + Math.random() * 0.1), t, 0.02); set(S.sq2.frequency, 2350 * (0.95 + Math.random() * 0.1), t, 0.02);
+    set(S.gSq.gain, sq * 2.2, t, 0.05);
+    var sqf = 900 + slip * 28 + (Math.random() - 0.5) * 90;
+    set(S.sqo1.frequency, sqf, t, 0.015); set(S.sqo2.frequency, sqf * 1.012 + (Math.random() - 0.5) * 40, t, 0.015); set(S.sqF.frequency, sqf * 1.4, t, 0.03);
+    set(S.gSqT.gain, sq * 0.11, t, 0.04);
+    set(S.lpWind.frequency, 300 + v * 28, t, 0.1); set(S.gWind.gain, on ? Math.pow(v / 90, 2) * 0.5 + (p.boosting ? 0.06 : 0) : 0, t, 0.1);
+    set(S.gRoad.gain, on ? Math.min(1, v / 70) * 0.2 : 0, t, 0.08);
+    set(S.gOff.gain, on && G.offroad ? Math.min(1, v / 25) * 0.35 : 0, t, 0.06);
+    set(S.kerbLfo.frequency, Math.max(4, v / 1.5), t, 0.05); set(S.gKerb.gain, on && G.kerb ? Math.min(1, v / 20) * 0.5 : 0, t, 0.03);
+    // нитро
+    if (on && p.boosting && !S.nosOn) { burst(S, t, { filter: "bandpass", ff: 500, q: 0.9, vol: 1.1, dur: 0.7, att: 0.04 }); burst(S, t, { tone: "sawtooth", f: 60, f2: 140, vol: 0.25, dur: 0.6, filter: "lowpass", ff: 600 }); }
+    S.nosOn = !!p.boosting;
+    set(S.bpNos.frequency, p.boosting ? 900 + Math.random() * 200 : 500, t, 0.05); set(S.gNos.gain, on && p.boosting ? 0.55 : 0, t, 0.06);
+    // соперники: два ближайших
+    var near = (G.rivals || []).map(function (r) { return { r: r, d: Math.hypot(r.x - p.x, r.z - p.z) }; }).filter(function (o) { return o.d < 90; }).sort(function (a, b) { return a.d - b.d; }).slice(0, 2);
+    S.rivals.forEach(function (e, i) {
+      var o = near[i];
+      if (!o || !on) { e.frame(800, 0, false, t, 0); e.who = null; return; }
+      var r = o.r; if (e.who !== r) { e.setKind(engSpec(r.model)); e.who = r; }
+      var rs = engState(r, e.spec, r.th == null ? 1 : r.th, dt, false);
+      var dx = r.x - p.x, dz = r.z - p.z, d = o.d || 0.001, ux = dx / d, uz = dz / d;
+      var vrel = ((r.vx || 0) - (p.vx || 0)) * ux + ((r.vz || 0) - (p.vz || 0)) * uz, dop = clamp(343 / (343 + vrel), 0.8, 1.25);
+      e.frame(rs.rpm * dop, rs.load, true, t, 0.8 / Math.pow(1 + d / 9, 1.5));
+      if (e.pan.pan) { var fx = Math.sin(G.camH), fz = Math.cos(G.camH), right = ux * fz - uz * fx; set(e.pan.pan, clamp(right, -0.9, 0.9), t, 0.05); }
+    });
   }
+  var sndPrevN = null;
+  function updateAudio(dt) {
+    var S = SND; if (!S.ctx) return;
+    var on = (state === "race" || state === "count" || (state === "done" && player && !player.finished)) && !muted && !paused && !document.hidden;
+    var lat = player ? Math.abs(player.lat || 0) : 0, onKerb = false;
+    if (player && TR[player.idx] && lat > W / 2 - 0.2 && lat < W / 2 + 1.7) { var ii = player.idx; onKerb = TR[ii].curv > 0.1 || TR[wrapI(ii + 3)].curv > 0.1 || TR[wrapI(ii - 3)].curv > 0.1; }
+    var thrIn = state === "count" ? ((keys.KeyW || keys.ArrowUp || touch.g) ? 1 : 0) : (player ? (player.th || 0) : 0);
+    soundFrame(S, dt || 0.016, S.ctx.currentTime, { player: state === "menu" ? null : player, on: on, thr: thrIn, free: state === "count", offroad: lat > W / 2 + 1.7, kerb: onKerb,
+      rivals: racers.filter(function (r) { return r !== player && !r.left; }), camH: camH });
+    S.master.gain.setTargetAtTime(muted ? 0 : 0.55, S.ctx.currentTime, 0.05);
+    // писк светофора на отсчёте
+    if (state === "count") { var n = Math.ceil(countdown - 0.6); if (n !== sndPrevN && on) beepSound(S, S.ctx.currentTime, n > 0 ? 660 : 1320, n > 0 ? 0.16 : 0.45); sndPrevN = n; } else sndPrevN = null;
+  }
+  function sndHit(k, metal) { if (SND.ctx && !muted && state !== "menu") hitSound(SND, SND.ctx.currentTime, clamp(k, 0.15, 1), metal); }
+  document.addEventListener("visibilitychange", function () { if (!SND.ctx) return; if (document.hidden) SND.ctx.suspend(); else if (state === "race" || state === "count") SND.ctx.resume(); });
+  // iOS может «прервать» звук (звонок, другое приложение): любое касание его оживляет
+  ["touchend", "pointerup", "click", "keydown"].forEach(function (ev) {
+    document.addEventListener(ev, function () { var c = SND.ctx; if (c && c.state !== "running" && c.state !== "closed" && !document.hidden && state !== "menu") c.resume(); }, { capture: true, passive: true });
+  });
 
   // ---------- онлайн-гонки: 1v1, 1v1v1, 1v1v1v1 ----------
   // Каждый считает свою машину сам и шлёт положение; чужие машины плавно догоняют присланные точки.
@@ -1752,7 +1958,7 @@ body.touchy #nitro { display: none; }
   function loop(now) {
     requestAnimationFrame(loop);
     var dt = Math.min(0.05, (now - last) / 1000); last = now; if (dt <= 0) return;
-    resize(); if (!paused) step(dt); $("pauseBtn").hidden = !(state === "race" || state === "count") || paused; updateCars(dt); updateCamera(dt); updateShowcase(dt); updateStartLights(); updateFx(dt); updateHud(dt); updateAudio();
+    resize(); if (!paused) step(dt); $("pauseBtn").hidden = !(state === "race" || state === "count") || paused; updateCars(dt); updateCamera(dt); updateShowcase(dt); updateStartLights(); updateFx(dt); updateHud(dt); updateAudio(dt);
     var gt = now / 1000; ghosts.forEach(function (g) { g.g.position.y = g.y + Math.sin(gt * 1.6 + g.ph) * 0.6; g.g.rotation.z = Math.sin(gt + g.ph) * 0.12; });
     if (!window.__NO_RENDER__) renderer.render(scene, camera); // для автотестов: логика без отрисовки
   }
@@ -1762,7 +1968,35 @@ body.touchy #nitro { display: none; }
   racers = []; camH = SL.h; camera.position.set(SL.x - Math.sin(SL.h) * 14, 6, SL.z - Math.cos(SL.h) * 14); camera.lookAt(SL.x, 1, SL.z);
   $("who").textContent = SESSION ? "☁ " + (SESSION.name || SESSION.user) + " · прогресс в облаке" : "Гость · войди на главной, чтобы сохранять в облако";
   applyGfx(); renderCars(); resize();
-  window.__rc = { info: function () { return { calls: renderer.info.render.calls, tris: renderer.info.render.triangles, geo: renderer.info.memory.geometries, tex: renderer.info.memory.textures, prog: renderer.info.programs.length }; }, setShowAng: function (v) { showAng = v; }, paused: function () { return paused; }, net: function () { return net; }, lapDone: lapDone, racersAll: function () { return racers; }, TRACKS: TRACKS, build: buildTrack, tr: function () { return TR; }, W: function () { return W; }, camp: function () { return camp; }, startCamp: startCampaign,  ai: ai, racers: function () { return racers; }, step: step, state: function () { return state; }, TOTAL: TOTAL, LENGTH: LENGTH, player: function () { return player; }, keys: keys, finish: function () { return finishOrder; }, raceT: function () { return raceT; } };
+  window.__rc = { renderSound: function (carId, secs) {
+      var sr = 44100, octx = new OfflineAudioContext(2, sr * secs, sr), S = buildSound(octx, octx.destination);
+      var md = MODELS.filter(function (m) { return m.id === carId; })[0] || MODELS[0];
+      var pl = { model: md, vf: 0, vl: 0, vx: 0, vz: 0, x: 0, z: 0, boosting: false, hand: false }, rv = { model: MODELS[1], vf: 90, vx: 0, vz: 90, x: 3, z: -120, th: 1 };
+      var dt = 1 / 60, events = [];
+      for (var t = 0; t < secs; t += dt) {
+        var thr = t < 1.2 ? 0 : t < 9 ? 1 : t < 10.2 ? 0 : t < 15 ? 1 : t < 15.6 ? -1 : 1;
+        var free = t < 1.2 && t > 0.4; if (free) thr = Math.sin(t * 9) > 0 ? 1 : 0;
+        pl.boosting = t > 12 && t < 14; pl.vl = t > 10.2 && t < 12 ? 7 : 0; pl.hand = t > 10.4 && t < 11.2;
+        var vmax = md.maxV * (pl.boosting ? 1.3 : 1), acc = md.accel * (pl.boosting ? 1.8 : 1);
+        if (thr > 0 && t >= 1.2) pl.vf += acc * thr * Math.max(0.05, 1 - pl.vf / vmax) * dt; else if (thr < 0) pl.vf = Math.max(0, pl.vf - 40 * dt);
+        pl.vf -= pl.vf * 0.09 * dt; pl.vz = pl.vf; pl.z += pl.vf * dt;
+        rv.z += rv.vz * dt;
+        if (Math.abs(t - 15.5) < dt / 2) hitSound(S, t, 0.9, true);
+        if (Math.abs(t - 1.25) < dt / 2) beepSound(S, t, 1320, 0.45);
+        soundFrame(S, dt, t, { player: pl, on: true, thr: thr, free: t < 1.2, offroad: false, kerb: t > 14 && t < 14.8, rivals: t > 16 ? [rv] : [], camH: 0 });
+        if (pl.snd && pl.snd.shift) events.push([+t.toFixed(2), pl.snd.shift, pl.snd.g, Math.round(pl.snd.rpm)]);
+        if (t > 16 && Math.abs(rv.z - pl.z) < 200) rv.z = rv.z; else if (t > 16) rv.z = pl.z - 120;
+      }
+      return octx.startRendering().then(function (buf) {
+        var L = buf.getChannelData(0), R = buf.getChannelData(1), n = L.length, out = new DataView(new ArrayBuffer(44 + n * 4));
+        var ws = function (o, str) { for (var i = 0; i < str.length; i++) out.setUint8(o + i, str.charCodeAt(i)); };
+        ws(0, "RIFF"); out.setUint32(4, 36 + n * 4, true); ws(8, "WAVEfmt "); out.setUint32(16, 16, true); out.setUint16(20, 1, true); out.setUint16(22, 2, true); out.setUint32(24, sr, true); out.setUint32(28, sr * 4, true); out.setUint16(32, 4, true); out.setUint16(34, 16, true); ws(36, "data"); out.setUint32(40, n * 4, true);
+        var peak = 0;
+        for (var i = 0; i < n; i++) { peak = Math.max(peak, Math.abs(L[i]), Math.abs(R[i])); out.setInt16(44 + i * 4, Math.max(-1, Math.min(1, L[i])) * 32767, true); out.setInt16(46 + i * 4, Math.max(-1, Math.min(1, R[i])) * 32767, true); }
+        var bytes = new Uint8Array(out.buffer), bin = ""; for (var j = 0; j < bytes.length; j += 32768) bin += String.fromCharCode.apply(null, bytes.subarray(j, j + 32768));
+        return { wav: btoa(bin), peak: peak, events: events };
+      });
+    }, info: function () { return { calls: renderer.info.render.calls, tris: renderer.info.render.triangles, geo: renderer.info.memory.geometries, tex: renderer.info.memory.textures, prog: renderer.info.programs.length }; }, setShowAng: function (v) { showAng = v; }, paused: function () { return paused; }, net: function () { return net; }, lapDone: lapDone, racersAll: function () { return racers; }, TRACKS: TRACKS, build: buildTrack, tr: function () { return TR; }, W: function () { return W; }, camp: function () { return camp; }, startCamp: startCampaign,  ai: ai, racers: function () { return racers; }, step: step, state: function () { return state; }, TOTAL: TOTAL, LENGTH: LENGTH, player: function () { return player; }, keys: keys, finish: function () { return finishOrder; }, raceT: function () { return raceT; } };
   requestAnimationFrame(loop);
 });
 </script>
