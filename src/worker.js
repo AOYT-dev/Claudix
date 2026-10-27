@@ -419,7 +419,7 @@ export class Room {
         // в дуэли позиции видит только соперник
         const o = this.sockOf(a.d);
         ws.serializeAttachment(a);
-        if (o) this.sendTo(o, { t: "dp", x: lim(m.x, 20), z: lim(m.z, 20), f: lim(m.f, 10), m: m.m ? 1 : 0, hp: Math.max(0, Math.min(1000, +m.hp || 0)) });
+        if (o) this.sendTo(o, { t: "dp", x: lim(m.x, 20), z: lim(m.z, 20), f: lim(m.f, 10), y: Math.max(0, lim(m.y, 6)), m: m.m ? 1 : 0, hp: Math.max(0, Math.min(1000, +m.hp || 0)) });
         return;
       }
       a.x = lim(m.x, 35.5); a.z = lim(m.z, 35.5); a.f = lim(m.f, 10); a.m = m.m ? 1 : 0;

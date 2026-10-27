@@ -2969,6 +2969,10 @@ Claudix.ready(function () {
       var dead = p.life <= 0 || Math.abs(p.x) > ARENA + 8 || Math.abs(p.z) > ARENA + 8;
       if (p.friendly && p.vis) {
         if (Math.random() < 0.6) burst(p.x, p.y, p.z, p.color, 1, 1.5, 0.25, 0.14, 0.2);
+        if (duel && player && !player.dead && !p.pierce && Math.hypot(player.pos.x - p.x, player.pos.z - p.z) < 0.8 + p.r) {
+          dead = true;
+          if (p.splash) { ringFx(p.x, p.z, p.splash, 0.3, 0xff7a1a, 0.8); burst(p.x, 1, p.z, 0xff7a1a, 14, 6, 0.5, 0.25, 1); }
+        }
       } else if (p.friendly) {
         if (Math.random() < 0.6) burst(p.x, p.y, p.z, p.color, 1, 1.5, 0.25, 0.14, 0.2);
         for (var j = 0; j < enemies.length; j++) {
@@ -3138,6 +3142,7 @@ Claudix.ready(function () {
       shake = Math.max(shake, 0.2);
       enemies.forEach(function (e) {
         if (e.dead || Math.hypot(e.pos.x - p.pos.x, e.pos.z - p.pos.z) > 9 * rm() + e.r) return;
+        if (e.duel) { addFx(1.6, function () {}, function () { if (duel && !duel.over) hurtEnemy(e, 55, { color: "#d9b8ff", big: true }); }); return; }
         e.liftDur = e.type === "boss" ? 1.0 : 1.6; e.liftT = 0; e.wind = 0; e.kv.x = e.kv.z = 0;
       });
     },
@@ -3174,7 +3179,7 @@ Claudix.ready(function () {
           var dx = hx - e.pos.x, dz = hz - e.pos.z, d = Math.hypot(dx, dz);
           if (d < R && d > 0.05) {
             var pull = (e.type === "boss" ? 2.5 : 6) * dt;
-            e.pos.x += dx / d * pull; e.pos.z += dz / d * pull;
+            if (!e.duel) { e.pos.x += dx / d * pull; e.pos.z += dz / d * pull; }
             bhStretch(e, hx, hz, d);
           }
           if (doDmg && d < RC) hurtEnemy(e, 10, { color: "#d9b8ff", silent: false });
@@ -3197,6 +3202,75 @@ Claudix.ready(function () {
     var L = (adv ? adv.R : duel ? 13 : ARENA) - 3, hx = Math.max(-L, Math.min(L, x + Math.sin(f) * 6)), hz = Math.max(-L, Math.min(L, z + Math.cos(f) * 6));
     var vis = blackHoleFx(hx, hz, 11, { pos: { x: x, z: z }, face: f }, 3.5);
     addFx(3.5, function (k, dt) { vis.tick(k, dt); }, function () { vis.done(); });
+  }
+  // удар или способность соперника в дуэли: та же картинка, что видит он сам.
+  // Урон считает атакующий (приходит сообщением dx), а тут — эффекты и то, что делают с тобой: притяжение дыры, подъём Гравитона.
+  function duelFoeFx(m) {
+    var f = duel.foe, id = duel.opp.def.id, p = player;
+    var x = m.x != null ? +m.x : f.pos.x, z = m.z != null ? +m.z : f.pos.z, fa = m.f != null ? +m.f : f.face;
+    var sx = Math.sin(fa), sz = Math.cos(fa);
+    f.atk = 0.25; f.tf = fa; actStart(f.c, (m.k ? "abil_" : "atk_") + id, m.k ? ABIL_DUR[id] : ATK_DUR[id]);
+    var near = function (r) { return p && !p.dead && Math.hypot(p.pos.x - x, p.pos.z - z) <= r + 0.6; };
+    if (!m.k) {
+      if (id === "shade" && f.invis > 0) { f.invis = 0; charOpacity(f.c, 1); }
+      if (id === "flame") shoot({ x: x + sx * 0.8, z: z + sz * 0.8, y: 1.6, dx: sx, dz: sz, speed: 15, dmg: 0, life: 1.1, friendly: true, vis: true, color: 0xff7a1a, size: 0.6, r: 0.5, splash: 2.4 });
+      else if (id === "abyss") shoot({ x: x + sx * 0.8, z: z + sz * 0.8, y: 1.6, dx: sx, dz: sz, speed: 20, dmg: 0, life: 0.95, friendly: true, vis: true, color: 0x9b4dff, size: 0.75, r: 0.8, pierce: true });
+      else if (id === "storm") {
+        var from = new THREE.Vector3(x + sx * 0.6, 1.8, z + sz * 0.6);
+        if (near(14)) boltFx(from, new THREE.Vector3(p.pos.x, 1.6, p.pos.z), 0x9ff3ff);
+        else boltFx(from, new THREE.Vector3(from.x + sx * 8, 1.5, from.z + sz * 8), 0x35e0ff);
+      } else if (id === "cobalt") slashFx(x, z, fa, 3.2, 0xffc933);
+      else if (id === "shade") slashFx(x, z, fa, 2.6, 0xb48cff);
+      else if (id === "graviton") { slashFx(x, z, fa, 5.4, 0xc79bff); shake = Math.max(shake, 0.1); }
+      else slashFx(x, z, fa, 3, duel.opp.def.accent);
+      return;
+    }
+    if (id === "abyss") {
+      // чёрная дыра соперника: картинка + тянет тебя к центру
+      var L = 10, hx = Math.max(-L, Math.min(L, x + sx * 6)), hz = Math.max(-L, Math.min(L, z + sz * 6));
+      var vis = blackHoleFx(hx, hz, 11, { pos: { x: x, z: z }, face: fa }, 3.5);
+      addFx(3.5, function (k, dt) {
+        vis.tick(k, dt);
+        if (!p || p.dead || !duel || duel.over) return;
+        bhRelax(p, dt);
+        if (p.dash) return;
+        var dx = hx - p.pos.x, dz = hz - p.pos.z, d = Math.hypot(dx, dz);
+        if (d < 11 && d > 0.05) {
+          var pull = Math.min(d, 6 * dt);
+          p.pos.x += dx / d * pull; p.pos.z += dz / d * pull; clampPos(p.pos);
+          bhStretch(p, hx, hz, d);
+        }
+      }, function () {
+        vis.done(); shake = Math.max(shake, 0.35);
+        if (p && p.c && p.c.lift) { p.c.lift.rotation.set(0, 0, 0); p.c.lift.scale.set(1, 1, 1); }
+      });
+    } else if (id === "storm") {
+      ringFx(x, z, 12, 0.5, 0x35e0ff, 0.8); shake = Math.max(shake, 0.35);
+      if (near(12)) { boltFx(new THREE.Vector3(p.pos.x + rnd(-3, 3), 22, p.pos.z + rnd(-3, 3)), new THREE.Vector3(p.pos.x, 1, p.pos.z), 0xeaffff, 0.3); burst(p.pos.x, 1, p.pos.z, 0x9ff3ff, 6, 5, 0.4, 0.18, 1); }
+      for (var b = 0; b < 3; b++) { var a = Math.random() * 6.28, r = rnd(3, 11), bx = x + Math.cos(a) * r, bz = z + Math.sin(a) * r; boltFx(new THREE.Vector3(bx + rnd(-2, 2), 22, bz + rnd(-2, 2)), new THREE.Vector3(bx, 0.1, bz), 0xeaffff, 0.25); }
+    } else if (id === "graviton") {
+      ringFx(x, z, 9, 0.5, 0xc79bff, 0.8); shake = Math.max(shake, 0.2);
+      if (near(9) && !p.dash) {
+        // Гравитон поднимает тебя в воздух: 1.6 с не двигаешься, потом падаешь (урон пришлёт соперник)
+        var LD = 1.6; p.held = LD;
+        addFx(LD, function (k) {
+          if (!p || p.dead) return;
+          var t = k * LD, y = t < 0.35 ? 3.4 * t / 0.35 : t < LD - 0.25 ? 3.4 + Math.sin(t * 5) * 0.12 : 3.4 * Math.max(0, (LD - t) / 0.25);
+          p.pos.y = y; p.c.shadow.position.y = -y + 0.03; p.c.body.rotation.z = Math.sin(t * 4) * 0.25;
+        }, function () {
+          if (!p) return; p.pos.y = 0; p.held = 0; p.c.shadow.position.y = 0.03; p.c.body.rotation.z = 0;
+          ringFx(p.pos.x, p.pos.z, 2.6, 0.3, 0xc79bff, 0.8); burst(p.pos.x, 0.3, p.pos.z, 0xc79bff, 8, 5, 0.4, 0.2, 0.8); shake = Math.max(shake, 0.25);
+        });
+      }
+    } else if (id === "flame") {
+      ringFx(x, z, 12, 0.7, 0xff6a1a, 0.9, 0.15); ringFx(x, z, 10.2, 0.7, 0xffcc33, 0.8, 0.2); shake = Math.max(shake, 0.3);
+      addFx(0.7, function (k) { var r = 12 * k; burst(x + Math.cos(k * 40) * r, 0.6, z + Math.sin(k * 40) * r, 0xff7a1a, 1, 2, 0.4, 0.3, 1); });
+    } else if (id === "shade") {
+      f.invis = 4.5; charOpacity(f.c, 0.12);
+      burst(x, 1.5, z, 0x9b6bff, 16, 5, 0.6, 0.22, 1);
+    } else if (id === "cobalt") {
+      addFx(0.35, function () { burst(f.pos.x, 1.4, f.pos.z, 0x5aa0ff, 2, 2, 0.3, 0.3, 0.3); });
+    } else ringFx(x, z, 5, 0.4, duel.opp.def.accent, 0.8);
   }
   // ---------- снаряды ----------
   var PROJ_GEO = {};
@@ -3280,6 +3354,8 @@ Claudix.ready(function () {
       });
       speedNow = 10 * rm() / d.dur;
       if (d.t >= d.dur) p.dash = null;
+    } else if (p.held > 0) {
+      p.held -= dt; speedNow = 0;
     } else {
       var spd = def.speed * spdMul() * (p.invis > 0 ? 1.35 : 1);
       p.pos.x += mv.x * spd * dt; p.pos.z += mv.z * spd * dt; clampPos(p.pos);
@@ -3287,7 +3363,7 @@ Claudix.ready(function () {
       if (moving > 0.15) p.face = turn(p.face, Math.atan2(mv.x, mv.z), dt * 14);
     }
     var wantAtk = input.btnAtk || input.keys.Space || input.keys.KeyJ;
-    if (wantAtk && p.atkT <= 0 && !p.dash) {
+    if (wantAtk && p.atkT <= 0 && !p.dash && !(p.held > 0)) {
       ATK[def.id](p); p.atkT = def.atkCd; p.atkAnim = 0.22; actStart(p.c, "atk_" + def.id, ATK_DUR[def.id]);
       if (duel) netSend({ t: "da", k: 0, f: +p.face.toFixed(2), x: +p.pos.x.toFixed(2), z: +p.pos.z.toFixed(2) });
       else if (adv && adv.mate && !adv.mate.bot) netSend({ t: "aa", k: 0, f: +p.face.toFixed(2), x: +p.pos.x.toFixed(2), z: +p.pos.z.toFixed(2) });
@@ -3721,12 +3797,8 @@ Claudix.ready(function () {
     else if (m.t === "ar" && adv) advOnEvent(m);
     else if (m.t === "aend" && adv) advMateLeft();
     else if (m.t === "ds" && m.o) { dq = false; $("duelOv").hidden = true; startDuel(m); }
-    else if (m.t === "dp" && duel) { var f = duel.foe; f.tx = m.x; f.tz = m.z; f.tf = m.f; f.mv = m.m; duel.fhp = m.hp; }
-    else if (m.t === "da" && duel) {
-      var f2 = duel.foe; f2.atk = 0.25; actStart(f2.c, (m.k ? "abil_" : "atk_") + duel.opp.def.id, m.k ? ABIL_DUR[duel.opp.def.id] : ATK_DUR[duel.opp.def.id]);
-      if (m.k) { if (duel.opp.def.id === "abyss") holeVisual(f2.pos.x, f2.pos.z, f2.face); else ringFx(f2.pos.x, f2.pos.z, 5, 0.4, duel.opp.def.accent, 0.8); shake = Math.max(shake, 0.15); }
-      else slashFx(f2.pos.x, f2.pos.z, f2.face, 3, duel.opp.def.accent);
-    }
+    else if (m.t === "dp" && duel) { var f = duel.foe; f.tx = m.x; f.tz = m.z; f.tf = m.f; f.mv = m.m; f.ty = +m.y || 0; duel.fhp = m.hp; }
+    else if (m.t === "da" && duel) duelFoeFx(m);
     else if (m.t === "dx" && duel && player && !duel.over) { hurtPlayer(+m.d || 0, m.x, m.z); }
     else if (m.t === "de" && duel) { endDuelUi(m); }
     else if (m.t === "p") { var r = net.remotes[m.u]; if (r) { r.tx = m.x; r.tz = m.z; r.tf = m.f; } }
@@ -3849,7 +3921,11 @@ Claudix.ready(function () {
     var f = duel.foe, k = 1 - Math.exp(-dt * 12), p = player;
     f.pos.x += (f.tx - f.pos.x) * k; f.pos.z += (f.tz - f.pos.z) * k;
     f.face = turn(f.face, f.tf, dt * 14);
+    // соперник в воздухе (его поднял твой Гравитон)
+    var fy = f.ty || 0; f.pos.y += (fy - f.pos.y) * k; f.c.shadow.position.y = -f.pos.y + 0.03; f.c.body.rotation.z = f.pos.y > 0.2 ? Math.sin(tAll * 4) * 0.25 : 0;
+    bhRelax(f, dt);
     f.flash = Math.max(0, f.flash - dt); f.atk = Math.max(0, f.atk - dt);
+    if (f.invis > 0) { f.invis -= dt; if (f.invis <= 0) { f.invis = 0; charOpacity(f.c, 1); } }
     var fl = f.flash > 0 ? 0.9 : 0;
     flashChar(f.c, fl);
     f.c.root.rotation.y = 0; f.c.body.rotation.y = f.face;
@@ -3862,7 +3938,7 @@ Claudix.ready(function () {
       duel.sendT = 0;
       var mv = Math.hypot(p.pos.x - duel.lx, p.pos.z - duel.lz) > 0.05 ? 1 : 0;
       duel.lx = p.pos.x; duel.lz = p.pos.z;
-      netSend({ t: "p", x: +p.pos.x.toFixed(2), z: +p.pos.z.toFixed(2), f: +p.face.toFixed(2), m: mv, hp: Math.max(0, Math.round(p.hp)) });
+      netSend({ t: "p", x: +p.pos.x.toFixed(2), z: +p.pos.z.toFixed(2), f: +p.face.toFixed(2), y: +p.pos.y.toFixed(2), m: mv, hp: Math.max(0, Math.round(p.hp)) });
     }
   }
   function endDuelUi(m) {
@@ -5065,7 +5141,7 @@ Claudix.ready(function () {
   })();
 
   if (window.__LG_TEST__) window.__lg = { adv: function () { return adv; }, enemies: function () { return enemies; }, player: function () { return player; }, save: function () { return save; },
-    hurt: hurtEnemy, mode: function () { return mode; }, projs: function () { return projs; }, ROOMS: ROOMS, net: net, chars: function () { return CHARS; }, GFX: GFX, renderer: renderer, fx: function () { return fxList; }, spawn: function (t) { return spawnEnemy(t); }, run: function () { return run; } };
+    hurt: hurtEnemy, mode: function () { return mode; }, projs: function () { return projs; }, ROOMS: ROOMS, net: net, chars: function () { return CHARS; }, GFX: GFX, renderer: renderer, fx: function () { return fxList; }, duel: function () { return duel; }, spawn: function (t) { return spawnEnemy(t); }, run: function () { return run; } };
   // ---------- главный цикл ----------
   var lastT = performance.now();
   function loop(now) {
