@@ -213,6 +213,8 @@
 "Графика: высокая": "Graphics: high",
 "Графика: быстрая": "Graphics: fast",
 "Хеллоуин": "Halloween",
+"Герой, хранитель времени": "Hero, Keeper of Time",
+"Герой. Годами изучал мультивселенную, и его затянуло внутрь: время шло то быстро, то медленно. В средневековье он прошёл испытания босса мультивселенной, стал достоин и получил в дар власть над временем": "Hero. He studied the multiverse for years until it pulled him in, where time ran fast, then slow. In the Middle Ages he passed the trials of the multiverse's master, proved worthy and was granted power over time",
 "Титан": "Titan",
 "Хронос": "Chronos",
 "Каменный великан": "Stone Giant",
