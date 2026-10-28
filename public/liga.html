@@ -421,7 +421,7 @@ Claudix.ready(function () {
       role: TR("Антигерой, брат Шторм-Джея"), lore: TR("Антигерой. Старший брат Шторм-Джея. Писал вирус, чтобы взломать игру, его ударило током, и теперь он захватывает мир"), atk: TR("Мощный луч прошивает всех на линии и заражает, вирус перескакивает на соседей"), abil: TR("Взлом: заражённые враги переходят на твою сторону и бьют своих"), abilName: TR("Взлом") },
     { id: "phantom", name: TR("Фантом"), price: 30000, suit: 0x1a2633, accent: 0x7fe8ff, skin: 0x7d8f9e, hp: 150, speed: 8.0, cd: 12, atkCd: 0.55,
       role: TR("Антигерой, воин-призрак"), lore: TR("Антигерой. Корпорация «Тень» ставила на нём опыты, он умер, а его душа переродилась в нечто большее, чем человек"), atk: TR("Цепь-хлыст хватает врага и притягивает к тебе"), abil: TR("Одержимость: вселяешься во врага, управляешь им 4 с и взрываешь изнутри"), abilName: TR("Вселение") },
-    { id: "titan", name: TR("Титан"), price: 35000, suit: 0x1a1817, accent: 0xff7a1a, skin: 0x1a1817, hp: 220, speed: 6.4, cd: 11, atkCd: 0.75,
+    { id: "titan", name: TR("Титан"), price: 35000, suit: 0x1a1817, accent: 0xff7a1a, skin: 0x1a1817, hp: 280, speed: 6.0, cd: 11, atkCd: 0.75,
       role: TR("Каменный великан"), atk: TR("Бьёт кулаком в землю, и по линии вылезают каменные шипы"), abil: TR("Землетрясение: подбрасывает всех вокруг, земля горит трещинами"), abilName: TR("Тряска") },
     { id: "chronos", name: TR("Хронос"), price: 40000, suit: 0x16203a, accent: 0xffd25a, skin: 0xe2bc98, hp: 120, speed: 8.2, cd: 13, atkCd: 0.5,
       role: TR("Повелитель времени"), atk: TR("Веер стрелок часов прошивает врагов насквозь"), abil: TR("Стоп-кадр: время замирает на 3 с, враги стоят как статуи"), abilName: TR("Стоп") }
@@ -3420,7 +3420,7 @@ Claudix.ready(function () {
       spikeLine(px, pz, fx, fz, 6, 1.05 * rm(), function (x, z) {
         enemies.forEach(function (e) {
           if (e.dead || hit.indexOf(e) >= 0 || Math.hypot(e.pos.x - x, e.pos.z - z) > 1.3 + e.r) return;
-          hit.push(e); hurtEnemy(e, 26, { color: "#ffb36b", stun: 0.4, kx: fx * 4 * e.kb, kz: fz * 4 * e.kb });
+          hit.push(e); hurtEnemy(e, 62, { color: "#ffb36b", big: true, stun: 0.5, kx: fx * 4 * e.kb, kz: fz * 4 * e.kb });
         });
       });
     },
@@ -3443,17 +3443,17 @@ Claudix.ready(function () {
       quakeFx(cx, cz, R);
       enemies.forEach(function (e) {
         if (e.dead || Math.hypot(e.pos.x - cx, e.pos.z - cz) > R + e.r) return;
-        if (e.duel) { addFx(0.9, function () {}, function () { if (duel && !duel.over) hurtEnemy(e, 80, { color: "#ffb36b", big: true }); }); return; }
+        if (e.duel) { addFx(0.9, function () {}, function () { if (duel && !duel.over) hurtEnemy(e, 130, { color: "#ffb36b", big: true }); }); return; }
         var boss = e.type === "boss" || (e.T && e.T.boss);
-        if (e.proxy) { hurtEnemy(e, 45, { color: "#ffb36b", big: true, stun: 1 }); return; }
-        hurtEnemy(e, 25, { color: "#ffb36b" });
+        if (e.proxy) { hurtEnemy(e, 120, { color: "#ffb36b", big: true, stun: 1.2 }); return; }
+        hurtEnemy(e, 70, { color: "#ffb36b", big: true });
         if (!e.dead) { e.liftDur = boss ? 0.6 : 0.9; e.liftT = 0; e.wind = 0; e.slam = 0; e.kv.x = e.kv.z = 0; }
       });
       // земля горит трещинами 4 секунды
       var tick = 0;
       addFx(4, function (k, dt) {
         tick -= dt; if (tick > 0) return; tick = 0.5;
-        enemies.forEach(function (e) { if (!e.dead && Math.hypot(e.pos.x - cx, e.pos.z - cz) < R * 0.9) hurtEnemy(e, 6, { color: "#ff7a1a", silent: true }); });
+        enemies.forEach(function (e) { if (!e.dead && Math.hypot(e.pos.x - cx, e.pos.z - cz) < R * 0.9) hurtEnemy(e, 12, { color: "#ff7a1a", silent: true }); });
       });
     },
     chronos: function (p) {
@@ -5486,7 +5486,7 @@ Claudix.ready(function () {
     if (d > 0.05) m.face = turn(m.face, Math.atan2(dx, dz), dt * 12);
     if (tgt && m.atkT <= 0 && bd < (def.id === "phantom" ? 7.5 : def.id === "titan" ? 7 : ranged ? 14 : 3.2)) {
       m.atkT = def.atkCd * 1.15;
-      var dmg = { cobalt: 20, storm: 14, shade: 18, graviton: 12, flame: 22, abyss: 28, virus: 32, phantom: 22, titan: 26, chronos: 15 }[def.id] * 1.6;
+      var dmg = { cobalt: 20, storm: 14, shade: 18, graviton: 12, flame: 22, abyss: 28, virus: 32, phantom: 22, titan: 62, chronos: 15 }[def.id] * 1.6;
       mateAttackFx({ k: 0, f: m.face, x: m.pos.x, z: m.pos.z });
       if (!ranged) {
         enemies.forEach(function (e) {
