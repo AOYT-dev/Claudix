@@ -1447,11 +1447,11 @@ Claudix.ready(function () {
       body: "slim", style: "hero", head: { jaw: 1.0, chin: 1.2, cheek: 1.15, brow: 1.2, w: 0.97 },
       face: { skin: 0xe2bc98, brow: 0x2a1e14, iris: 0xffd25a, irisGlow: true, hair: 0x2a1e14, hairFront: 0.52, stubble: 0.3,
         glowPaint: function (g, X, Y, R, sc) { g.strokeStyle = "rgba(255,210,90,1)"; g.lineWidth = 2 * sc; g.beginPath(); g.arc(X(0), Y(0.52), R(0.07), 0, Math.PI * 2); g.stroke(); g.beginPath(); g.moveTo(X(0), Y(0.52)); g.lineTo(X(0), Y(0.58)); g.moveTo(X(0), Y(0.52)); g.lineTo(X(0.04), Y(0.5)); g.stroke(); } },
-      hair: "slick", hairC: 0x24180f, robe: { c: 0x1a2648, in: 0x0c1222, trim: 0xd9a845 },
+      hair: "slick", hairC: 0x24180f, robe: { c: 0x1f6b3a, in: 0x0e3a1e, trim: 0xc8202a },
       suit: { base: 0x16203a, side: 0x0f1628, yoke: 0x1c2848, muscle: 0.7, belt: 0x0c1220, buckle: 0xffd25a, emblem: "clock", emblemS: 0.08, emblemC: [0xffd25a, 0x0c1220, 0xfff2c0], glow: true, collar: 0x0f1628,
         paint: function (U) { gears(U, 0xffd25a, 9, 5); } },
       sleeve: 0x16203a, glove: 0xc9a24a, pants: 0x1c2848, boot: 0x0c1220, bootTrim: 0xffd25a, wrist: 0xffd25a,
-      cape: { c: 0x1a2440, w: 0.95, l: 1.4 }, clockHalo: 0xffd25a
+      cape: { c: 0x1f6b3a, w: 0.95, l: 1.4, trim: 0xc8202a }, clockHalo: 0xffd25a
     },
     // ---------- улица ----------
     thug: {
@@ -2110,6 +2110,11 @@ Claudix.ready(function () {
       var cg = capeGeo(info.cape.w, info.cape.l); ownGeo.push(cg);
       var cm = new THREE.MeshStandardMaterial({ color: col(info.cape.c), roughness: 0.78, metalness: 0.02, side: THREE.DoubleSide });
       if (info.cape.ragged) { cm.alphaMap = raggedTex(); cm.alphaTest = 0.5; cm.transparent = false; }
+      if (info.cape.trim != null) {
+        // плащ с контуром: основной цвет и полоса другого цвета по краям и низу
+        var ctx2 = canvasTex(128, 256, function (g, w, h) { g.fillStyle = rgbStr(info.cape.c); g.fillRect(0, 0, w, h); g.fillStyle = rgbStr(info.cape.trim); g.fillRect(0, 0, 9, h); g.fillRect(w - 9, 0, 9, h); g.fillRect(0, h - 12, w, 12); g.fillStyle = "rgba(0,0,0,0.25)"; g.fillRect(9, 0, 2, h - 12); g.fillRect(w - 11, 0, 2, h - 12); g.fillRect(9, h - 14, w - 18, 2); });
+        cm.map = ctx2; cm.color = new THREE.Color(1, 1, 1);
+      }
       mats.push(cm);
       cape = new THREE.Group(); cape.position.set(0, 0.76, -0.17 * (B.tz / 0.64)); G.torso.add(cape);
       var cmesh = new THREE.Mesh(cg, cm); if (GFX.hi) cmesh.castShadow = true; cape.add(cmesh); cape.userData.geo = cg;
