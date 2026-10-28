@@ -265,7 +265,7 @@ async function route(req, env) {
 }
 
 // ---- онлайн-лобби: одна общая комната на всех (Durable Object, WebSocket) ----
-const HERO_IDS = ["cobalt", "storm", "shade", "graviton", "flame", "abyss", "virus", "phantom"];
+const HERO_IDS = ["cobalt", "storm", "shade", "graviton", "flame", "abyss", "virus", "phantom", "titan", "chronos"];
 const ROOM_MAX = 24;
 const ADV_RELAY = ["ap", "ae", "ah", "ax", "aa", "ar"];
 // Halloween Adventure пока на проверке: в очередь пускаем только этих игроков (uid). Пустой список = всех.
