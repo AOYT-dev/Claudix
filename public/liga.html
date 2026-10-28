@@ -423,7 +423,7 @@ Claudix.ready(function () {
       role: TR("Антигерой, воин-призрак"), lore: TR("Антигерой. Корпорация «Тень» ставила на нём опыты, он умер, а его душа переродилась в нечто большее, чем человек"), atk: TR("Цепь-хлыст хватает врага и притягивает к тебе"), abil: TR("Одержимость: вселяешься во врага, управляешь им 4 с и взрываешь изнутри"), abilName: TR("Вселение") },
     { id: "titan", name: TR("Титан"), price: 35000, suit: 0x1a1817, accent: 0xff7a1a, skin: 0x1a1817, hp: 280, speed: 6.0, cd: 11, atkCd: 0.75,
       role: TR("Каменный великан"), atk: TR("Бьёт кулаком в землю, и по линии вылезают каменные шипы"), abil: TR("Землетрясение: подбрасывает всех вокруг, земля горит трещинами"), abilName: TR("Тряска") },
-    { id: "chronos", name: TR("Хронос"), price: 40000, suit: 0x16203a, accent: 0xffd25a, skin: 0xe2bc98, hp: 120, speed: 8.2, cd: 13, atkCd: 0.5,
+    { id: "chronos", name: TR("Хронос"), price: 40000, suit: 0x16203a, accent: 0xffd25a, skin: 0xd9b08c, hp: 130, speed: 8.0, cd: 13, atkCd: 0.6,
       role: TR("Повелитель времени"), atk: TR("Веер стрелок часов прошивает врагов насквозь"), abil: TR("Стоп-кадр: время замирает на 3 с, враги стоят как статуи"), abilName: TR("Стоп") }
   ];
   var HERO_BY_ID = {};
@@ -1444,8 +1444,8 @@ Claudix.ready(function () {
       sleeve: 0x1a1817, skinArms: true, glove: null, pants: 0x1e1c1a, boot: 0x141312, bootTrim: 0xff7a1a, gauntlet: 0x34312d, rocks: 0x6a655e
     },
     chronos: {
-      body: "slim", style: "hero", head: { jaw: 1.0, chin: 1.2, cheek: 1.15, brow: 1.2, w: 0.97 },
-      face: { skin: 0xe2bc98, brow: 0x2a1e14, iris: 0xffd25a, irisGlow: true, hair: 0x2a1e14, hairFront: 0.52, stubble: 0.3,
+      body: "hero", style: "hero", head: { jaw: 1.2, chin: 1.3, cheek: 1.3, brow: 1.45, w: 1.0, h: 1.03 },
+      face: { skin: 0xd9b08c, brow: 0x24180f, iris: 0xffd25a, irisGlow: true, hair: 0x24180f, hairFront: 0.55, stubble: 0.75, stubbleC: 0x2a1c12, age: 0.45, angry: 0.15,
         glowPaint: function (g, X, Y, R, sc) { g.strokeStyle = "rgba(255,210,90,1)"; g.lineWidth = 2 * sc; g.beginPath(); g.arc(X(0), Y(0.52), R(0.07), 0, Math.PI * 2); g.stroke(); g.beginPath(); g.moveTo(X(0), Y(0.52)); g.lineTo(X(0), Y(0.58)); g.moveTo(X(0), Y(0.52)); g.lineTo(X(0.04), Y(0.5)); g.stroke(); } },
       hair: "slick", hairC: 0x24180f, robe: { c: 0x1f6b3a, in: 0x0e3a1e, trim: 0xc8202a },
       suit: { base: 0x16203a, side: 0x0f1628, yoke: 0x1c2848, muscle: 0.7, belt: 0x0c1220, buckle: 0xffd25a, emblem: "clock", emblemS: 0.08, emblemC: [0xffd25a, 0x0c1220, 0xfff2c0], glow: true, collar: 0x0f1628,
@@ -3433,7 +3433,7 @@ Claudix.ready(function () {
       aim(18);
       [-0.2, 0, 0.2].forEach(function (a) {
         var f = p.face + a, fx = Math.sin(f), fz = Math.cos(f);
-        shoot({ x: p.pos.x + fx * 0.8, z: p.pos.z + fz * 0.8, y: 1.6, dx: fx, dz: fz, speed: 22, dmg: 15, life: 0.85 * rm(), friendly: true, color: 0xffd25a, size: 0.5, r: 0.5, pierce: true, knock: 2 });
+        shoot({ x: p.pos.x + fx * 0.8, z: p.pos.z + fz * 0.8, y: 1.6, dx: fx, dz: fz, speed: 22, dmg: 26, life: 0.85 * rm(), friendly: true, color: 0xffd25a, size: 0.5, r: 0.5, pierce: true, knock: 2.5 });
       });
     },
     abyss: function (p) {
@@ -5491,7 +5491,7 @@ Claudix.ready(function () {
     if (d > 0.05) m.face = turn(m.face, Math.atan2(dx, dz), dt * 12);
     if (tgt && m.atkT <= 0 && bd < (def.id === "phantom" ? 7.5 : def.id === "titan" ? 7 : ranged ? 14 : 3.2)) {
       m.atkT = def.atkCd * 1.15;
-      var dmg = { cobalt: 20, storm: 14, shade: 18, graviton: 12, flame: 22, abyss: 28, virus: 32, phantom: 22, titan: 62, chronos: 15 }[def.id] * 1.6;
+      var dmg = { cobalt: 20, storm: 14, shade: 18, graviton: 12, flame: 22, abyss: 28, virus: 32, phantom: 22, titan: 62, chronos: 26 }[def.id] * 1.6;
       mateAttackFx({ k: 0, f: m.face, x: m.pos.x, z: m.pos.z });
       if (!ranged) {
         enemies.forEach(function (e) {
