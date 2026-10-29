@@ -414,7 +414,7 @@ Claudix.ready(function () {
     { id: "graviton", name: TR("Гравитон"), price: 3000, suit: 0x13897f, accent: 0xc79bff, skin: 0xe0b08a, hp: 120, speed: 7.0, cd: 8, atkCd: 0.6,
       role: TR("Хозяин гравитации"), lore: TR("Герой. Сам собрал гравитационную пушку, снаряд попал ему в глаз и дал телекинез"), atk: TR("Толчок: отбрасывает всех перед собой"), abil: TR("Подъём: поднимает врагов в воздух и швыряет об землю"), abilName: TR("Подъём") },
     { id: "flame", name: TR("Пламень"), price: 7000, suit: 0xd9381e, accent: 0xffb02e, skin: 0xe6b38e, hp: 105, speed: 7.2, cd: 7, atkCd: 0.55,
-      role: TR("Огненный маг"), lore: TR("Герой. Делал огнемёты в корпорации «Тень»: колба с сывороткой упала на огнемёт, он выжил в огне и получил его силу"), atk: TR("Огненный шар взрывается и поджигает"), abil: TR("Огненная волна: пылающее кольцо по большой площади"), abilName: TR("Волна") },
+      role: TR("Огненный маг"), lore: TR("Герой. Делал огнемёты в корпорации «Тень»: колба с сывороткой упала на огнемёт, он выжил в огне и получил его силу"), atk: TR("Огненный шар взрывается и поджигает"), abil: TR("Огненная волна: стена огня катится во все стороны и поджигает врагов на 5 секунд"), abilName: TR("Волна") },
     { id: "abyss", name: TR("Бездна"), price: 15000, suit: 0x14101f, accent: 0x8a2be2, skin: 0x3a3347, hp: 150, speed: 7.4, cd: 12, atkCd: 0.7,
       role: TR("Антигерой, властелин пустоты"), lore: TR("Антигерой. Космонавт, улетел к чёрной дыре, экипаж погиб, а он вернулся монстром и мстит тем, кто это подстроил"), atk: TR("Тёмный снаряд пробивает врагов насквозь"), abil: TR("Чёрная дыра: затягивает всех и дробит"), abilName: TR("Дыра") },
     { id: "virus", name: TR("Вирус"), price: 25000, suit: 0x0e1411, accent: 0x39ff88, skin: 0xd6a47c, hp: 125, speed: 7.8, cd: 10, atkCd: 0.5,
@@ -3100,6 +3100,7 @@ Claudix.ready(function () {
     o = o || {};
     if (!o.raw) dmg *= pwrMul();
     if (e.phased) { if (!o.silent) popText(e.pos.x, e.pos.y + 2.8, e.pos.z, TR("мимо"), "#9fb3ff", false); return; }
+    if (e.proxy && o.burn) e.visBurn = Math.max(e.visBurn || 0, o.burn);
     if (e.proxy) {
       var pd = Math.min(500, Math.round(dmg));
       e.flash = 0.12; e.c.hitT = 0.2;
@@ -3113,6 +3114,14 @@ Claudix.ready(function () {
       popText(e.pos.x, e.pos.y + 2.8, e.pos.z, String(dd), o.color || "#ffffff", o.big);
       burst(e.pos.x, e.pos.y + 1.5, e.pos.z, 0xffffff, 3, 4, 0.25, 0.14, 0.6);
       if (player) netSend({ t: "dx", d: dd, x: +player.pos.x.toFixed(2), z: +player.pos.z.toFixed(2) });
+      if (o.burn) {
+        e.visBurn = Math.max(e.visBurn || 0, o.burn);
+        if (!(e.burnLeft > 0)) {
+          var bt = 0.5, bd = Math.max(1, Math.round((o.burnDps || 6) * 0.5));
+          addFx(o.burn, function (k, dt) { bt -= dt; if (bt > 0) return; bt = 0.5; if (duel && !duel.over && player) { popText(e.pos.x, e.pos.y + 2.6, e.pos.z, String(bd), "#ff9a3a", false); netSend({ t: "dx", d: bd, x: +player.pos.x.toFixed(2), z: +player.pos.z.toFixed(2) }); } }, function () { e.burnLeft = 0; });
+        }
+        e.burnLeft = o.burn;
+      }
       return;
     }
     e.hp -= dmg; e.flash = 0.12; e.c.hitT = 0.2;
@@ -3530,19 +3539,16 @@ Claudix.ready(function () {
     },
     flame: function (p) {
       var hit = [], cx = p.pos.x, cz = p.pos.z, maxR = 12 * rm();
-      ringFx(cx, cz, maxR, 0.7, 0xff6a1a, 0.9, 0.15);
-      ringFx(cx, cz, maxR * 0.85, 0.7, 0xffcc33, 0.8, 0.2);
-      shake = Math.max(shake, 0.3);
-      addFx(0.7, function (k) {
-        var r = maxR * k;
-        burst(cx + Math.cos(k * 40) * r, 0.6, cz + Math.sin(k * 40) * r, 0xff7a1a, 1, 2, 0.4, 0.3, 1);
+      fireWaveFx(cx, cz, maxR, 0.9);
+      addFx(0.9, function (k) {
+        var r = maxR * (1 - (1 - k) * (1 - k));
         enemies.forEach(function (e) {
           if (e.dead || hit.indexOf(e) >= 0) return;
           var d = Math.hypot(e.pos.x - cx, e.pos.z - cz);
           if (d <= r + e.r) {
             hit.push(e);
             var kk = d > 0.01 ? 1 / d : 0;
-            hurtEnemy(e, 45, { color: "#ffb36b", big: true, burn: 3, burnDps: 7, kx: (e.pos.x - cx) * kk * 8 * e.kb, kz: (e.pos.z - cz) * kk * 8 * e.kb });
+            hurtEnemy(e, 45, { color: "#ffb36b", big: true, burn: 5, burnDps: 10, kx: (e.pos.x - cx) * kk * 8 * e.kb, kz: (e.pos.z - cz) * kk * 8 * e.kb });
           }
         });
       });
@@ -3649,6 +3655,63 @@ Claudix.ready(function () {
     if (TIME_STOP <= 0) return;
     TIME_STOP -= dt;
     if (TIME_STOP <= 0 || mode === "lobby") { TIME_STOP = 0; renderer.domElement.style.filter = ""; }
+  }
+  // ---------- огонь Пламеня ----------
+  var FIRE_TEX = null, FIRE_MAT = null;
+  function fireTex() {
+    if (FIRE_TEX) return FIRE_TEX;
+    FIRE_TEX = canvasTex(128, 256, function (g, w, h) {
+      // три языка пламени: белое ядро, жёлтый, оранжевый, тёмно-красный край
+      [[0, 0.04, 1], [-16, 0.2, 0.75], [16, 0.16, 0.8]].forEach(function (q) {
+        var cx = w / 2 + q[0], top = h * q[1], gr = g.createRadialGradient(cx, h * 0.8, 3, cx, h * 0.62, h * 0.66);
+        gr.addColorStop(0, "rgba(255,235,140," + q[2] + ")"); gr.addColorStop(0.2, "rgba(255,160,40," + 0.95 * q[2] + ")"); gr.addColorStop(0.5, "rgba(225,70,10," + 0.8 * q[2] + ")"); gr.addColorStop(1, "rgba(110,10,0,0)");
+        g.fillStyle = gr; g.beginPath(); g.moveTo(cx, top); g.bezierCurveTo(cx + w * 0.16, h * 0.32, cx + w * 0.44, h * 0.62, cx + w * 0.3, h * 0.88); g.quadraticCurveTo(cx, h * 1.0, cx - w * 0.3, h * 0.88); g.bezierCurveTo(cx - w * 0.44, h * 0.62, cx - w * 0.16, h * 0.32, cx, top); g.fill();
+      });
+    });
+    FIRE_TEX.userData = { keep: true };
+    return FIRE_TEX;
+  }
+  function fireMat() { if (!FIRE_MAT) { FIRE_MAT = new THREE.SpriteMaterial({ map: fireTex(), color: new THREE.Color(0.85, 0.7, 0.6), opacity: 0.85, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }); FIRE_MAT.userData.shared = true; } return FIRE_MAT; }
+  // огненная волна: живая стена огня катится кольцом во все стороны, за ней дым и искры
+  function fireWaveFx(cx, cz, maxR, dur) {
+    var N = GFX.hi ? 72 : 40, grp = new THREE.Group(), m = new THREE.SpriteMaterial({ map: fireTex(), color: new THREE.Color(0.9, 0.72, 0.6), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending });
+    for (var i = 0; i < N; i++) { var sp = new THREE.Sprite(m); sp.userData = { a: i / N * Math.PI * 2 + rnd(-0.04, 0.04), ph: Math.random() * 6, k: 0.75 + Math.random() * 0.55, o: rnd(-0.35, 0.35) }; grp.add(sp); }
+    scene.add(grp); shake = Math.max(shake, 0.35);
+    flashFx(cx, 1, cz, 0xff8a2a, 4.5, 0.25); ringFx(cx, cz, maxR * 0.95, dur, 0xff5a10, 0.35);
+    var T0 = tAll;
+    addFx(dur + 0.5, function (k) {
+      var kk = Math.min(1, k * (dur + 0.5) / dur), r = maxR * (1 - (1 - kk) * (1 - kk)), fade = k < 0.7 ? 1 : 1 - (k - 0.7) / 0.3, t = tAll - T0;
+      m.opacity = 0.85 * fade;
+      grp.children.forEach(function (sp) {
+        var u = sp.userData, fl = 0.78 + 0.3 * Math.sin(t * 19 + u.ph) + 0.12 * Math.sin(t * 31 + u.ph * 2), hgt = (1.3 + 1.6 * (1 - kk * 0.6)) * u.k * fl;
+        sp.scale.set(hgt * 0.7, hgt, 1); sp.position.set(cx + Math.cos(u.a) * (r + u.o), hgt * 0.42, cz + Math.sin(u.a) * (r + u.o));
+      });
+      for (var q = 0; q < 3; q++) { var a = Math.random() * 6.283; if (Math.random() < 0.8 * fade) burst(cx + Math.cos(a) * r, 0.5 + Math.random(), cz + Math.sin(a) * r, Math.random() < 0.5 ? 0xff7a1a : 0xffc040, 1, 2.2, 0.6, 0.16, 1.8); }
+      if (Math.random() < 0.6 * fade) { var a2 = Math.random() * 6.283; smokePuff(cx + Math.cos(a2) * r * 0.9, 1.4, cz + Math.sin(a2) * r * 0.9, 0x2e2420, 1.6, 1.3); }
+    }, function () { scene.remove(grp); m.dispose(); });
+  }
+  // горящие враги (и соперник в дуэли): на них пляшет огонь, пока идёт горение
+  var FIRES = [];
+  function updateFires(dt) {
+    enemies.forEach(function (e) { if (!e.dead && (e.burn > 0 || e.visBurn > 0) && !e.fireS) { e.fireS = new THREE.Sprite(fireMat()); scene.add(e.fireS); FIRES.push(e); } });
+    for (var i = FIRES.length - 1; i >= 0; i--) {
+      var e = FIRES[i];
+      if (e.visBurn > 0) e.visBurn -= dt;
+      if (e.dead || enemies.indexOf(e) < 0 || !(e.burn > 0 || e.visBurn > 0)) { scene.remove(e.fireS); e.fireS = null; FIRES.splice(i, 1); continue; }
+      var sc = e.scale || 1, fl = 0.8 + 0.25 * Math.sin(tAll * 21 + (e.id || i)) + 0.1 * Math.sin(tAll * 33 + i);
+      e.fireS.position.set(e.pos.x, e.pos.y + 0.75 * sc, e.pos.z); e.fireS.scale.set(0.95 * sc * fl, 1.7 * sc * fl, 1);
+      if (Math.random() < dt * 10) burst(e.pos.x + rnd(-0.3, 0.3), e.pos.y + 0.5 + Math.random() * 1.5 * sc, e.pos.z + rnd(-0.3, 0.3), Math.random() < 0.5 ? 0xff7a1a : 0xffc040, 1, 0.9, 0.5, 0.15, 2);
+      if (Math.random() < dt * 3) smokePuff(e.pos.x, e.pos.y + 2.2 * sc, e.pos.z, 0x2e2420, 0.9, 1);
+    }
+  }
+  // горит сам игрок (огонь соперника в дуэли): только картинка, урон присылает соперник
+  function playerBurnVis(dur) {
+    var p = player; if (!p) return; var sp = new THREE.Sprite(fireMat()); scene.add(sp);
+    addFx(dur, function (k, dt) {
+      if (!player) return; var fl = 0.8 + 0.25 * Math.sin(tAll * 21) + 0.1 * Math.sin(tAll * 34);
+      sp.position.set(p.pos.x, p.pos.y + 0.75, p.pos.z); sp.scale.set(0.95 * fl, 1.7 * fl, 1);
+      if (Math.random() < dt * 10) burst(p.pos.x + rnd(-0.3, 0.3), p.pos.y + 0.5 + Math.random() * 1.5, p.pos.z + rnd(-0.3, 0.3), 0xff7a1a, 1, 0.9, 0.5, 0.15, 2);
+    }, function () { scene.remove(sp); });
   }
   // ---------- Вирус и Фантом ----------
   // цифровой луч: прямой, с мелким цифровым дрожанием и «пикселями» по пути
@@ -3868,8 +3931,8 @@ Claudix.ready(function () {
         });
       }
     } else if (id === "flame") {
-      ringFx(x, z, 12, 0.7, 0xff6a1a, 0.9, 0.15); ringFx(x, z, 10.2, 0.7, 0xffcc33, 0.8, 0.2); shake = Math.max(shake, 0.3);
-      addFx(0.7, function (k) { var r = 12 * k; burst(x + Math.cos(k * 40) * r, 0.6, z + Math.sin(k * 40) * r, 0xff7a1a, 1, 2, 0.4, 0.3, 1); });
+      fireWaveFx(x, z, 12, 0.9);
+      if (near(12)) { var dly = Math.min(0.85, Math.hypot(p.pos.x - x, p.pos.z - z) / 12 * 0.9); addFx(dly, function () {}, function () { playerBurnVis(5); }); }
     } else if (id === "titan") {
       quakeFx(x, z, 10);
       if (near(10) && !p.dash) {
@@ -5425,7 +5488,7 @@ Claudix.ready(function () {
     mt.atk = 0.25;
     var def = mt.def, x = +m.x || 0, z = +m.z || 0, f = +m.f || 0;
     actStart(mt.c, (m.k ? "abil_" : "atk_") + def.id, m.k ? ABIL_DUR[def.id] : ATK_DUR[def.id]);
-    if (m.k) { if (def.id === "abyss") holeVisual(x, z, f); else ringFx(x, z, 6, 0.4, def.accent, 0.8); return; }
+    if (m.k) { if (def.id === "abyss") holeVisual(x, z, f); else if (def.id === "flame") fireWaveFx(x, z, 12, 0.9); else ringFx(x, z, 6, 0.4, def.accent, 0.8); return; }
     if (def.id === "flame" || def.id === "abyss") {
       shoot({ x: x + Math.sin(f) * 0.8, z: z + Math.cos(f) * 0.8, y: 1.6, dx: Math.sin(f), dz: Math.cos(f), speed: def.id === "flame" ? 15 : 20, dmg: 0, life: 1, friendly: true, vis: true, color: def.id === "flame" ? 0xff7a1a : 0x9b4dff, size: 0.6, r: 0.5 });
     } else if (def.id === "storm") {
@@ -5819,7 +5882,7 @@ Claudix.ready(function () {
         if (duel) updateDuel(dt);
         if (adv && mode === "play") updateAdv(dt);
         for (var j = enemies.length - 1; j >= 0; j--) if (enemies[j].dead) enemies.splice(j, 1);
-        updateProjs(dt); updateFx(dt); updateVirus(dt);
+        updateProjs(dt); updateFx(dt); updateVirus(dt); updateFires(dt);
         if (player) updateHud();
       } else if (mode === "dead") {
         deadT -= dt; updateFx(dt);

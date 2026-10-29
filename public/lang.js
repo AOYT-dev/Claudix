@@ -213,6 +213,7 @@
 "Графика: высокая": "Graphics: high",
 "Графика: быстрая": "Graphics: fast",
 "Хеллоуин": "Halloween",
+"Огненная волна: стена огня катится во все стороны и поджигает врагов на 5 секунд": "Fire Wave: a wall of fire rolls out in every direction and sets enemies ablaze for 5 seconds",
 "Герой, хранитель времени": "Hero, Keeper of Time",
 "Герой. Годами изучал мультивселенную, и его затянуло внутрь: время шло то быстро, то медленно. В средневековье он прошёл испытания босса мультивселенной, стал достоин и получил в дар власть над временем": "Hero. He studied the multiverse for years until it pulled him in, where time ran fast, then slow. In the Middle Ages he passed the trials of the multiverse's master, proved worthy and was granted power over time",
 "Титан": "Titan",
