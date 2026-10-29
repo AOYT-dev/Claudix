@@ -134,6 +134,18 @@ button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 #archive .bar { height: 4px; border-radius: 2px; background: rgba(125, 255, 90, 0.15); overflow: hidden; }
 #archive .bar i { display: block; height: 100%; background: #7dff5a; transform-origin: left; transform: scaleX(0); }
 #arTxt { margin: 0; white-space: pre-wrap; min-height: 9.5em; }
+#vnote, #vkey { position: absolute; inset: 0; z-index: 7; display: grid; place-items: center; background: rgba(4, 6, 12, 0.7); padding: 16px; }
+#vnote .paper { width: min(520px, 100%); max-height: calc(100% - 32px); overflow: auto; padding: 22px 24px; border-radius: 6px; background: #efe6cf; color: #2a2318; font: 500 1.02rem/1.5 var(--font-body); box-shadow: 0 20px 50px rgba(0,0,0,.5); transform: rotate(-1deg); display: flex; flex-direction: column; gap: 8px; }
+#vnote .paper p { margin: 0; } #vnote .paper p.q { padding-left: 10px; border-left: 3px solid #b8302a; }
+#vnote .paper b { font-family: var(--font-display); font-weight: 400; font-size: 1.2rem; letter-spacing: .04em; }
+#vkey .kp { width: min(300px, 100%); padding: 18px; border-radius: 16px; background: #14181f; border: 1px solid rgba(58,232,255,.4); display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; box-shadow: 0 0 40px rgba(58,232,255,.15); }
+#vkey .kp.bad { animation: kpShake .35s; } @keyframes kpShake { 25% { transform: translateX(-8px); } 75% { transform: translateX(8px); } }
+#vkey #kpScr { grid-column: 1 / -1; padding: 12px; border-radius: 10px; background: #050a0e; color: #3ae8ff; font: 700 2rem/1 ui-monospace, Menlo, monospace; text-align: center; letter-spacing: .1em; }
+#vkey #kpScr.good { color: #7dff5a; }
+#vkey #kpMsg { grid-column: 1 / -1; color: var(--muted); font-size: .9rem; text-align: center; min-height: 1.3em; }
+#vkey button { padding: 14px 0; border-radius: 10px; border: 1px solid var(--line); background: #1e242e; color: var(--fg); font: 700 1.25rem var(--font-body); cursor: pointer; }
+#vkey button:focus-visible, #vnote button:focus-visible { outline: 2px solid #3ae8ff; outline-offset: 2px; }
+#vkey button.ok { background: #3ae8ff; color: #04121a; } #vkey button.sm { font-size: .85rem; }
 #banner {
   position: absolute; left: 0; right: 0; top: 22%; z-index: 5; text-align: center; pointer-events: none;
   opacity: 0; padding: 0 16px;
@@ -332,6 +344,13 @@ html, body { touch-action: manipulation; -webkit-tap-highlight-color: transparen
 
 <div id="banner"><b id="banMain"></b><span id="banSub"></span></div>
 <div id="rewind" hidden></div>
+<div id="vnote" hidden><div class="paper"><b>Записка</b><div id="vnTxt"></div><button id="vnOk" class="act" type="button">Понял</button></div></div>
+<div id="vkey" hidden><div class="kp"><div id="kpScr">_ _ _ _</div><div id="kpMsg"></div>
+<button type="button" data-k="1">1</button><button type="button" data-k="2">2</button><button type="button" data-k="3">3</button>
+<button type="button" data-k="4">4</button><button type="button" data-k="5">5</button><button type="button" data-k="6">6</button>
+<button type="button" data-k="7">7</button><button type="button" data-k="8">8</button><button type="button" data-k="9">9</button>
+<button type="button" data-k="del" class="sm">Стереть</button><button type="button" data-k="0">0</button><button type="button" data-k="ok" class="ok">OK</button>
+<button type="button" data-k="note" class="sm">Записка</button><button type="button" data-k="close" class="sm" style="grid-column: span 2">Выйти</button></div></div>
 <div id="archive" hidden><header><span id="arHead"></span><span id="arTime">0.0 с</span></header><div class="bar"><i id="arBar"></i></div><pre id="arTxt"></pre></div>
 <div id="story" hidden><b id="stWho"></b><span id="stTxt"></span><small id="stHint">Нажми, чтобы дальше</small></div>
 
@@ -1487,6 +1506,14 @@ Claudix.ready(function () {
       suit: { base: 0x8a929e, side: 0x6c747f, muscle: 1.1, belt: 0x2a2e36, buckle: 0x1a1d22, seams: true,
         paint: function (U) { var g = U.g, W = g.canvas.width; g.strokeStyle = "rgba(30,34,40,0.6)"; g.lineWidth = 3 * U.sc; [0.62, 0.36, 0.1].forEach(function (y) { g.beginPath(); g.moveTo(0, U.Yt(y)); g.lineTo(W, U.Yt(y)); g.stroke(); }); g.fillStyle = "rgba(230,236,244,0.45)"; for (var x = 0; x < 40; x++) { g.beginPath(); g.arc((x / 40) * W, U.Yt(0.62) + 5 * U.sc, 2 * U.sc, 0, 7); g.fill(); } } },
       sleeve: 0x8a929e, skinArms: true, glove: 0x5a626e, pants: 0x6c747f, boot: 0x2a2e36, bootTrim: 0x8ae8ff
+    },
+    tongue: {
+      body: "lean", style: "zombie", head: { jaw: 1.5, chin: 0.8, cheek: 1.5, brow: 1.8, w: 1.08, h: 1.1, socket: 1.8, skull: 1.2 },
+      face: { skin: 0x4e3e52, brow: null, iris: 0xff3030, irisGlow: true, angry: 1, noLips: true, blush: 0, hair: null, socket: 0x1a0a14, socketA: 0.9, blotch: 0.4,
+        paint: function (g, X, Y, R, sc) { g.fillStyle = "#1a0408"; g.beginPath(); g.ellipse(X(0), Y(-0.48), R(0.24), R(0.12), 0, 0, Math.PI * 2); g.fill(); g.strokeStyle = "rgba(60,20,40,0.6)"; g.lineWidth = 2 * sc; for (var k = 0; k < 10; k++) { var x = X((Math.random() - 0.5) * 1.8), y = Y((Math.random() - 0.2) * 1.4); g.beginPath(); g.moveTo(x, y); g.lineTo(x + (Math.random() - 0.5) * 30 * sc, y + Math.random() * 30 * sc); g.stroke(); } } },
+      eyeGlow: 0xff3030, hair: "none", noEars: true, noNose: true,
+      suit: { base: 0x2e2232, side: 0x241a28, muscle: 1.3, belt: null, seams: false, paint: function (U) { var g = U.g; g.strokeStyle = "rgba(120,40,70,0.5)"; g.lineWidth = 3 * U.sc; for (var k = 0; k < 18; k++) { var x = Math.random() * g.canvas.width, y = U.Yt(Math.random() * 0.8); g.beginPath(); g.moveTo(x, y); g.lineTo(x + (Math.random() - 0.5) * 40 * U.sc, y + 30 * U.sc); g.stroke(); } } },
+      sleeve: null, skinArms: true, glove: null, pants: 0x2e2430, boot: 0x1a141c, bootTrim: 0x1a141c
     },
     director: {
       body: "hero", style: "hero", head: { jaw: 1.05, chin: 1.1, cheek: 1.05, brow: 1.1, w: 0.98 },
@@ -4191,7 +4218,7 @@ Claudix.ready(function () {
       waveEl.textContent = adv.kind === "virus" ? TR("Код Вируса · ") + ROOMS[adv.room].name : ROOMS[adv.room].intro ? TR("Улица") : TR("Этаж ") + adv.floor + " · " + ROOMS[adv.room].name;
       var bossE = null; enemies.forEach(function (e) { if (!e.dead && e.T && e.T.boss) bossE = e; });
       foeEl.textContent = bossE ? TR("Тыквенный король · ") + Math.ceil(100 * (bossE.proxy ? bossE.hpF : bossE.hp / bossE.maxHp)) + "%"
-        : adv.state === "story" || adv.state === "storyEnd" ? TR("Сцена…") : adv.state === "heroFight" ? TR("Герои · повалено ") + (adv.heroDown || 0) + " / 6 · " + Math.max(0, Math.ceil(adv.heroT)) + TR(" с") : adv.state === "gate" ? (ROOMS[adv.room].intro ? TR("Войди в поместье ↑") : TR("Дверь открыта ↑")) : adv.state === "won" ? TR("Победа!") : TR("Врагов: ") + (aliveCount() + (adv.host ? adv.queue.length : 0));
+        : adv.state === "story" || adv.state === "storyEnd" ? TR("Сцена…") : adv.state === "search" ? TR("Обыщи шкафы · открыто ") + (adv.searched || 0) + " / " + (adv.cabinets ? adv.cabinets.length : 0) : adv.state === "heroFight" ? TR("Герои · повалено ") + (adv.heroDown || 0) + " / 6 · " + Math.max(0, Math.ceil(adv.heroT)) + TR(" с") : adv.state === "gate" ? (adv.kind === "virus" ? (ROOMS[adv.room].code ? TR("Код от лифта ↑") : TR("Лифт открыт ↑")) : ROOMS[adv.room].intro ? TR("Войди в поместье ↑") : TR("Дверь открыта ↑")) : adv.state === "won" ? TR("Победа!") : TR("Врагов: ") + (aliveCount() + (adv.host ? adv.queue.length : 0));
       if (adv.mate) $("mateTxt").textContent = adv.mate.n + " · " + (adv.mate.dead ? TR("пал") : Math.ceil(adv.mate.hp) + " / " + adv.mate.mh);
       if (p.dead) hpTxt.textContent = TR("пал · ждёт следующей комнаты");
     } else if (duel) {
@@ -5046,10 +5073,11 @@ Claudix.ready(function () {
     hf_graviton: { kind: "graviton", name: TR("Гравитон"), hp: 440, speed: 4.0, dmg: 11, range: 0, cd: 1.4, wind: 0, scale: 1, kb: 0.8, ranged: true, shot: 0xb070ff, heroFoe: true },
     hf_storm:    { kind: "storm", name: TR("Шторм-Джей"), hp: 440, speed: 4.6, dmg: 12, range: 0, cd: 1.2, wind: 0, scale: 1, kb: 0.8, ranged: true, shot: 0x5ad8ff, heroFoe: true },
     hf_titan:    { kind: "titan", name: TR("Титан"), hp: 900, speed: 2.9, dmg: 20, range: 2.3, cd: 1.6, wind: 0.5, scale: 1, kb: 0.2, heroFoe: true },
+    tongue:  { name: TR("Тварь"), hp: 380, speed: 3.7, dmg: 15, range: 2.5, cd: 1.2, wind: 0.42, scale: 1.5, kb: 0.35, tongue: true },
     metal:   { name: TR("Боец из сплава"), hp: 430, speed: 3.5, dmg: 17, range: 1.8, cd: 1.15, wind: 0.35, scale: 1.08, kb: 0.45, suit: 0x8a929e, pants: 0x6c747f, skin: 0x8f98a4, accent: 0x8ae8ff, metal: true },
     pking:   { name: TR("Тыквенный король"), hp: 3500, speed: 2.8, dmg: 30, range: 3.2, cd: 1.5, wind: 0.6, scale: 2.6, kb: 0.1, suit: 0x3a1f4f, pants: 0x1f1430, skin: 0xff8a1a, accent: 0x6fd14a, boss: true }
   };
-  var MON_IDS = ["zombie", "skel", "ghost", "butcher", "pking", "metal"];
+  var MON_IDS = ["zombie", "skel", "ghost", "butcher", "pking", "metal", "tongue"];
   var ROOMS = [
     { intro: true, f: 1, R: 18, name: TR("Улица"), waves: [] },
     { f: 1, R: 15, theme: "hall", name: TR("Холл"), waves: [["zombie", "zombie", "zombie", "zombie", "skel"], ["zombie", "zombie", "zombie", "skel", "skel"]] },
@@ -5062,7 +5090,10 @@ Claudix.ready(function () {
   // портал «Код Вируса»: сюжет Вируса. Пока одна сцена — кабинет директора «Тени» и восемь бойцов из сплава
   var HW_ROOMS = ROOMS;
   var VIRUS_ROOMS = [
-    { f: 1, R: 16, theme: "shadow", story: "director", name: TR("Штаб «Тени»"), waves: [["metal", "metal", "metal", "metal", "metal", "metal", "metal", "metal"]] }
+    { f: 1, R: 16, theme: "shadow", story: "director", name: TR("Штаб «Тени»"), waves: [["metal", "metal", "metal", "metal", "metal", "metal", "metal", "metal"]] },
+    { f: 1, R: 15, theme: "shadow2", story: "floor2", capsules: true, name: TR("2 этаж"), waves: [["tongue", "tongue", "tongue", "tongue", "tongue", "tongue"]] },
+    { f: 1, R: 14, theme: "shadow3", story: "floor3", code: true, name: TR("3 этаж"), waves: [] },
+    { f: 1, R: 15, theme: "lab", story: "lab", name: TR("Секретная лаборатория"), waves: [] }
   ];
   var STORY = {
     director: [
@@ -5270,9 +5301,10 @@ Claudix.ready(function () {
     var portalM = new THREE.MeshBasicMaterial({ color: glowCol(0xff8a2a, 1.4), transparent: true, opacity: 0, side: THREE.DoubleSide, depthWrite: false, blending: THREE.AdditiveBlending, map: T("glow") });
     var padM = new THREE.MeshBasicMaterial({ map: T("pad"), color: col(0xff7a1a), transparent: true, opacity: 0, depthWrite: false, toneMapped: false });
     var pad = new THREE.Mesh(DISC, padM); pad.rotation.x = -Math.PI / 2; pad.scale.setScalar(2.8); pad.position.set(0, 0.09, -R + 1.8); advG.add(pad);
+    adv.gx = 0; adv.capsules = null; adv.cabinets = null; adv.vats = null;
     var doors = [], last = i === ROOMS.length - 1;
     var doorM = new THREE.MeshStandardMaterial({ map: doorTex(), roughness: 0.6, metalness: 0.05 });
-    if (D.theme === "shadow") buildShadowRoom(D, R, M_, own, plane);
+    if (/^shadow|^lab/.test(D.theme || "")) buildShadowRoom(D, R, M_, own, plane, doors);
     else if (D.intro) {
       // двор у поместья: трава, мощёная дорожка, ограда с пиками, могилы, мёртвые деревья, фонари, туман, луна
       var grass = new THREE.MeshStandardMaterial({ map: T("grassDark"), roughness: 1 }); grass.map = grass.map.clone(); grass.map.needsUpdate = true; grass.map.repeat.set(10, 10);
@@ -5449,13 +5481,14 @@ Claudix.ready(function () {
       adv.decor = function () { if (Math.random() < 0.1) smokePuff(rnd(-R, R), 0.2, rnd(-R, R), 0x3a3048, 2.2, 3); };
     }
     var pg = own(new THREE.PlaneGeometry(D.intro ? 5.4 : 4.8, 3.8));
-    var portal = new THREE.Mesh(pg, portalM); portal.position.set(0, 1.9, -R - 0.25); advG.add(portal);
+    var portal = new THREE.Mesh(pg, portalM); portal.position.set(adv.gx || 0, 1.9, -R - 0.25); advG.add(portal); pad.position.x = adv.gx || 0;
+    if (/^shadow|^lab/.test(D.theme || "")) { portalM.color.copy(glowCol(0x3ae8ff, 1.2)); padM.color.copy(col(0x3ae8ff)); }
     if (D.intro) { [-1.3, 1.3].forEach(function (x) { var dm = M_(own(new THREE.BoxGeometry(2.5, 4, 0.3)), doorM, x, 2, -R - 0.2); doors.push(dm); }); }
     adv.gate = { portalM: portalM, bars: last ? [] : doors, padM: padM, open: false, torches: torches, last: last };
   }
   // кабинет директора «Тени»: тёмный металл, бирюзовые полосы света, логотип, капсулы с бойцами по бокам, балкон директора
-  function buildShadowRoom(D, R, M_, own, plane) {
-    var H = 6.2;
+  function buildShadowRoom(D, R, M_, own, plane, doors) {
+    var H = 6.2, th = D.theme;
     var flT = canvasTex(256, 256, function (g, w, h) { g.fillStyle = "#2a2f38"; g.fillRect(0, 0, w, h); g.strokeStyle = "#3a414c"; g.lineWidth = 3; for (var k = 0; k <= 4; k++) { g.beginPath(); g.moveTo(k * w / 4, 0); g.lineTo(k * w / 4, h); g.stroke(); g.beginPath(); g.moveTo(0, k * h / 4); g.lineTo(w, k * h / 4); g.stroke(); } noiseOver(g, w, h, 0.15); });
     flT.repeat.set(R / 2, R / 2);
     plane(R * 2 + 2, R * 2 + 2, new THREE.MeshStandardMaterial({ map: flT, roughness: 0.3, metalness: 0.45 }), 0, 0.06, 0, -Math.PI / 2);
@@ -5471,7 +5504,8 @@ Claudix.ready(function () {
     // логотип «Тени» на дальней стене
     var logo = canvasTex(512, 512, function (g, w, h) { g.clearRect(0, 0, w, h); g.fillStyle = "#050608"; g.beginPath(); g.arc(w / 2, h / 2, w * 0.46, 0, 7); g.fill(); g.strokeStyle = "#3ae8ff"; g.lineWidth = 10; g.stroke(); g.fillStyle = "#e8ecf2"; g.font = "bold " + Math.round(w * 0.42) + "px 'Russo One', Arial Black, sans-serif"; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText("Т", w / 2, h * 0.47); g.font = "bold " + Math.round(w * 0.09) + "px 'Russo One', Arial Black, sans-serif"; g.fillText("ТЕНЬ", w / 2, h * 0.8); });
     logo.wrapS = logo.wrapT = THREE.ClampToEdgeWrapping;
-    plane(4.2, 4.2, new THREE.MeshStandardMaterial({ map: logo, transparent: true, roughness: 0.3, metalness: 0.4, emissive: glowCol(0x3ae8ff, 0.25), emissiveMap: logo }), 0, H - 1.9, -R + 0.08, 0, 0);
+    if (th === "shadow" || th === "lab") plane(4.2, 4.2, new THREE.MeshStandardMaterial({ map: logo, transparent: true, roughness: 0.3, metalness: 0.4, emissive: glowCol(0x3ae8ff, 0.25), emissiveMap: logo }), 0, H - 1.9, -R + 0.08, 0, 0);
+    if (th === "shadow") {
     // балкон директора у дальней стены: помост, стеклянные перила, стол, экраны
     var platM = new THREE.MeshStandardMaterial({ color: col(0x262a32), roughness: 0.35, metalness: 0.75 });
     M_(own(new THREE.BoxGeometry(9, 1.4, 4)), platM, 0, 0.7, -R + 2);
@@ -5482,12 +5516,24 @@ Claudix.ready(function () {
     M_(own(new THREE.BoxGeometry(3.4, 0.9, 1.2)), deskM, 0, 1.85, -R + 2.2);
     var scrM = new THREE.MeshBasicMaterial({ map: canvasTex(256, 160, function (g, w, h) { g.fillStyle = "#04121a"; g.fillRect(0, 0, w, h); g.strokeStyle = "#3ae8ff"; g.lineWidth = 2; for (var k = 0; k < 8; k++) { g.beginPath(); g.moveTo(10, 20 + k * 14); g.lineTo(10 + Math.random() * 200, 20 + k * 14); g.stroke(); } g.fillStyle = "#7dff5a"; g.font = "bold 18px monospace"; g.fillText("VIRUS DETECTED", 40, 150); }), toneMapped: false });
     [-1.2, 1.2].forEach(function (x) { M_(own(new THREE.PlaneGeometry(1.2, 0.75)), scrM, x, 2.75, -R + 1.75, -0.2, Math.PI, 0).castShadow = false; });
+    }
+    // лифт в дальней стене: в кабинете справа от балкона, на этажах по центру
+    adv.gx = th === "shadow" ? R - 3 : 0;
+    (function (x) {
+      var frM = new THREE.MeshStandardMaterial({ color: col(0x3a404a), roughness: 0.3, metalness: 0.85 }), dM = new THREE.MeshStandardMaterial({ color: col(0xa8b0ba), roughness: 0.2, metalness: 0.95 });
+      M_(own(new THREE.BoxGeometry(3.4, 4.4, 0.4)), frM, x, 2.2, -R + 0.05);
+      [-0.6, 0.6].forEach(function (o) { doors.push(M_(own(new THREE.BoxGeometry(1.18, 3.6, 0.12)), dM, x + o, 1.8, -R + 0.3)); });
+      M_(own(new THREE.BoxGeometry(2.6, 0.06, 0.06)), lineM, x, 3.85, -R + 0.3).castShadow = false;
+      var lt = new THREE.MeshBasicMaterial({ map: canvasTex(128, 48, function (g, w, h) { g.fillStyle = "#05070a"; g.fillRect(0, 0, w, h); g.fillStyle = "#3ae8ff"; g.font = "bold 28px 'Russo One', Arial Black, sans-serif"; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText("ЛИФТ", w / 2, h / 2 + 2); }), toneMapped: false });
+      M_(own(new THREE.PlaneGeometry(1.0, 0.38)), lt, x, 4.15, -R + 0.27).castShadow = false;
+    })(adv.gx);
     // восемь капсул: по четыре у боковых стен
-    adv.capsules = []; adv.capI = 0;
+    var capZ = th === "shadow" ? [-8.5, -3.5, 1.5, 6.5] : th === "shadow2" ? [-6, -1, 4] : [];
+    adv.capsules = capZ.length ? [] : null; adv.capI = 0;
     var capM = new THREE.MeshStandardMaterial({ color: col(0x2e333c), roughness: 0.3, metalness: 0.85 }), capGlassM = new THREE.MeshStandardMaterial({ color: col(0x8ae8ff), roughness: 0.05, metalness: 0.1, transparent: true, opacity: 0.35, depthWrite: false, emissive: glowCol(0x3ae8ff, 0.25) });
     var silM = new THREE.MeshStandardMaterial({ color: col(0x6c747f), roughness: 0.3, metalness: 0.9 });
     [-1, 1].forEach(function (s) {
-      [-8.5, -3.5, 1.5, 6.5].forEach(function (z) {
+      capZ.forEach(function (z) {
         var x = s * (R - 1.4), g = new THREE.Group(); g.position.set(x, 0, z); advG.add(g);
         var base = new THREE.Mesh(own(new THREE.CylinderGeometry(1.05, 1.15, 0.3, 20)), capM); base.position.y = 0.15; g.add(base);
         var topc = new THREE.Mesh(own(new THREE.CylinderGeometry(1.05, 1.05, 0.4, 20)), capM); topc.position.y = 3.3; g.add(topc);
@@ -5503,10 +5549,40 @@ Claudix.ready(function () {
       });
     });
     addLight(-6, H - 0.8, 4, 0xbfefff, 2.2, 22); addLight(6, H - 0.8, -4, 0xbfefff, 2.2, 22); addLight(0, 4.2, -R + 4.5, 0xffffff, 2.0, 14); addLight(0, H - 0.8, R - 4, 0xbfefff, 1.6, 18);
-    adv.decor = function (t) { adv.capsules.forEach(function (c, k) { if (!c.open) c.fog.material.opacity = 0.14 + Math.sin(t * 2 + k) * 0.05; }); };
+    adv.decor = function (t) { (adv.capsules || []).forEach(function (c, k) { if (!c.open) c.fog.material.opacity = 0.14 + Math.sin(t * 2 + k) * 0.05; }); (adv.vats || []).forEach(function (v, k) { v.material.opacity = 0.55 + Math.sin(t * 1.5 + k) * 0.08; }); };
+    if (th === "shadow2") addLight(0, 3, 0, 0xff5060, 1.4, 16);
+    // 3 этаж: шкафы с папками вдоль стен, столы; записка в одном из шкафов
+    if (th === "shadow3") {
+      adv.cabinets = [];
+      var cabM = new THREE.MeshStandardMaterial({ color: col(0x4a525e), roughness: 0.45, metalness: 0.6 }), drM = new THREE.MeshStandardMaterial({ color: col(0x5a6370), roughness: 0.4, metalness: 0.65 });
+      var noteIdx = 1 + Math.floor(Math.random() * 5);
+      [-1, 1].forEach(function (s) {
+        [-7, -1.5, 4].forEach(function (z, k) {
+          var x = s * (R - 0.9), g = new THREE.Group(); g.position.set(x, 0, z); advG.add(g);
+          var body = new THREE.Mesh(own(new THREE.BoxGeometry(1.2, 3.2, 2.2)), cabM); body.position.y = 1.6; body.castShadow = GFX.hi; g.add(body);
+          var hinge = new THREE.Group(); hinge.position.set(-s * 0.62, 0, -1.08); g.add(hinge);
+          var door = new THREE.Mesh(own(new THREE.BoxGeometry(0.06, 3.0, 2.12)), drM); door.position.set(0, 1.6, 1.06); hinge.add(door);
+          var hd = new THREE.Mesh(own(new THREE.BoxGeometry(0.06, 0.4, 0.06)), lineM); hd.position.set(-s * 0.04, 1.7, 1.9); hinge.add(hd);
+          adv.cabinets.push({ x: x - s * 1.4, z: z, door: hinge, dir: s, open: false, note: adv.cabinets.length === noteIdx });
+        });
+      });
+      var deskM = new THREE.MeshStandardMaterial({ color: col(0x1a1d22), roughness: 0.3, metalness: 0.6 });
+      [[-4, 4], [4, 4], [-4, -4], [4, -4]].forEach(function (d) { M_(own(new THREE.BoxGeometry(2.6, 0.9, 1.3)), deskM, d[0], 0.45, d[1]); });
+    }
+    // секретная лаборатория: чаны с зелёной жидкостью
+    if (th === "lab") {
+      adv.vats = [];
+      var vatM = new THREE.MeshStandardMaterial({ color: col(0x2e333c), roughness: 0.3, metalness: 0.85 });
+      [[-7, -6], [7, -6], [-7, 2], [7, 2], [0, -9]].forEach(function (v) {
+        M_(own(new THREE.CylinderGeometry(1.5, 1.6, 0.5, 24)), vatM, v[0], 0.25, v[1]);
+        var liq = new THREE.Mesh(own(new THREE.CylinderGeometry(1.35, 1.35, 3.2, 24, 1, true)), new THREE.MeshStandardMaterial({ color: col(0x7dff5a), emissive: glowCol(0x3aff6a, 0.5), transparent: true, opacity: 0.6, roughness: 0.1, depthWrite: false, side: THREE.DoubleSide })); liq.position.set(v[0], 2.1, v[1]); advG.add(liq); adv.vats.push(liq);
+        M_(own(new THREE.CylinderGeometry(1.5, 1.5, 0.4, 24)), vatM, v[0], 3.9, v[1]);
+      });
+      addLight(0, 3.5, -3, 0x7dff5a, 2.0, 18);
+    }
     // директор на балконе
-    if (adv.director) disposeChar(adv.director);
-    var dch = makeChar({ kind: "director", scale: 1 }); dch.root.position.set(0, 1.4, -R + 3.2); scene.add(dch.root); adv.director = dch;
+    if (adv.director) { disposeChar(adv.director); adv.director = null; }
+    if (th === "shadow") { var dch = makeChar({ kind: "director", scale: 1 }); dch.root.position.set(0, 1.4, -R + 3.2); scene.add(dch.root); adv.director = dch; }
   }
   function openCapsule(cp) {
     if (cp.open) return; cp.open = true;
@@ -5603,7 +5679,7 @@ Claudix.ready(function () {
           ringFx(0, 2.5, 4, 0.8, 0x3ad87a, 0.9);
           heroFoesAll().concat([{ c: ch }]).forEach(function (e) { var c = e.c; burst(c.root.position.x, 1.4, c.root.position.z, 0x3ad87a, 8, 3, 0.6, 0.16, 1); addFx(0.9, function (t) { charOpacity(c, 1 - t); c.root.scale.setScalar((c.scale || 1) * (1 - 0.3 * t)); }, function () { disposeChar(c); }); });
           adv.foes = []; adv.chronosC = null;
-          setTimeout(function () { archiveScene(virusPartEnd); }, 1200);
+          setTimeout(function () { archiveScene(liftOpen); }, 1200);
         }, 1600);
       });
     }, 900);
@@ -5658,16 +5734,96 @@ Claudix.ready(function () {
       }
     }, 40);
   }
+  // ---------- «Код Вируса»: лифт, 2 этаж (твари), 3 этаж (шкафы и записка), код лифта, секретная лаборатория ----------
+  STORY.floor2 = [
+    ["Директор · по громкой связи", "О, ты нашёл лифт.", 0xc8ccd4],
+    ["Директор · по громкой связи", "Поэтому тебе подарок.", 0xc8ccd4]
+  ];
+  var LIFT_CODE = "8643";
+  var NOTE_TXT = ["Подручному.", "Код от лифта в лабораторию меняется каждый день. Сегодняшний не записываю — сам догадаешься:",
+    "1-я цифра — сколько бойцов из сплава охраняли мой кабинет.", "2-я — сколько героев пришло за Вирусом.",
+    "3-я — номер испытания «Разряд» без десятка.", "4-я — на каком этаже ты сейчас стоишь.", "Записку сжечь. — Д."];
+  function liftOpen() {
+    if (!adv || adv.over) return;
+    adv.camOvr = null; adv.state = "gate"; openGate();
+    banner(TR("Лифт"), TR("Найди лифт у дальней стены"));
+  }
+  // твари с языком из пяти частей: язык из трубок, шевелится и хлещет при ударе
+  function addTongue(e) {
+    var c = e.c; c.root.updateMatrixWorld(true);
+    var bb = new THREE.Box3().setFromObject(c.body), hp = new THREE.Vector3(); c.head.getWorldPosition(hp);
+    var top = c.head.worldToLocal(new THREE.Vector3(hp.x, bb.max.y, hp.z)), hr = Math.max(0.1, top.y * 0.55);
+    var g = new THREE.Group(); g.position.set(0, top.y - hr * 1.45, hr * 0.8); c.head.add(g);
+    var m = new THREE.MeshStandardMaterial({ color: col(0xd0304a), roughness: 0.3, metalness: 0.05, emissive: col(0x6a0a1a) });
+    var parts = [];
+    for (var k = 0; k < 5; k++) {
+      var a = (k - 2) * 0.32, pts = [];
+      for (var s = 0; s <= 6; s++) { var t = s / 6; pts.push(new THREE.Vector3(Math.sin(a) * t * 0.55, -t * 0.25 + Math.sin(t * 3 + k) * 0.05, t * 0.8)); }
+      var tg = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 12, 0.055 * (1 - k % 2 * 0.2), 6, false), m);
+      var holder = new THREE.Group(); holder.add(tg); g.add(holder); parts.push(holder); c.ownGeo.push(tg.geometry);
+    }
+    c.mats.push(m);
+    var root = new THREE.Mesh(new THREE.SphereGeometry(0.09, 10, 8), m); g.add(root); c.ownGeo.push(root.geometry);
+    g.scale.setScalar(Math.max(0.6, hr * 3.6));
+    e.tongue = { g: g, parts: parts, lash: 0 };
+  }
+  function tongueTick(e, dt) {
+    var T = e.tongue; if (!T) return;
+    if (e.wind > 0 || e.swing > 0) T.lash = Math.min(1, T.lash + dt * 6); else T.lash = Math.max(0, T.lash - dt * 3);
+    T.parts.forEach(function (p, k) { p.rotation.y = Math.sin(tAll * 7 + k * 1.3) * 0.25 * (1 - T.lash * 0.6); p.rotation.x = Math.sin(tAll * 5 + k) * 0.18 - T.lash * 0.4; p.scale.z = 1 + T.lash * 1.6; });
+  }
+  // шкафы на 3 этаже: подходишь — дверца открывается, в одном записка
+  function updateSearch(dt) {
+    var list = adv.cabinets || []; if (!player || player.dead) return;
+    list.forEach(function (cb) {
+      if (cb.open) return;
+      if (Math.hypot(player.pos.x - cb.x, player.pos.z - cb.z) < 2.0) {
+        cb.open = true; var d = cb.door, a0 = d.rotation.y;
+        addFx(0.4, function (k) { d.rotation.y = a0 + cb.dir * 1.6 * k; });
+        adv.searched = (adv.searched || 0) + 1;
+        if (cb.note) { popText(cb.x, 3, cb.z, TR("Записка!"), "#7dff5a", true); setTimeout(function () { showNote(true); }, 500); }
+        else popText(cb.x, 3, cb.z, TR(["Пусто", "Только папки", "Пыль и старые отчёты", "Ничего"][Math.floor(Math.random() * 4)]), "#c8ccd4", false);
+      }
+    });
+  }
+  function showNote(first) {
+    var el = $("vnote"); $("vnTxt").innerHTML = NOTE_TXT.map(function (l, i) { return "<p" + (i >= 2 && i <= 5 ? ' class="q"' : "") + ">" + TR(l) + "</p>"; }).join("");
+    el.hidden = false; adv.noteOpen = true;
+    $("vnOk").onclick = function () { el.hidden = true; adv.noteOpen = false; if (first && adv.state === "search") { adv.hasNote = true; adv.state = "gate"; openGate(); banner(TR("Записка у тебя"), TR("Разгадай код и иди к лифту")); } };
+  }
+  // кодовый замок в лифте
+  var kpVal = "", kpTries = 0;
+  function showKeypad() {
+    if (!adv || adv.kpOpen) return;
+    adv.kpOpen = true; kpVal = ""; $("kpScr").textContent = "_ _ _ _"; $("kpMsg").textContent = TR("Введи код от лаборатории"); $("vkey").hidden = false;
+  }
+  function kpPress(k) {
+    if (k === "del") kpVal = kpVal.slice(0, -1);
+    else if (k === "note") { showNote(false); return; }
+    else if (k === "close") { $("vkey").hidden = true; adv.kpOpen = false; adv.kpWait = 1.5; return; }
+    else if (k === "ok") {
+      if (kpVal === LIFT_CODE) {
+        $("kpMsg").textContent = TR("Код принят. Лифт едет вниз…"); $("kpScr").classList.add("good");
+        setTimeout(function () { $("vkey").hidden = true; $("kpScr").classList.remove("good"); adv.kpOpen = false; if (adv && !adv.over) advBeginRoom(adv.room + 1); }, 1100);
+        return;
+      }
+      kpTries++; kpVal = ""; var kb = $("vkey").querySelector(".kp"); kb.classList.remove("bad"); void kb.offsetWidth; kb.classList.add("bad");
+      $("kpMsg").textContent = kpTries >= 3 ? TR("Неверно. Подсказка: первая цифра — 8") : TR("Неверный код");
+    } else if (kpVal.length < 4) kpVal += k;
+    $("kpScr").textContent = (kpVal + "____").slice(0, 4).split("").join(" ");
+  }
+  $("vkey").addEventListener("click", function (e) { var b = e.target.closest("button"); if (b && adv && adv.kpOpen) kpPress(b.getAttribute("data-k")); });
+  window.addEventListener("keydown", function (e) { if (!adv || !adv.kpOpen || !$("vnote").hidden) return; if (/^Digit\d$/.test(e.code)) kpPress(e.code.slice(5)); else if (e.code === "Backspace") kpPress("del"); else if (e.code === "Enter") kpPress("ok"); else if (e.code === "Escape") kpPress("close"); });
   function virusPartEnd() {
     if (!adv || adv.over) return;
     adv.camOvr = null;
-    banner(TR("Продолжение следует"), TR("Вирус узнал правду о своих силах"));
+    banner(TR("Продолжение следует"), TR("Секретная лаборатория «Тени»"));
     setTimeout(function () { if (adv && !adv.over) advResult(true); }, 2600);
   }
   function updateHeroFight(dt) {
     adv.heroT -= dt;
     if ((adv.heroDown || 0) >= 3 && !adv.chronos) { chronosRewind(); return; }
-    if (adv.heroT <= 0) heroesLeave(STORY.heroesRetreat, function () { archiveScene(virusPartEnd); });
+    if (adv.heroT <= 0) heroesLeave(STORY.heroesRetreat, function () { archiveScene(liftOpen); });
   }
   function openGate() {
     if (!adv.gate || adv.gate.open) return;
@@ -5705,7 +5861,7 @@ Claudix.ready(function () {
     var fgm = new THREE.Mesh(BAR_FG_G, BAR_FG_M); fgm.position.set(-0.57, 0, 0.01); fgm.renderOrder = 11;
     bar.add(bg); bar.add(fgm); bar.visible = false; c.root.add(bar);
     scene.add(c.root); c.enemy = true; spawnAnim(c);
-    if (B.metal) { metalize(c); c.spawnT = 0; c.lift.position.y = 0; }
+    if (B.metal || B.tongue) { if (B.metal) metalize(c); c.spawnT = 0; c.lift.position.y = 0; }
     var hp = B.hp * hpMul;
     var e = { type: type, T: B, c: c, root: c.root, pos: c.root.position, scale: B.scale, r: 0.6 * B.scale,
       hp: hp, maxHp: hp, speed: B.speed, dmg: B.dmg * dmgMul, dmgMul: dmgMul, kb: B.kb, reward: 0,
@@ -5715,6 +5871,7 @@ Claudix.ready(function () {
       id: id, proxy: !!proxy, phased: false, phT: rnd(2, 4), sp: 3, slam: 0, alt: false, summoned: 0,
       tx: x, tz: z, tf: 0, ty: 0, hpF: 1, fl: 0 };
     if (B.boss) e.bar.scale.set(2.2, 1.6, 1);
+    if (B.tongue) addTongue(e);
     enemies.push(e);
     return e;
   }
@@ -5793,6 +5950,7 @@ Claudix.ready(function () {
   function updateMonster(e, dt) {
     if (adv && !(e.c.spawnT > 0) && !(e.hacked > 0) && !e.possessed && !(e.frozenT > 0) && monSpecial(e, dt)) { clampPos(e.pos); return; }
     if (!e.dead) updateEnemy(e, dt);
+    if (e.tongue && !e.dead) tongueTick(e, dt);
     if (adv && e.T.ghost && !e.dead) e.c.body.position.y = 0.3 + Math.sin(tAll * 3 + e.id) * 0.15;
   }
 
@@ -5912,7 +6070,7 @@ Claudix.ready(function () {
     enemies.forEach(function (e) { if (e.dead) return; var d = Math.hypot(e.pos.x - m.pos.x, e.pos.z - m.pos.z); if (d < bd) { bd = d; tgt = e; } });
     var ranged = def.id === "storm" || def.id === "flame" || def.id === "abyss" || def.id === "virus" || def.id === "phantom" || def.id === "titan" || def.id === "chronos", want = def.id === "phantom" ? 4.5 : def.id === "titan" ? 3.5 : ranged ? 8 : 1.8, spd = 0, gx = 0, gz = 0;
     if (tgt) { gx = tgt.pos.x; gz = tgt.pos.z; }
-    else if (adv.state === "gate") { gx = 0; gz = -adv.R + 1.5; want = 0.5; }
+    else if (adv.state === "gate") { gx = adv.gx || 0; gz = -adv.R + 1.5; want = 0.5; }
     else if (player) { gx = player.pos.x + 2.5; gz = player.pos.z + 1.5; want = 1.5; }
     var dx = gx - m.pos.x, dz = gz - m.pos.z, d = Math.hypot(dx, dz) || 0.001;
     if (d > want) { m.pos.x += dx / d * def.speed * dt; m.pos.z += dz / d * def.speed * dt; spd = def.speed; }
@@ -5961,6 +6119,13 @@ Claudix.ready(function () {
     adv.started = true;
     adv.room = i; adv.floor = D.f; adv.waveI = -1; adv.queue = []; adv.state = "fight"; adv.spawnT = 1.4;
     buildAdvRoom(i); advPlaceStart();
+    if (D.story === "floor2") {
+      adv.state = "story"; banner(TR("2 этаж"), TR("Лифт остановился"));
+      setTimeout(function () { if (adv && adv.state === "story") storyPlay(STORY.floor2, function () { if (!adv) return; adv.state = "fight"; banner(TR("Подарок от Директора"), TR("Твари с языками")); advNextWave(); }); }, 1200);
+      return;
+    }
+    if (D.story === "floor3") { adv.state = "search"; adv.searched = 0; banner(TR("3 этаж"), TR("Обыщи шкафы")); return; }
+    if (D.story === "lab") { adv.state = "won"; banner(TR("Секретная лаборатория"), TR("Лифт спустился глубоко под штаб")); setTimeout(virusPartEnd, 3200); return; }
     if (D.story) {
       adv.state = "story"; banner(TR("Код Вируса"), D.name);
       if (player) { player.pos.set(0, 0, -D.R + 9); player.face = Math.PI; }
@@ -5977,7 +6142,7 @@ Claudix.ready(function () {
   function advSpawnPoint(type) {
     var R = adv.R;
     if (type === "pking") return { x: 0, z: -4 };
-    if (type === "metal" && adv.capsules && adv.capsules.length) { var cp = adv.capsules[adv.capI++ % adv.capsules.length]; openCapsule(cp); return { x: cp.x, z: cp.z }; }
+    if ((type === "metal" || type === "tongue") && adv.capsules && adv.capsules.length) { var cp = adv.capsules[adv.capI++ % adv.capsules.length]; openCapsule(cp); return { x: cp.x, z: cp.z }; }
     var best = null;
     for (var t = 0; t < 12; t++) {
       var side = Math.floor(Math.random() * 3), u = rnd(-R + 2, R - 2), E = R - 1.5;
@@ -6000,7 +6165,7 @@ Claudix.ready(function () {
     adv.state = last ? "won" : "gate"; adv.cleared++;
     adv.earn += bonus;
     if (player && !player.dead) { player.hp = Math.min(player.maxHp, player.hp + player.maxHp * 0.4); popText(player.pos.x, 3.6, player.pos.z, "+" + bonus, "#ffc933", true); }
-    if (last && adv.kind === "virus") {
+    if (adv.kind === "virus" && adv.room === 0) {
       var firstV = !save.vk; save.vk = (save.vk || 0) + 1; if (firstV) adv.earn += 3000;
       adv.state = "storyEnd";
       if (player) player.hp = Math.min(player.maxHp, player.hp + player.maxHp * 0.5);
@@ -6026,7 +6191,7 @@ Claudix.ready(function () {
       setTimeout(function () { if (adv && !adv.over) advResult(true); }, 2600);
     } else {
       openGate();
-      banner(TR("Комната зачищена"), "+" + bonus + TR(" · дверь наверху открыта"));
+      banner(adv.kind === "virus" ? TR("Этаж зачищен") : TR("Комната зачищена"), "+" + bonus + (adv.kind === "virus" ? TR(" · лифт открыт") : TR(" · дверь наверху открыта")));
     }
   }
   function advMateLeft() {
@@ -6072,6 +6237,7 @@ Claudix.ready(function () {
     if (adv.killCam && adv.killCam.t > 0) adv.killCam.t -= dt;
     if (adv.state === "story" || adv.state === "storyEnd") { storyTick(dt); return; }
     if (adv.state === "heroFight") updateHeroFight(dt);
+    if (adv.state === "search") updateSearch(dt);
     if (adv.state === "fight") {
       adv.spawnT -= dt;
       if (adv.queue.length && adv.spawnT <= 0 && aliveCount() < 8) {
@@ -6084,9 +6250,10 @@ Claudix.ready(function () {
         else advRoomClear();
       }
     } else if (adv.state === "gate") {
-      var inG = function (o) { return Math.abs(o.pos.x) < 3.2 && o.pos.z < -adv.R + 3.4; };
+      var inG = function (o) { return Math.abs(o.pos.x - (adv.gx || 0)) < (adv.kind === "virus" ? 2.2 : 3.2) && o.pos.z < -adv.R + 3.4; };
       var pOk = player.dead || inG(player), mOk = !m || m.dead || inG(m);
-      if (pOk && mOk && !(player.dead && (!m || m.dead))) advBeginRoom(adv.room + 1);
+      if (adv.kpWait > 0) adv.kpWait -= dt;
+      if (pOk && mOk && !(player.dead && (!m || m.dead))) { if (D.code) { if (!adv.kpOpen && !(adv.kpWait > 0)) showKeypad(); } else advBeginRoom(adv.room + 1); }
     }
     if (adv.state !== "won" && player.dead && (!m || m.dead)) { advEvent({ k: "lose" }); advResult(false); }
   }
@@ -6119,7 +6286,7 @@ Claudix.ready(function () {
     $("lobby").hidden = true; $("hud").hidden = false; $("hud").classList.remove("lobby"); $("resultOv").hidden = true; $("pauseOv").hidden = true;
     $("mateTxt").hidden = !adv.mate;
     resetJoy();
-    if (vk) ["metal#0", "director#0", "cobalt#0", "shade#0", "flame#0", "graviton#0", "storm#0", "titan#0", "chronos#0"].forEach(function (k) { if (!CH_TPL[k]) CH_TPL[k] = buildTemplate(k.split("#")[0], 0); });
+    if (vk) ["tongue#0", "metal#0", "director#0", "cobalt#0", "shade#0", "flame#0", "graviton#0", "storm#0", "titan#0", "chronos#0"].forEach(function (k) { if (!CH_TPL[k]) CH_TPL[k] = buildTemplate(k.split("#")[0], 0); });
     if (vk) $("quitBtn").textContent = TR("Покинуть штаб");
     advBeginRoom(0);
     if (!vk) banner("Halloween Adventure", adv.mate ? TR("Вместе с ") + adv.mate.n : TR("В одиночку. Удачи"));
@@ -6151,7 +6318,7 @@ Claudix.ready(function () {
     if (adv.director) { disposeChar(adv.director); adv.director = null; }
     (adv.foes || []).forEach(function (e) { if (e.c && !e.c.dead) disposeChar(e.c); }); adv.foes = [];
     if (adv.chronosC) { disposeChar(adv.chronosC); adv.chronosC = null; }
-    $("rewind").hidden = true; $("archive").hidden = true;
+    $("rewind").hidden = true; $("archive").hidden = true; $("vnote").hidden = true; $("vkey").hidden = true;
     storyQ = null; $("story").hidden = true;
     disposeMate();
     cleanupRun();
