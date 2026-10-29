@@ -125,6 +125,10 @@ button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 }
 #story b { font-family: var(--font-display); font-weight: 400; letter-spacing: .04em; color: var(--sc, var(--accent)); font-size: .95rem; text-transform: uppercase; }
 #story small { color: var(--muted); font-size: .78rem; align-self: flex-end; }
+#rewind { position: absolute; inset: 0; z-index: 4; pointer-events: none; background: repeating-linear-gradient(0deg, rgba(58,216,122,0.10) 0 3px, rgba(0,0,0,0) 3px 7px), radial-gradient(ellipse at center, rgba(58,216,122,0.05), rgba(10,60,30,0.55)); mix-blend-mode: screen; opacity: 0; }
+#rewind.on { animation: rewindFx 1.6s ease-in-out; }
+@keyframes rewindFx { 0% { opacity: 0; filter: hue-rotate(0deg); } 20% { opacity: 1; } 50% { opacity: 1; transform: translateY(-6px); } 80% { opacity: 1; transform: translateY(4px); } 100% { opacity: 0; transform: none; } }
+@media (prefers-reduced-motion: reduce) { #rewind.on { animation-duration: 0.8s; } }
 #banner {
   position: absolute; left: 0; right: 0; top: 22%; z-index: 5; text-align: center; pointer-events: none;
   opacity: 0; padding: 0 16px;
@@ -322,6 +326,7 @@ html, body { touch-action: manipulation; -webkit-tap-highlight-color: transparen
 </div>
 
 <div id="banner"><b id="banMain"></b><span id="banSub"></span></div>
+<div id="rewind" hidden></div>
 <div id="story" hidden><b id="stWho"></b><span id="stTxt"></span><small id="stHint">Нажми, чтобы дальше</small></div>
 
 <div class="slabels" id="slabels"></div>
@@ -2460,6 +2465,7 @@ Claudix.ready(function () {
   }
   // смерть: каждый по-своему, потом исчезает и удаляется
   function deathAnim(c, color) {
+    if (c && c.heroFoe) return heroDown(c);
     if (c && c.kind === "metal") return metalDeath(c);
     if (!c || c.dying) return;
     c.dying = true; c.act = null;
@@ -4179,7 +4185,7 @@ Claudix.ready(function () {
       waveEl.textContent = adv.kind === "virus" ? TR("Код Вируса · ") + ROOMS[adv.room].name : ROOMS[adv.room].intro ? TR("Улица") : TR("Этаж ") + adv.floor + " · " + ROOMS[adv.room].name;
       var bossE = null; enemies.forEach(function (e) { if (!e.dead && e.T && e.T.boss) bossE = e; });
       foeEl.textContent = bossE ? TR("Тыквенный король · ") + Math.ceil(100 * (bossE.proxy ? bossE.hpF : bossE.hp / bossE.maxHp)) + "%"
-        : adv.state === "story" || adv.state === "storyEnd" ? TR("Директор говорит…") : adv.state === "gate" ? (ROOMS[adv.room].intro ? TR("Войди в поместье ↑") : TR("Дверь открыта ↑")) : adv.state === "won" ? TR("Победа!") : TR("Врагов: ") + (aliveCount() + (adv.host ? adv.queue.length : 0));
+        : adv.state === "story" || adv.state === "storyEnd" ? TR("Сцена…") : adv.state === "heroFight" ? TR("Герои · повалено ") + (adv.heroDown || 0) + " / 6 · " + Math.max(0, Math.ceil(adv.heroT)) + TR(" с") : adv.state === "gate" ? (ROOMS[adv.room].intro ? TR("Войди в поместье ↑") : TR("Дверь открыта ↑")) : adv.state === "won" ? TR("Победа!") : TR("Врагов: ") + (aliveCount() + (adv.host ? adv.queue.length : 0));
       if (adv.mate) $("mateTxt").textContent = adv.mate.n + " · " + (adv.mate.dead ? TR("пал") : Math.ceil(adv.mate.hp) + " / " + adv.mate.mh);
       if (p.dead) hpTxt.textContent = TR("пал · ждёт следующей комнаты");
     } else if (duel) {
@@ -5028,6 +5034,12 @@ Claudix.ready(function () {
     skel:    { name: TR("Скелет"), hp: 170, speed: 3.0, dmg: 13, range: 0, cd: 1.6, wind: 0, scale: 1, kb: 1, suit: 0xe6e1d3, pants: 0xd4cfc0, skin: 0xefeadc, accent: 0x9a9384, ranged: true, shot: 0xf3eedd },
     ghost:   { name: TR("Призрак"), hp: 180, speed: 5.0, dmg: 12, range: 1.5, cd: 0.9, wind: 0.25, scale: 1, kb: 1.2, suit: 0xdfe8ff, pants: 0xdfe8ff, skin: 0xf2f6ff, accent: 0xb8c8ff, ghost: true },
     butcher: { name: TR("Мясник"), hp: 700, speed: 2.6, dmg: 30, range: 2.3, cd: 1.7, wind: 0.55, scale: 1.6, kb: 0.35, suit: 0x7a2a2a, pants: 0x2e2622, skin: 0xb98a6a, accent: 0xd9d2c3 },
+    hf_cobalt:   { kind: "cobalt", name: TR("Кобальт"), hp: 520, speed: 4.4, dmg: 12, range: 1.9, cd: 0.95, wind: 0.28, scale: 1, kb: 0.6, heroFoe: true },
+    hf_shade:    { kind: "shade", name: TR("Тень-9"), hp: 460, speed: 5.4, dmg: 10, range: 1.8, cd: 0.7, wind: 0.2, scale: 1, kb: 0.7, heroFoe: true },
+    hf_flame:    { kind: "flame", name: TR("Пламень"), hp: 440, speed: 4.0, dmg: 11, range: 0, cd: 1.3, wind: 0, scale: 1, kb: 0.8, ranged: true, shot: 0xff7a1a, heroFoe: true },
+    hf_graviton: { kind: "graviton", name: TR("Гравитон"), hp: 440, speed: 4.0, dmg: 11, range: 0, cd: 1.4, wind: 0, scale: 1, kb: 0.8, ranged: true, shot: 0xb070ff, heroFoe: true },
+    hf_storm:    { kind: "storm", name: TR("Шторм-Джей"), hp: 440, speed: 4.6, dmg: 12, range: 0, cd: 1.2, wind: 0, scale: 1, kb: 0.8, ranged: true, shot: 0x5ad8ff, heroFoe: true },
+    hf_titan:    { kind: "titan", name: TR("Титан"), hp: 900, speed: 2.9, dmg: 20, range: 2.3, cd: 1.6, wind: 0.5, scale: 1, kb: 0.2, heroFoe: true },
     metal:   { name: TR("Боец из сплава"), hp: 430, speed: 3.5, dmg: 17, range: 1.8, cd: 1.15, wind: 0.35, scale: 1.08, kb: 0.45, suit: 0x8a929e, pants: 0x6c747f, skin: 0x8f98a4, accent: 0x8ae8ff, metal: true },
     pking:   { name: TR("Тыквенный король"), hp: 3500, speed: 2.8, dmg: 30, range: 3.2, cd: 1.5, wind: 0.6, scale: 2.6, kb: 0.1, suit: 0x3a1f4f, pants: 0x1f1430, skin: 0xff8a1a, accent: 0x6fd14a, boss: true }
   };
@@ -5497,6 +5509,110 @@ Claudix.ready(function () {
     sil.visible = false;
     addFx(0.6, function (k) { g.position.y = 1.7 + k * 2.6; f.material.opacity = 0.18 * (1 - k); }, function () { g.visible = false; f.visible = false; });
   }
+  // ---------- «Код Вируса»: шесть героев приходят остановить Вируса ----------
+  STORY.heroes = [
+    ["Кобальт", "Вирус! Стой. Хватит.", 0x5aa0ff],
+    ["Вирус", "О, команда спасателей. Все шестеро. Я польщён.", 0x7dff5a],
+    ["Тень-9", "Ты положил восьмерых. Я знал этих ребят. Я был в их отряде.", 0x9aa8c8],
+    ["Пламень", "Мы не убиваем людей. Никогда. Даже таких, как Директор.", 0xff8a2a],
+    ["Шторм-Джей", "Брат, это не ты. Остановись, пока не поздно.", 0x35e0ff],
+    ["Вирус", "Не учи меня, младший. «Тень» сломала мне жизнь.", 0x7dff5a],
+    ["Гравитон", "Сдайся по-хорошему.", 0xc79bff],
+    ["Титан", "Или по-плохому.", 0xff7a1a],
+    ["Вирус", "Шестеро на одного? Ну давайте.", 0x7dff5a]
+  ];
+  STORY.heroesRetreat = [
+    ["Кобальт", "Отходим! Сегодня его не остановить.", 0x5aa0ff],
+    ["Шторм-Джей", "Мы ещё поговорим, брат.", 0x35e0ff]
+  ];
+  STORY.chronos = [
+    ["Хронос", "Довольно.", 0x3ad87a],
+    ["Вирус", "А ты ещё кто такой?", 0x7dff5a],
+    ["Хронос", "Тот, кто видел, чем закончится этот бой. Его не должно было быть. Не сейчас.", 0x3ad87a]
+  ];
+  var HERO_FOES = ["cobalt", "shade", "flame", "graviton", "storm", "titan"];
+  var HERO_SPOTS = [[-7.5, 1], [-4.5, 3], [-1.5, 4.5], [1.5, 4.5], [4.5, 3], [7.5, 1]];
+  function heroesArrive() {
+    if (!adv || adv.over) return;
+    adv.state = "story"; adv.heroDown = 0; adv.heroT = 60; adv.foes = [];
+    if (player) { player.pos.set(0, 0, -2); player.face = 0; }
+    banner(TR("Тревога"), TR("Кто-то вошёл в штаб"));
+    HERO_FOES.forEach(function (id, k) {
+      setTimeout(function () {
+        if (!adv || adv.over) return;
+        var s = HERO_SPOTS[k], e = spawnMon("hf_" + id, s[0], s[1] + 3, adv.nextId++);
+        e.face = Math.PI; e.c.heroFoe = true; e.c.body.rotation.y = Math.PI; adv.foes.push(e);
+      }, 250 + k * 280);
+    });
+    adv.camOvr = { px: 0, py: 11, pz: 17, lx: 0, ly: 0.8, lz: 1.5, show: true };
+    setTimeout(function () {
+      if (!adv || adv.over) return;
+      storyPlay(STORY.heroes, function () {
+        if (!adv || adv.over) return;
+        adv.camOvr = null; adv.state = "heroFight"; adv.heroT = 60; adv.hpBefore = player ? player.hp : 0;
+        banner(TR("Бой"), TR("Шесть героев против Вируса"));
+      });
+    }, 2600);
+  }
+  // герой не умирает: падает и лежит (его потом может поднять Хронос)
+  function heroDown(c) {
+    if (!c || c.down) return; c.down = true; c.act = null;
+    if (adv) adv.heroDown = (adv.heroDown || 0) + 1;
+    var p = c.root.position; burst(p.x, 1.4, p.z, 0xffffff, 10, 4, 0.5, 0.16, 0.8);
+    addFx(0.7, function (k) { if (!c.down) return; var e = k * k * (3 - 2 * k); c.body.rotation.x = -1.42 * e; c.armL.rotation.set(-2.3 * e, 0, -0.4); c.armR.rotation.set(-2.5 * e, 0, 0.4); });
+  }
+  function heroFoesAll() { return (adv && adv.foes || []); }
+  function heroesLeave(lines, done) {
+    // живые и лежащие герои уходят к дальней двери и исчезают
+    adv.state = "story";
+    heroFoesAll().forEach(function (e) { e.dead = true; e.bar && (e.bar.visible = false); });
+    storyPlay(lines, function () {
+      heroFoesAll().forEach(function (e, k) {
+        var c = e.c, x0 = c.root.position.x, z0 = c.root.position.z;
+        if (c.down) { addFx(0.8, function (t) { charOpacity(c, 1 - t); }, function () { disposeChar(c); }); return; }
+        addFx(1.6, function (t) { c.body.rotation.y = Math.atan2(-x0, -adv.R - 4 - z0); c.root.position.set(x0 + (0 - x0) * t * 0.5, 0, z0 + (-adv.R + 4 - z0) * t); animWalk(c, 0.016, 7); if (t > 0.6) charOpacity(c, 1 - (t - 0.6) / 0.4); }, function () { disposeChar(c); });
+      });
+      adv.foes = [];
+      setTimeout(done, 1700);
+    });
+  }
+  function chronosRewind() {
+    adv.state = "story"; adv.chronos = true;
+    heroFoesAll().forEach(function (e) { e.dead = true; e.bar && (e.bar.visible = false); });
+    var ch = makeChar({ kind: "chronos", scale: 1 }); ch.root.position.set(0, 0, 2.5); ch.body.rotation.y = Math.PI; scene.add(ch.root); adv.chronosC = ch;
+    flashFx(0, 1.6, 2.5, 0x3ad87a, 6, 0.4); ringFx(0, 2.5, 6, 0.6, 0x3ad87a, 0.9); burst(0, 1.4, 2.5, 0xffd25a, 24, 6, 0.8, 0.2, 1);
+    adv.camOvr = { px: 0, py: 5.5, pz: 12, lx: 0, ly: 1.2, lz: 2, show: true };
+    banner(TR("Хронос"), TR("Хранитель времени"));
+    setTimeout(function () {
+      if (!adv || adv.over) return;
+      storyPlay(STORY.chronos, function () {
+        if (!adv || adv.over) return;
+        // перемотка: экран уходит в зелёный, лежащие герои встают, здоровье Вируса как до боя
+        var rw = $("rewind"); rw.hidden = false; rw.classList.remove("on"); void rw.offsetWidth; rw.classList.add("on");
+        ringFx(0, 2.5, 18, 1.4, 0x3ad87a, 0.7);
+        heroFoesAll().forEach(function (e) { var c = e.c; if (c.down) { var b0 = c.body.rotation.x; addFx(1.2, function (t) { c.body.rotation.x = b0 * (1 - t); }, function () { standUp(c); }); } });
+        if (player && !player.dead) { player.hp = Math.max(player.hp, adv.hpBefore || player.maxHp); popText(player.pos.x, 3.4, player.pos.z, TR("Время отмотано"), "#7dffb0", true); }
+        setTimeout(function () {
+          rw.hidden = true; rw.classList.remove("on");
+          ringFx(0, 2.5, 4, 0.8, 0x3ad87a, 0.9);
+          heroFoesAll().concat([{ c: ch }]).forEach(function (e) { var c = e.c; burst(c.root.position.x, 1.4, c.root.position.z, 0x3ad87a, 8, 3, 0.6, 0.16, 1); addFx(0.9, function (t) { charOpacity(c, 1 - t); c.root.scale.setScalar((c.scale || 1) * (1 - 0.3 * t)); }, function () { disposeChar(c); }); });
+          adv.foes = []; adv.chronosC = null;
+          setTimeout(virusPartEnd, 1200);
+        }, 1600);
+      });
+    }, 900);
+  }
+  function virusPartEnd() {
+    if (!adv || adv.over) return;
+    adv.camOvr = null;
+    banner(TR("Продолжение следует"), adv.chronos ? TR("Хронос забрал героев") : TR("Герои отступили"));
+    setTimeout(function () { if (adv && !adv.over) advResult(true); }, 2600);
+  }
+  function updateHeroFight(dt) {
+    adv.heroT -= dt;
+    if ((adv.heroDown || 0) >= 3 && !adv.chronos) { chronosRewind(); return; }
+    if (adv.heroT <= 0) heroesLeave(STORY.heroesRetreat, virusPartEnd);
+  }
   function openGate() {
     if (!adv.gate || adv.gate.open) return;
     adv.gate.open = true;
@@ -5525,7 +5641,7 @@ Claudix.ready(function () {
   function spawnMon(type, x, z, id, proxy) {
     var B = MON[type], f = adv.floor;
     var hpMul = [1, 1.4, 1.9][f - 1] * (adv.party > 1 ? 1.75 : 1) * adv.pScale, dmgMul = 1 + 0.2 * (f - 1);
-    var c = makeChar({ kind: type, suit: B.suit, pants: B.pants, skin: B.skin, accent: B.accent, scale: B.scale });
+    var c = makeChar({ kind: B.kind || type, suit: B.suit, pants: B.pants, skin: B.skin, accent: B.accent, scale: B.scale });
     if (B.ghost) c.mats.forEach(function (m) { m.transparent = true; m.opacity = 0.62; m.depthWrite = false; });
     c.root.position.set(x, 0, z);
     var bar = new THREE.Group(); bar.position.set(0, 3.15, 0); bar.rotation.x = BAR_PITCH;
@@ -5831,6 +5947,7 @@ Claudix.ready(function () {
     if (last && adv.kind === "virus") {
       var firstV = !save.vk; save.vk = (save.vk || 0) + 1; if (firstV) adv.earn += 3000;
       adv.state = "storyEnd";
+      if (player) player.hp = Math.min(player.maxHp, player.hp + player.maxHp * 0.5);
       setTimeout(function () {
         if (!adv || adv.over) return;
         adv.camOvr = { px: 0, py: 4.8, pz: -adv.R + 15.5, lx: 0, ly: 2.2, lz: -adv.R + 4, show: true };
@@ -5838,8 +5955,8 @@ Claudix.ready(function () {
           if (!adv || adv.over) return;
           var dch = adv.director;
           if (dch) { adv.director = null; addFx(1.6, function (k) { dch.body.rotation.y = Math.PI; dch.root.position.z = -adv.R + 3.4 - k * 1.4; animWalk(dch, 0.016, 2.5); charOpacity(dch, 1 - k); }, function () { disposeChar(dch); }); }
-          banner(TR("Продолжение следует"), TR("Директор ушёл. ") + (firstV ? TR("+3000 монет за первую победу") : ""));
-          setTimeout(function () { if (adv && !adv.over) advResult(true); }, 2600);
+          adv.camOvr = null;
+          setTimeout(heroesArrive, 1400);
         });
       }, 1200);
       return;
@@ -5898,6 +6015,7 @@ Claudix.ready(function () {
     if (adv.director && player) { var d2 = adv.director; d2.body.rotation.y = Math.atan2(player.pos.x - d2.root.position.x, player.pos.z - d2.root.position.z); }
     if (adv.killCam && adv.killCam.t > 0) adv.killCam.t -= dt;
     if (adv.state === "story" || adv.state === "storyEnd") { storyTick(dt); return; }
+    if (adv.state === "heroFight") updateHeroFight(dt);
     if (adv.state === "fight") {
       adv.spawnT -= dt;
       if (adv.queue.length && adv.spawnT <= 0 && aliveCount() < 8) {
@@ -5945,7 +6063,7 @@ Claudix.ready(function () {
     $("lobby").hidden = true; $("hud").hidden = false; $("hud").classList.remove("lobby"); $("resultOv").hidden = true; $("pauseOv").hidden = true;
     $("mateTxt").hidden = !adv.mate;
     resetJoy();
-    if (vk) ["metal#0", "director#0"].forEach(function (k) { if (!CH_TPL[k]) CH_TPL[k] = buildTemplate(k.split("#")[0], 0); });
+    if (vk) ["metal#0", "director#0", "cobalt#0", "shade#0", "flame#0", "graviton#0", "storm#0", "titan#0", "chronos#0"].forEach(function (k) { if (!CH_TPL[k]) CH_TPL[k] = buildTemplate(k.split("#")[0], 0); });
     if (vk) $("quitBtn").textContent = TR("Покинуть штаб");
     advBeginRoom(0);
     if (!vk) banner("Halloween Adventure", adv.mate ? TR("Вместе с ") + adv.mate.n : TR("В одиночку. Удачи"));
@@ -5963,8 +6081,8 @@ Claudix.ready(function () {
     commitAdv();
     mode = "dead"; deadT = 1e9; input.btnAtk = false; input.keys = {}; joyEnd();
     $("pauseOv").hidden = true;
-    $("resTitle").textContent = adv.kind === "virus" ? (win ? TR("Код Вируса: глава 1 пройдена") : TR("Бойцы из сплава оказались сильнее")) : win ? TR("Победа! Тыквенный король повержен") : TR("Подземелье оказалось сильнее");
-    var rows = adv.kind === "virus" ? [[TR("Бойцов из сплава"), run.kills + " / 8"], [TR("Глава"), "1"], [TR("Заработано монет"), fmt(adv.earn)], [TR("Всего монет"), fmt(save.money)]]
+    $("resTitle").textContent = adv.kind === "virus" ? (win ? TR("Код Вируса: продолжение следует") : TR("Вирус пал")) : win ? TR("Победа! Тыквенный король повержен") : TR("Подземелье оказалось сильнее");
+    var rows = adv.kind === "virus" ? [[TR("Бойцов из сплава"), "8 / 8"], [TR("Героев повалено"), (adv.heroDown || 0) + " / 6" + (adv.chronos ? TR(" · пришёл Хронос") : "")], [TR("Заработано монет"), fmt(adv.earn)], [TR("Всего монет"), fmt(save.money)]]
       : [[TR("Комнат пройдено"), adv.cleared + " / " + (ROOMS.length - 1)], adv.sp ? [TR("Скиллпойнты"), "+" + adv.sp + " ★"] : [TR("Дошли до этажа"), String(adv.floor)], [TR("Заработано монет"), fmt(adv.earn)], [TR("Всего монет"), fmt(save.money)]];
     $("resultOv").querySelectorAll("li span").forEach(function (s, i) { s.textContent = rows[i][0]; });
     RES_IDS.forEach(function (id, i) { $(id).textContent = rows[i][1]; });
@@ -5975,6 +6093,9 @@ Claudix.ready(function () {
   function cleanupAdv() {
     if (!adv) return;
     if (adv.director) { disposeChar(adv.director); adv.director = null; }
+    (adv.foes || []).forEach(function (e) { if (e.c && !e.c.dead) disposeChar(e.c); }); adv.foes = [];
+    if (adv.chronosC) { disposeChar(adv.chronosC); adv.chronosC = null; }
+    $("rewind").hidden = true;
     storyQ = null; $("story").hidden = true;
     disposeMate();
     cleanupRun();
@@ -6117,7 +6238,8 @@ Claudix.ready(function () {
       } else if (mode === "play") {
         if (!(adv && player.dead) && !(adv && (adv.state === "story" || adv.state === "storyEnd"))) updatePlayer(dt); else if (adv && player && !player.dead) animWalk(player.c, dt, 0);
         if (mode === "play") updateRun(dt);
-        for (var i = 0; i < enemies.length; i++) if (!enemies[i].dead && !enemies[i].duel && !enemies[i].proxy) updateMonster(enemies[i], dt);
+        var still = adv && (adv.state === "story" || adv.state === "storyEnd");
+        for (var i = 0; i < enemies.length; i++) if (!enemies[i].dead && !enemies[i].duel && !enemies[i].proxy) { if (still) { if (!(enemies[i].c.spawnT > 0)) animWalk(enemies[i].c, dt, 0); enemies[i].c.body.rotation.y = enemies[i].face; } else updateMonster(enemies[i], dt); }
         if (duel) updateDuel(dt);
         if (adv && mode === "play") updateAdv(dt);
         for (var j = enemies.length - 1; j >= 0; j--) if (enemies[j].dead) enemies.splice(j, 1);
