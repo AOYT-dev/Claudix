@@ -129,6 +129,11 @@ button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 #rewind.on { animation: rewindFx 1.6s ease-in-out; }
 @keyframes rewindFx { 0% { opacity: 0; filter: hue-rotate(0deg); } 20% { opacity: 1; } 50% { opacity: 1; transform: translateY(-6px); } 80% { opacity: 1; transform: translateY(4px); } 100% { opacity: 0; transform: none; } }
 @media (prefers-reduced-motion: reduce) { #rewind.on { animation-duration: 0.8s; } }
+#archive { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -54%); z-index: 6; width: min(620px, calc(100% - 32px)); padding: 16px 18px; border-radius: 14px; background: rgba(2, 12, 6, 0.92); border: 1px solid rgba(125, 255, 90, 0.45); box-shadow: 0 0 40px rgba(125, 255, 90, 0.18); color: #b8ffa8; font: 500 0.98rem/1.45 ui-monospace, "SF Mono", Menlo, monospace; cursor: pointer; display: flex; flex-direction: column; gap: 10px; }
+#archive header { display: flex; justify-content: space-between; gap: 12px; color: #7dff5a; font-weight: 700; letter-spacing: .04em; }
+#archive .bar { height: 4px; border-radius: 2px; background: rgba(125, 255, 90, 0.15); overflow: hidden; }
+#archive .bar i { display: block; height: 100%; background: #7dff5a; transform-origin: left; transform: scaleX(0); }
+#arTxt { margin: 0; white-space: pre-wrap; min-height: 9.5em; }
 #banner {
   position: absolute; left: 0; right: 0; top: 22%; z-index: 5; text-align: center; pointer-events: none;
   opacity: 0; padding: 0 16px;
@@ -327,6 +332,7 @@ html, body { touch-action: manipulation; -webkit-tap-highlight-color: transparen
 
 <div id="banner"><b id="banMain"></b><span id="banSub"></span></div>
 <div id="rewind" hidden></div>
+<div id="archive" hidden><header><span id="arHead"></span><span id="arTime">0.0 с</span></header><div class="bar"><i id="arBar"></i></div><pre id="arTxt"></pre></div>
 <div id="story" hidden><b id="stWho"></b><span id="stTxt"></span><small id="stHint">Нажми, чтобы дальше</small></div>
 
 <div class="slabels" id="slabels"></div>
@@ -5597,21 +5603,71 @@ Claudix.ready(function () {
           ringFx(0, 2.5, 4, 0.8, 0x3ad87a, 0.9);
           heroFoesAll().concat([{ c: ch }]).forEach(function (e) { var c = e.c; burst(c.root.position.x, 1.4, c.root.position.z, 0x3ad87a, 8, 3, 0.6, 0.16, 1); addFx(0.9, function (t) { charOpacity(c, 1 - t); c.root.scale.setScalar((c.scale || 1) * (1 - 0.3 * t)); }, function () { disposeChar(c); }); });
           adv.foes = []; adv.chronosC = null;
-          setTimeout(virusPartEnd, 1200);
+          setTimeout(function () { archiveScene(virusPartEnd); }, 1200);
         }, 1600);
       });
     }, 900);
   }
+  // ---------- «Код Вируса»: архив «Тени» — Вирус узнаёт, откуда у него силы ----------
+  STORY.archive = [
+    ["Вирус", "Так это были вы...", 0x7dff5a],
+    ["Вирус", "Я думал, это случайность. Ток от блока, пока я писал вирус.", 0x7dff5a],
+    ["Вирус", "А это «Тень» била молнией по моему дому. Я чуть не умер от боли.", 0x7dff5a],
+    ["Вирус", "А вы просто записали это в отчёт. «Наблюдать».", 0x7dff5a],
+    ["Вирус", "Директор. Теперь это личное.", 0x7dff5a]
+  ];
+  var ARCHIVE_TXT = [
+    "> ДОСТУП РАЗРЕШЁН",
+    "> АРХИВ «ТЕНИ» / ПРОЕКТ «РАЗРЯД»",
+    "> Испытание №14. Направленная молния.",
+    "> Цель: проверить удар по городской сети.",
+    "> Попадание: антенна жилого дома.",
+    "> Побочный эффект: к антенне был подключён компьютер.",
+    "> Пострадавший: подросток. Выжил.",
+    "> Зафиксированы аномальные электрические способности.",
+    "> Решение Директора: НАБЛЮДАТЬ. НЕ ВМЕШИВАТЬСЯ."
+  ];
+  function archiveScene(done) {
+    if (!adv || adv.over) return;
+    adv.state = "story";
+    if (player) { player.pos.set(0, 0, -adv.R + 5); player.face = Math.PI; }
+    adv.camOvr = { px: 1.6, py: 3.6, pz: -adv.R + 8.2, lx: 0, ly: 2.4, lz: -adv.R + 2, show: true };
+    var el = $("archive"), out = $("arTxt"), tm = $("arTime"), bar = $("arBar"), t0 = performance.now(), D = 10000, fast = false;
+    out.textContent = ""; el.hidden = false; $("arHead").textContent = TR("Вирус взламывает шифр Директора");
+    el.onpointerdown = function () { fast = true; };
+    var tick = setInterval(function () {
+      if (!adv || adv.over) { clearInterval(tick); el.hidden = true; return; }
+      var t = Math.min(D, (performance.now() - t0) * (fast ? 6 : 1));
+      if (fast) { t0 -= 40 * 5; }
+      tm.textContent = (t / 1000).toFixed(1) + TR(" с"); bar.style.transform = "scaleX(" + (t / D).toFixed(3) + ")";
+      var junk = ""; for (var k = 0; k < 4; k++) junk += Math.random().toString(16).slice(2, 10).toUpperCase() + " ";
+      out.textContent = "> " + junk + "\n> " + TR("подбор ключа...") + " " + Math.floor(t / D * 100) + "%";
+      if (t >= D) {
+        clearInterval(tick); tm.textContent = TR("10 секунд"); bar.style.transform = "scaleX(1)";
+        var i = 0; out.textContent = "";
+        var typer = setInterval(function () {
+          if (!adv || adv.over) { clearInterval(typer); el.hidden = true; return; }
+          out.textContent += (i ? "\n" : "") + TR(ARCHIVE_TXT[i]); i++;
+          if (i >= ARCHIVE_TXT.length) {
+            clearInterval(typer);
+            el.onpointerdown = function () { el.onpointerdown = null; el.hidden = true; storyPlay(STORY.archive, done); };
+            $("arHead").textContent = TR("Архив открыт · нажми, чтобы дальше");
+            setTimeout(function () { if (el.onpointerdown) el.onpointerdown(); }, 6000);
+          }
+        }, 650);
+      }
+    }, 40);
+  }
   function virusPartEnd() {
     if (!adv || adv.over) return;
     adv.camOvr = null;
-    banner(TR("Продолжение следует"), adv.chronos ? TR("Хронос забрал героев") : TR("Герои отступили"));
+    banner(TR("Продолжение следует"), TR("Вирус узнал правду о своих силах"));
     setTimeout(function () { if (adv && !adv.over) advResult(true); }, 2600);
   }
   function updateHeroFight(dt) {
     adv.heroT -= dt;
     if ((adv.heroDown || 0) >= 3 && !adv.chronos) { chronosRewind(); return; }
-    if (adv.heroT <= 0) heroesLeave(STORY.heroesRetreat, virusPartEnd);
+    if (adv.heroT <= 0) heroesLeave(STORY.heroesRetreat, function () { archiveScene(virusPartEnd); });
   }
   function openGate() {
     if (!adv.gate || adv.gate.open) return;
@@ -6095,7 +6151,7 @@ Claudix.ready(function () {
     if (adv.director) { disposeChar(adv.director); adv.director = null; }
     (adv.foes || []).forEach(function (e) { if (e.c && !e.c.dead) disposeChar(e.c); }); adv.foes = [];
     if (adv.chronosC) { disposeChar(adv.chronosC); adv.chronosC = null; }
-    $("rewind").hidden = true;
+    $("rewind").hidden = true; $("archive").hidden = true;
     storyQ = null; $("story").hidden = true;
     disposeMate();
     cleanupRun();
