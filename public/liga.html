@@ -136,7 +136,7 @@ button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 #arTxt { margin: 0; white-space: pre-wrap; min-height: 9.5em; }
 #vnote, #vkey { position: absolute; inset: 0; z-index: 7; display: grid; place-items: center; background: rgba(4, 6, 12, 0.7); padding: 16px; }
 #vnote .paper { width: min(520px, 100%); max-height: calc(100% - 32px); overflow: auto; padding: 22px 24px; border-radius: 6px; background: #efe6cf; color: #2a2318; font: 500 1.02rem/1.5 var(--font-body); box-shadow: 0 20px 50px rgba(0,0,0,.5); transform: rotate(-1deg); display: flex; flex-direction: column; gap: 8px; }
-#vnote .paper p { margin: 0; } #vnote .paper p.q { padding-left: 10px; border-left: 3px solid #b8302a; }
+#vnote .paper p { margin: 0; } #vnote .paper p.cph { text-align: center; font: 700 2.4rem/1.2 ui-monospace, Menlo, monospace; letter-spacing: .25em; color: #b8302a; margin: 6px 0; } #vnote .paper p.q { padding-left: 10px; border-left: 3px solid #b8302a; }
 #vnote .paper b { font-family: var(--font-display); font-weight: 400; font-size: 1.2rem; letter-spacing: .04em; }
 #vkey .kp { width: min(300px, 100%); padding: 18px; border-radius: 16px; background: #14181f; border: 1px solid rgba(58,232,255,.4); display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; box-shadow: 0 0 40px rgba(58,232,255,.15); }
 #vkey .kp.bad { animation: kpShake .35s; } @keyframes kpShake { 25% { transform: translateX(-8px); } 75% { transform: translateX(8px); } }
@@ -345,7 +345,7 @@ html, body { touch-action: manipulation; -webkit-tap-highlight-color: transparen
 <div id="banner"><b id="banMain"></b><span id="banSub"></span></div>
 <div id="rewind" hidden></div>
 <div id="vnote" hidden><div class="paper"><b>Записка</b><div id="vnTxt"></div><button id="vnOk" class="act" type="button">Понял</button></div></div>
-<div id="vkey" hidden><div class="kp"><div id="kpScr">_ _ _ _</div><div id="kpMsg"></div>
+<div id="vkey" hidden><div class="kp"><div id="kpScr">_ _ _ _ _</div><div id="kpMsg"></div>
 <button type="button" data-k="1">1</button><button type="button" data-k="2">2</button><button type="button" data-k="3">3</button>
 <button type="button" data-k="4">4</button><button type="button" data-k="5">5</button><button type="button" data-k="6">6</button>
 <button type="button" data-k="7">7</button><button type="button" data-k="8">8</button><button type="button" data-k="9">9</button>
@@ -5739,10 +5739,11 @@ Claudix.ready(function () {
     ["Директор · по громкой связи", "О, ты нашёл лифт.", 0xc8ccd4],
     ["Директор · по громкой связи", "Поэтому тебе подарок.", 0xc8ccd4]
   ];
-  var LIFT_CODE = "8643";
-  var NOTE_TXT = ["Подручному.", "Код от лифта в лабораторию меняется каждый день. Сегодняшний не записываю — сам догадаешься:",
-    "1-я цифра — сколько бойцов из сплава охраняли мой кабинет.", "2-я — сколько героев пришло за Вирусом.",
-    "3-я — номер испытания «Разряд» без десятка.", "4-я — на каком этаже ты сейчас стоишь.", "Записку сжечь. — Д."];
+  var LIFT_CODE = "34097";
+  // шифр по раскладке: те же клавиши с зажатым Shift (в русской раскладке Shift+7 — «?», в английской — «&»)
+  var NOTE_CIPHER = (window.CLX && CLX.lang === "en") ? "#$)(&" : "#$)(?";
+  var NOTE_TXT = ["Подручному.", "Код от лифта в лабораторию записываю шифром — чужой не поймёт:",
+    "@CIPHER", "Подсказка для своих: смотри на клавиатуру. Это те же клавиши, только без Shift.", "Записку сжечь. — Д."];
   function liftOpen() {
     if (!adv || adv.over) return;
     adv.camOvr = null; adv.state = "gate"; openGate();
@@ -5787,7 +5788,7 @@ Claudix.ready(function () {
     });
   }
   function showNote(first) {
-    var el = $("vnote"); $("vnTxt").innerHTML = NOTE_TXT.map(function (l, i) { return "<p" + (i >= 2 && i <= 5 ? ' class="q"' : "") + ">" + TR(l) + "</p>"; }).join("");
+    var el = $("vnote"); $("vnTxt").innerHTML = NOTE_TXT.map(function (l) { return l === "@CIPHER" ? '<p class="cph">' + NOTE_CIPHER.replace(/&/g, "&amp;") + "</p>" : "<p>" + TR(l) + "</p>"; }).join("");
     el.hidden = false; adv.noteOpen = true;
     $("vnOk").onclick = function () { el.hidden = true; adv.noteOpen = false; if (first && adv.state === "search") { adv.hasNote = true; adv.state = "gate"; openGate(); banner(TR("Записка у тебя"), TR("Разгадай код и иди к лифту")); } };
   }
@@ -5795,7 +5796,7 @@ Claudix.ready(function () {
   var kpVal = "", kpTries = 0;
   function showKeypad() {
     if (!adv || adv.kpOpen) return;
-    adv.kpOpen = true; kpVal = ""; $("kpScr").textContent = "_ _ _ _"; $("kpMsg").textContent = TR("Введи код от лаборатории"); $("vkey").hidden = false;
+    adv.kpOpen = true; kpVal = ""; $("kpScr").textContent = "_ _ _ _ _"; $("kpMsg").textContent = TR("Введи код от лаборатории"); $("vkey").hidden = false;
   }
   function kpPress(k) {
     if (k === "del") kpVal = kpVal.slice(0, -1);
@@ -5808,9 +5809,9 @@ Claudix.ready(function () {
         return;
       }
       kpTries++; kpVal = ""; var kb = $("vkey").querySelector(".kp"); kb.classList.remove("bad"); void kb.offsetWidth; kb.classList.add("bad");
-      $("kpMsg").textContent = kpTries >= 3 ? TR("Неверно. Подсказка: первая цифра — 8") : TR("Неверный код");
-    } else if (kpVal.length < 4) kpVal += k;
-    $("kpScr").textContent = (kpVal + "____").slice(0, 4).split("").join(" ");
+      $("kpMsg").textContent = kpTries >= 3 ? TR("Неверно. Подсказка: Shift + 3 = #") : TR("Неверный код");
+    } else if (kpVal.length < 5) kpVal += k;
+    $("kpScr").textContent = (kpVal + "_____").slice(0, 5).split("").join(" ");
   }
   $("vkey").addEventListener("click", function (e) { var b = e.target.closest("button"); if (b && adv && adv.kpOpen) kpPress(b.getAttribute("data-k")); });
   window.addEventListener("keydown", function (e) { if (!adv || !adv.kpOpen || !$("vnote").hidden) return; if (/^Digit\d$/.test(e.code)) kpPress(e.code.slice(5)); else if (e.code === "Backspace") kpPress("del"); else if (e.code === "Enter") kpPress("ok"); else if (e.code === "Escape") kpPress("close"); });
