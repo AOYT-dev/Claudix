@@ -114,6 +114,7 @@ button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 #btnAtk { width: 104px; height: 104px; right: calc(var(--gutter-r) + 4px); bottom: 26px; background: rgba(255, 201, 51, 0.3); border-color: var(--accent); }
 #btnAtk .lbl { font-size: 1rem; }
 #btnAbil { width: 80px; height: 80px; right: calc(var(--gutter-r) + 122px); bottom: 40px; }
+.btn[hidden] { display: none; } #btnRapid { width: 62px; height: 62px; right: calc(var(--gutter-r) + 40px); bottom: 140px; } #btnShield { width: 62px; height: 62px; right: calc(var(--gutter-r) + 118px); bottom: 134px; } #btnRapid.ready, #btnShield.ready { border-color: #7dff5a; } #btnRapid.on, #btnShield.on { border-color: #ffd25a; box-shadow: 0 0 16px rgba(255, 210, 90, 0.8); }
 #btnAbil.ready { border-color: #5df0ff; box-shadow: 0 0 18px rgba(93, 240, 255, 0.7); }
 .cdfill { position: absolute; inset: 0; background: rgba(0, 0, 0, 0.7); transform-origin: bottom; transform: scaleY(0); }
 .btn:active { filter: brightness(1.25); }
@@ -341,6 +342,8 @@ html, body { touch-action: manipulation; -webkit-tap-highlight-color: transparen
   <div id="joyzone"><div class="joybase" id="joyBase"><div class="joyknob" id="joyKnob"></div></div></div>
   <button class="btn" id="btnAbil" type="button"><span class="lbl" id="abilLbl">Способность</span><i class="cdfill" id="cdFill"></i></button>
   <button class="btn" id="btnAtk" type="button"><span class="lbl">УДАР</span></button>
+  <button class="btn" id="btnRapid" type="button" hidden><span class="lbl" id="rapidLbl">Быстрый</span><i class="cdfill" id="rapidFill"></i></button>
+  <button class="btn" id="btnShield" type="button" hidden><span class="lbl">Щит</span><i class="cdfill" id="shieldFill"></i></button>
 </div>
 
 <div id="banner"><b id="banMain"></b><span id="banSub"></span></div>
@@ -3384,6 +3387,7 @@ Claudix.ready(function () {
   function hurtPlayer(d, fx, fz) {
     var p = player;
     if (!p || p.dead || p.iframes > 0 || p.dash) return;
+    if (p.rsT > 0 && !duel) { rwRicochet(p, d, fx == null ? p.pos.x : fx, fz == null ? p.pos.z : fz); return; }
     p.hp -= d; p.iframes = 0.25;
     popText(p.pos.x, 3.2, p.pos.z, "-" + Math.round(d), "#ff6b7a", false);
     burst(p.pos.x, 1.6, p.pos.z, 0xff4a5c, 6, 5, 0.35, 0.18, 0.8);
@@ -3486,7 +3490,7 @@ Claudix.ready(function () {
         if (e.dead) return;
         var ex = e.pos.x - p.pos.x, ez = e.pos.z - p.pos.z, along = ex * fx + ez * fz, side = Math.abs(ex * fz - ez * fx);
         if (along < -0.5 || along > L + e.r || side > 0.9 + e.r) return;
-        hurtEnemy(e, 32, { color: "#39ff88", kx: fx * 5 * e.kb, kz: fz * 5 * e.kb });
+        hurtEnemy(e, 32 * (p.rapid > 0 ? 1.5 : 1), { color: "#39ff88", kx: fx * 5 * e.kb, kz: fz * 5 * e.kb });
         infect(e, 4);
         burst(e.pos.x, e.pos.y + 1.4 * (e.scale || 1), e.pos.z, 0x39ff88, 8, 5, 0.4, 0.16, 0.8);
       });
@@ -4149,9 +4153,10 @@ Claudix.ready(function () {
       speedNow = spd * moving;
       if (moving > 0.15) p.face = turn(p.face, Math.atan2(mv.x, mv.z), dt * 14);
     }
+    if (p.def.id === "virus") rwTick(p, dt);
     var wantAtk = input.btnAtk || input.keys.Space || input.keys.KeyJ;
     if (wantAtk && p.atkT <= 0 && !p.dash && !(p.held > 0)) {
-      ATK[def.id](p); p.atkT = def.atkCd; p.atkAnim = 0.22; actStart(p.c, "atk_" + def.id, ATK_DUR[def.id]);
+      ATK[def.id](p); if (p.rapid > 0) rwCount(p); p.atkT = def.atkCd * (p.rapid > 0 ? 0.75 : 1); p.atkAnim = 0.22; actStart(p.c, "atk_" + def.id, ATK_DUR[def.id]);
       if (duel) netSend({ t: "da", k: 0, f: +p.face.toFixed(2), x: +p.pos.x.toFixed(2), z: +p.pos.z.toFixed(2) });
       else if (adv && adv.mate && !adv.mate.bot) netSend({ t: "aa", k: 0, f: +p.face.toFixed(2), x: +p.pos.x.toFixed(2), z: +p.pos.z.toFixed(2) });
     }
@@ -4237,6 +4242,7 @@ Claudix.ready(function () {
     var cd = Math.max(0, p.abilT) / p.def.cd;
     cdFill.style.transform = "scaleY(" + cd.toFixed(3) + ")";
     btnAbil.classList.toggle("ready", p.abilT <= 0);
+    rwHud(p);
   }
   function renderMoney() {
     $("moneyEl").textContent = fmt(save.money);
@@ -5003,6 +5009,9 @@ Claudix.ready(function () {
   }
   holdBtn($("btnAtk"), function () { input.btnAtk = true; }, function () { input.btnAtk = false; });
   holdBtn($("btnAbil"), function () { input.abil = true; }, function () { /* разовое нажатие */ });
+  holdBtn($("btnShield"), function () { rwShield(); }, function () { /* разовое нажатие */ });
+  holdBtn($("btnRapid"), function () { rwRapid(); }, function () { /* разовое нажатие */ });
+  window.addEventListener("keydown", function (e) { if (e.code === "KeyF") rwShield(); else if (e.code === "KeyR") rwRapid(); });
   window.addEventListener("keydown", function (e) {
     if (mode === "lobby") {
       var kl = e.code;
@@ -6165,7 +6174,8 @@ Claudix.ready(function () {
     flashFx(e.pos.x, 1.8, e.pos.z, 0xffffff, 10, 0.5); for (var b = 0; b < 5; b++) burst(e.pos.x, 1.8, e.pos.z, rbHex(b / 5), 24, 9, 1, 0.22, 1);
     shake = Math.max(shake, 1);
     adv.state = "won"; adv.camOvr = null;
-    banner(TR("Директор повержен"), TR("Награда: новая способность"));
+    if (!save.vrw) { save.vrw = 1; persist(); }
+    banner(TR("Директор повержен"), TR("Награда: Рикошетный щит и быстрый удар"));
     setTimeout(virusPartEnd, 3600);
   }
   function dbCleanup(db) {
@@ -6173,6 +6183,72 @@ Claudix.ready(function () {
     if (db.cur) db.cur.tele.forEach(function (t) { t.ln.kill(); }); db.cur = null;
     if (db.light && db.light.parent) db.light.parent.remove(db.light);
     (db.mats || []).forEach(function (m) { m.dispose(); });
+  }
+  // ---------- награда портала: Рикошетный щит и быстрый удар (только у Вируса, не в дуэлях) ----------
+  var RW_SHIELD_T = 4, RW_SHIELD_CD = 12, RW_RAPID_N = 10, RW_RAPID_CD = 20, RW_MUL = 8;
+  function rwOk() { var p = player; return !!(p && !p.dead && p.def && p.def.id === "virus" && save.vrw && !duel && !(p.held > 0)); }
+  function rwShield() {
+    if (!rwOk() || player.rsT > 0 || player.rsCD > 0) return;
+    var p = player; p.rsT = RW_SHIELD_T; p.rsCD = RW_SHIELD_CD;
+    var m = new THREE.Mesh(new THREE.SphereGeometry(1.35, 20, 14), dbFxMat(0x39ff88, 0.28)); m.position.y = 1.2; p.c.root.add(m); p.rsMesh = m;
+    ringFx(p.pos.x, p.pos.z, 3, 0.4, 0x39ff88, 0.9); popText(p.pos.x, 3.4, p.pos.z, TR("РИКОШЕТНЫЙ ЩИТ"), "#39ff88", true);
+  }
+  function rwShieldOff(p) {
+    p.rsT = 0;
+    if (p.rsMesh) { p.c.root.remove(p.rsMesh); p.rsMesh.geometry.dispose(); p.rsMesh.material.dispose(); p.rsMesh = null; }
+  }
+  function rwRapid() {
+    if (!rwOk() || player.rapid > 0 || player.rapidCD > 0) return;
+    player.rapid = 1; player.rapidN = RW_RAPID_N;
+    popText(player.pos.x, 3.4, player.pos.z, TR("БЫСТРЫЙ УДАР"), "#ffd25a", true);
+  }
+  function rwCount(p) {
+    if (!(p.rapid > 0)) return;
+    p.rapidN--;
+    if (p.rapidN <= 0) { p.rapid = 0; p.rapidCD = RW_RAPID_CD; popText(p.pos.x, 3.4, p.pos.z, TR("Выдохся · перезарядка 20 с"), "#ffd25a", false); }
+  }
+  function rwTick(p, dt) {
+    if (p.rsT > 0) {
+      p.rsT -= dt;
+      if (p.rsMesh) { p.rsMesh.material.opacity = 0.22 + Math.sin(tAll * 8) * 0.08; p.rsMesh.rotation.y += dt * 2; }
+      if (p.rsT <= 0) rwShieldOff(p);
+    } else if (p.rsMesh) rwShieldOff(p);
+    if (p.rsCD > 0 && !(p.rsT > 0)) p.rsCD -= dt;
+    if (p.rapidCD > 0) p.rapidCD -= dt;
+  }
+  function rwHud(p) {
+    var on = !!(save.vrw && p.def.id === "virus" && !duel), bs = $("btnShield"), br = $("btnRapid");
+    bs.hidden = br.hidden = !on; if (!on) return;
+    bs.classList.toggle("on", p.rsT > 0); bs.classList.toggle("ready", !(p.rsCD > 0) && !(p.rsT > 0));
+    $("shieldFill").style.transform = "scaleY(" + (p.rsT > 0 ? 0 : Math.max(0, p.rsCD || 0) / RW_SHIELD_CD).toFixed(3) + ")";
+    br.classList.toggle("on", p.rapid > 0); br.classList.toggle("ready", !(p.rapidCD > 0) && !(p.rapid > 0));
+    $("rapidFill").style.transform = "scaleY(" + (p.rapid > 0 ? 0 : Math.max(0, p.rapidCD || 0) / RW_RAPID_CD).toFixed(3) + ")";
+    $("rapidLbl").textContent = p.rapid > 0 ? p.rapidN + " / " + RW_RAPID_N : TR("Быстрый");
+  }
+  // чужой удар или снаряд исчезает в щите и вылетает из портала за спиной врага, в 8 раз сильнее
+  function rwRicochet(p, d, fx, fz) {
+    var tgt = null, bd = 1e9;
+    enemies.forEach(function (e) { if (e.dead || e.duel || e.proxy) return; var dd = Math.hypot(e.pos.x - fx, e.pos.z - fz); if (dd < bd) { bd = dd; tgt = e; } });
+    p.iframes = 0.3;
+    burst(p.pos.x, 1.5, p.pos.z, 0x39ff88, 10, 5, 0.4, 0.16, 0.8); popText(p.pos.x, 3.2, p.pos.z, TR("РИКОШЕТ"), "#39ff88", true);
+    if (!tgt) return;
+    var melee = bd < 3.2, dx = tgt.pos.x - p.pos.x, dz = tgt.pos.z - p.pos.z, dl = Math.hypot(dx, dz) || 1, ux = dx / dl, uz = dz / dl;
+    var sc = tgt.scale || 1, py = 1.3 * sc, bx = tgt.pos.x + ux * 1.5 * sc, bz = tgt.pos.z + uz * 1.5 * sc;
+    var pm = dbFxMat(0x39ff88, 0.95), por = new THREE.Mesh(new THREE.RingGeometry(0.45 * sc, 0.85 * sc, 28), pm);
+    por.position.set(bx, py, bz); por.lookAt(p.pos.x, py, p.pos.z); scene.add(por);
+    var proj = new THREE.Mesh(melee ? new THREE.SphereGeometry(0.42 * sc, 12, 10) : new THREE.SphereGeometry(0.24 * sc, 10, 8), dbFxMat(melee ? 0xffd25a : 0x7dffb0, 1)); proj.visible = false; scene.add(proj);
+    var dmg = d * RW_MUL, hit = false;
+    addFx(0.75, function (k, dt) {
+      por.scale.setScalar(Math.max(0.01, k < 0.25 ? k / 0.25 : k > 0.85 ? (1 - k) / 0.15 : 1)); por.rotation.z += dt * 6;
+      if (k >= 0.3 && k < 0.5) { proj.visible = true; var u = (k - 0.3) / 0.2; proj.position.set(bx + (tgt.pos.x - bx) * u, py, bz + (tgt.pos.z - bz) * u); }
+      if (k >= 0.5 && !hit) {
+        hit = true; proj.visible = false;
+        if (!tgt.dead) {
+          hurtEnemy(tgt, dmg, { raw: true, big: true, color: "#7dff5a", kx: -ux * 6 * (tgt.kb || 0), kz: -uz * 6 * (tgt.kb || 0) });
+          burst(tgt.pos.x, py, tgt.pos.z, 0x39ff88, 16, 7, 0.6, 0.2, 0.8); flashFx(tgt.pos.x, py, tgt.pos.z, 0xffffff, 3, 0.2); shake = Math.max(shake, 0.3);
+        }
+      }
+    }, function () { dbDrop(por); dbDrop(proj); });
   }
   function virusPartEnd() {
     if (!adv || adv.over) return;
@@ -6808,7 +6884,7 @@ Claudix.ready(function () {
   })();
 
   if (window.__LG_TEST__) window.__lg = { vstart: function () { startAdv({ s: 0, kind: "virus" }); }, story: function () { return storyQ; }, storyNext: storyNext, adv: function () { return adv; }, enemies: function () { return enemies; }, player: function () { return player; }, save: function () { return save; },
-    room: function (i) { advBeginRoom(i); }, dboss: function () { return adv && adv.dboss; }, hold: function (v) { input.btnAtk = !!v; }, abil: function () { input.abil = true; }, hurt: hurtEnemy, mode: function () { return mode; }, projs: function () { return projs; }, ROOMS: ROOMS, net: net, chars: function () { return CHARS; }, GFX: GFX, renderer: renderer, fx: function () { return fxList; }, duel: function () { return duel; }, spawn: function (t) { return spawnEnemy(t); }, run: function () { return run; } };
+    room: function (i) { advBeginRoom(i); }, shield: function () { rwShield(); }, rapid: function () { rwRapid(); }, hurtP: hurtPlayer, dboss: function () { return adv && adv.dboss; }, hold: function (v) { input.btnAtk = !!v; }, abil: function () { input.abil = true; }, hurt: hurtEnemy, mode: function () { return mode; }, projs: function () { return projs; }, ROOMS: ROOMS, net: net, chars: function () { return CHARS; }, GFX: GFX, renderer: renderer, fx: function () { return fxList; }, duel: function () { return duel; }, spawn: function (t) { return spawnEnemy(t); }, run: function () { return run; } };
   // ---------- главный цикл ----------
   var lastT = performance.now();
   function loop(now) {
