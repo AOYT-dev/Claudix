@@ -136,6 +136,7 @@ button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 #arTxt { margin: 0; white-space: pre-wrap; min-height: 9.5em; }
 #vnote, #vkey { position: absolute; inset: 0; z-index: 7; display: grid; place-items: center; background: rgba(4, 6, 12, 0.7); padding: 16px; }
 #vnote .paper { width: min(520px, 100%); max-height: calc(100% - 32px); overflow: auto; padding: 22px 24px; border-radius: 6px; background: #efe6cf; color: #2a2318; font: 500 1.02rem/1.5 var(--font-body); box-shadow: 0 20px 50px rgba(0,0,0,.5); transform: rotate(-1deg); display: flex; flex-direction: column; gap: 8px; }
+#bossHud { position: fixed; left: 50%; bottom: 104px; transform: translateX(-50%); z-index: 22; min-width: 240px; max-width: 86vw; padding: 8px 14px; border-radius: 12px; background: rgba(5,10,14,.78); border: 1px solid #3ae8ff66; color: #e8fff4; font: 700 .95rem/1.3 system-ui, sans-serif; text-align: center; pointer-events: none; } #bossHud[hidden] { display: none; } #bossHud i { display: block; height: 6px; margin-top: 6px; border-radius: 4px; background: #ffffff22; overflow: hidden; } #bossHud i b { display: block; height: 100%; width: 0; background: #7dff5a; }
 #vnote .paper p { margin: 0; } #vnote .paper p.cph { text-align: center; font: 700 2.4rem/1.2 ui-monospace, Menlo, monospace; letter-spacing: .25em; color: #b8302a; margin: 6px 0; } #vnote .paper p.q { padding-left: 10px; border-left: 3px solid #b8302a; }
 #vnote .paper b { font-family: var(--font-display); font-weight: 400; font-size: 1.2rem; letter-spacing: .04em; }
 #vkey .kp { width: min(300px, 100%); padding: 18px; border-radius: 16px; background: #14181f; border: 1px solid rgba(58,232,255,.4); display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; box-shadow: 0 0 40px rgba(58,232,255,.15); }
@@ -345,6 +346,7 @@ html, body { touch-action: manipulation; -webkit-tap-highlight-color: transparen
 <div id="banner"><b id="banMain"></b><span id="banSub"></span></div>
 <div id="rewind" hidden></div>
 <div id="vnote" hidden><div class="paper"><b>Записка</b><div id="vnTxt"></div><button id="vnOk" class="act" type="button">Понял</button></div></div>
+<div id="bossHud" hidden><span id="bhTxt"></span><i><b id="bhBar"></b></i></div>
 <div id="vkey" hidden><div class="kp"><div id="kpScr">_ _ _ _ _</div><div id="kpMsg"></div>
 <button type="button" data-k="1">1</button><button type="button" data-k="2">2</button><button type="button" data-k="3">3</button>
 <button type="button" data-k="4">4</button><button type="button" data-k="5">5</button><button type="button" data-k="6">6</button>
@@ -3172,6 +3174,7 @@ Claudix.ready(function () {
     o = o || {};
     if (!o.raw) dmg *= pwrMul();
     if (e.phased) { if (!o.silent) popText(e.pos.x, e.pos.y + 2.8, e.pos.z, TR("мимо"), "#9fb3ff", false); return; }
+    if (e.shield) { if (!o.silent && Math.random() < 0.35) popText(e.pos.x, e.pos.y + 4.4, e.pos.z, TR("щит"), "#9fd8ff", false); return; }
     if (e.proxy && o.burn) e.visBurn = Math.max(e.visBurn || 0, o.burn);
     if (e.proxy) {
       var pd = Math.min(500, Math.round(dmg));
@@ -4151,6 +4154,7 @@ Claudix.ready(function () {
       if (duel) netSend({ t: "da", k: 0, f: +p.face.toFixed(2), x: +p.pos.x.toFixed(2), z: +p.pos.z.toFixed(2) });
       else if (adv && adv.mate && !adv.mate.bot) netSend({ t: "aa", k: 0, f: +p.face.toFixed(2), x: +p.pos.x.toFixed(2), z: +p.pos.z.toFixed(2) });
     }
+    if (input.abil && adv && adv.dboss && dbossAbil()) input.abil = false;
     if (input.abil) {
       input.abil = false;
       if (p.abilT <= 0 && !p.dash && !(p.held > 0) && ABIL[def.id](p) !== false) { p.abilT = def.cd; p.atkAnim = 0.25; actStart(p.c, "abil_" + def.id, ABIL_DUR[def.id]); if (duel) netSend({ t: "da", k: 1, f: +p.face.toFixed(2), x: +p.pos.x.toFixed(2), z: +p.pos.z.toFixed(2) }); else if (adv && adv.mate && !adv.mate.bot) netSend({ t: "aa", k: 1, f: +p.face.toFixed(2), x: +p.pos.x.toFixed(2), z: +p.pos.z.toFixed(2) }); }
@@ -4217,7 +4221,7 @@ Claudix.ready(function () {
       earnEl.textContent = fmt(adv.earn);
       waveEl.textContent = adv.kind === "virus" ? TR("Код Вируса · ") + ROOMS[adv.room].name : ROOMS[adv.room].intro ? TR("Улица") : TR("Этаж ") + adv.floor + " · " + ROOMS[adv.room].name;
       var bossE = null; enemies.forEach(function (e) { if (!e.dead && e.T && e.T.boss) bossE = e; });
-      foeEl.textContent = bossE ? TR("Тыквенный король · ") + Math.ceil(100 * (bossE.proxy ? bossE.hpF : bossE.hp / bossE.maxHp)) + "%"
+      foeEl.textContent = adv.dboss && adv.dboss.e && !adv.dboss.e.dead ? TR("Директор · ") + Math.ceil(100 * adv.dboss.e.hp / adv.dboss.e.maxHp) + "%" : bossE ? TR("Тыквенный король · ") + Math.ceil(100 * (bossE.proxy ? bossE.hpF : bossE.hp / bossE.maxHp)) + "%"
         : adv.state === "story" || adv.state === "storyEnd" ? TR("Сцена…") : adv.state === "search" ? TR("Обыщи шкафы · открыто ") + (adv.searched || 0) + " / " + (adv.cabinets ? adv.cabinets.length : 0) : adv.state === "heroFight" ? TR("Герои · повалено ") + (adv.heroDown || 0) + " / 6 · " + Math.max(0, Math.ceil(adv.heroT)) + TR(" с") : adv.state === "gate" ? (adv.kind === "virus" ? (ROOMS[adv.room].code ? TR("Код от лифта ↑") : TR("Лифт открыт ↑")) : ROOMS[adv.room].intro ? TR("Войди в поместье ↑") : TR("Дверь открыта ↑")) : adv.state === "won" ? TR("Победа!") : TR("Врагов: ") + (aliveCount() + (adv.host ? adv.queue.length : 0));
       if (adv.mate) $("mateTxt").textContent = adv.mate.n + " · " + (adv.mate.dead ? TR("пал") : Math.ceil(adv.mate.hp) + " / " + adv.mate.mh);
       if (p.dead) hpTxt.textContent = TR("пал · ждёт следующей комнаты");
@@ -5301,7 +5305,7 @@ Claudix.ready(function () {
     var portalM = new THREE.MeshBasicMaterial({ color: glowCol(0xff8a2a, 1.4), transparent: true, opacity: 0, side: THREE.DoubleSide, depthWrite: false, blending: THREE.AdditiveBlending, map: T("glow") });
     var padM = new THREE.MeshBasicMaterial({ map: T("pad"), color: col(0xff7a1a), transparent: true, opacity: 0, depthWrite: false, toneMapped: false });
     var pad = new THREE.Mesh(DISC, padM); pad.rotation.x = -Math.PI / 2; pad.scale.setScalar(2.8); pad.position.set(0, 0.09, -R + 1.8); advG.add(pad);
-    adv.gx = 0; adv.capsules = null; adv.cabinets = null; adv.vats = null;
+    adv.gx = 0; adv.capsules = null; adv.cabinets = null; adv.vats = null; adv.dboss = null;
     var doors = [], last = i === ROOMS.length - 1;
     var doorM = new THREE.MeshStandardMaterial({ map: doorTex(), roughness: 0.6, metalness: 0.05 });
     if (/^shadow|^lab/.test(D.theme || "")) buildShadowRoom(D, R, M_, own, plane, doors);
@@ -5815,6 +5819,375 @@ Claudix.ready(function () {
   }
   $("vkey").addEventListener("click", function (e) { var b = e.target.closest("button"); if (b && adv && adv.kpOpen) kpPress(b.getAttribute("data-k")); });
   window.addEventListener("keydown", function (e) { if (!adv || !adv.kpOpen || !$("vnote").hidden) return; if (/^Digit\d$/.test(e.code)) kpPress(e.code.slice(5)); else if (e.code === "Backspace") kpPress("del"); else if (e.code === "Enter") kpPress("ok"); else if (e.code === "Escape") kpPress("close"); });
+  // ---------- «Код Вируса»: Директор-монстр в секретной лаборатории ----------
+  var DB_JACK = 3500 * 1.9;      // столько ХП у Тыквенного короля на 3 этаже
+  var DB_HP = DB_JACK * 2;       // у Директора вдвое больше
+  var WHIP_CD = 60, WHIP_MUL = 4, WHIP_HOLD = 1.4;   // перезарядка хлыста, множитель урона, сколько держать УДАР
+  MON.dirmon = { name: TR("Директор"), kind: "director", hp: DB_HP, speed: 2.5, dmg: 25, range: 3, cd: 1.5, wind: 0.6, scale: 1.55, kb: 0, accent: 0xffffff, dirboss: true };
+  MON_IDS.push("dirmon");
+  STORY.labBoss = [
+    ["Директор", "Как ты нашёл секретную лабу?", 0xc8ccd4],
+    ["Вирус", "Твоя записка. Шифр на уровне кнопок с Shift. Десять секунд.", 0x7dff5a],
+    ["Директор", "Десять секунд… Значит, я зря надеялся, что ты застрянешь в архиве.", 0xc8ccd4],
+    ["Директор", "Ты хотел знать, откуда сила? Вот она. Вот, во что она превращает.", 0xc8ccd4],
+    ["Вирус", "Ты что с собой сделал?", 0x7dff5a],
+    ["Директор", "Я стал тем, чем вы все должны были стать.", 0xff9aff]
+  ];
+  var RBC = new THREE.Color();
+  function rbHex(t) { RBC.setHSL(((t % 1) + 1) % 1, 1, 0.56); return RBC.getHex(); }
+  function dbHud(txt, f) {
+    var el = $("bossHud"); if (!el) return;
+    if (!txt) { el.hidden = true; return; }
+    el.hidden = false; $("bhTxt").textContent = TR(txt);
+    var bar = $("bhBar").parentNode;
+    if (f == null) bar.style.display = "none"; else { bar.style.display = "block"; $("bhBar").style.width = Math.round(Math.max(0, Math.min(1, f)) * 100) + "%"; }
+  }
+  function dbLine(color, w) {
+    var m = new THREE.MeshBasicMaterial({ color: color, transparent: true, opacity: 0.9, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false });
+    var geo = new THREE.CylinderGeometry(w / 2, w / 2, 1, 6, 1, true); geo.rotateX(Math.PI / 2);
+    var mesh = new THREE.Mesh(geo, m); mesh.frustumCulled = false; scene.add(mesh);
+    return {
+      mesh: mesh, m: m,
+      set: function (a, b) { var d = a.distanceTo(b); mesh.position.copy(a).add(b).multiplyScalar(0.5); mesh.scale.set(1, 1, Math.max(0.01, d)); mesh.lookAt(b); },
+      kill: function () { scene.remove(mesh); geo.dispose(); m.dispose(); }
+    };
+  }
+  function dbDrop(o) {
+    if (!o) return; scene.remove(o);
+    o.traverse(function (n) { if (n.geometry) n.geometry.dispose(); if (n.material) n.material.dispose(); });
+  }
+  function dbFxMat(color, op) { return new THREE.MeshBasicMaterial({ color: color, transparent: true, opacity: op, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false, side: THREE.DoubleSide }); }
+
+  // облик: корона из шипов, ядро в груди, переливающееся свечение
+  function dbMonsterize(e, db) {
+    var c = e.c; c.root.updateMatrixWorld(true);
+    var bb = new THREE.Box3().setFromObject(c.body), hp = new THREE.Vector3(); c.head.getWorldPosition(hp);
+    var top = c.head.worldToLocal(new THREE.Vector3(hp.x, bb.max.y, hp.z)), hr = Math.max(0.1, top.y * 0.55);
+    db.H = bb.max.y; db.rb = []; db.mats = [];
+    var rbMesh = function (geo, off) { var m = new THREE.MeshBasicMaterial({ color: 0xff00ff, toneMapped: false }); db.mats.push(m); db.rb.push({ m: m, o: off }); c.ownGeo.push(geo); return new THREE.Mesh(geo, m); };
+    for (var k = 0; k < 8; k++) {
+      var a = k / 8 * Math.PI * 2, cone = rbMesh(new THREE.ConeGeometry(hr * 0.13, hr * (k % 2 ? 0.8 : 1.2), 6), k / 8);
+      cone.position.set(Math.sin(a) * hr * 0.8, top.y + hr * 0.05, Math.cos(a) * hr * 0.8);
+      cone.rotation.set(Math.cos(a) * 0.45, 0, -Math.sin(a) * 0.45); c.head.add(cone);
+    }
+    [-1, 1].forEach(function (s) {
+      var eye = rbMesh(new THREE.SphereGeometry(hr * 0.17, 10, 8), s > 0 ? 0.5 : 0.25);
+      eye.position.set(s * hr * 0.4, top.y - hr * 0.95, hr * 0.95); c.head.add(eye);
+    });
+    var chest = c.body.worldToLocal(new THREE.Vector3(e.pos.x, bb.max.y * 0.62, e.pos.z + 0.3 * e.scale));
+    var orb = rbMesh(new THREE.SphereGeometry(0.2, 12, 10), 0); orb.position.copy(chest); c.body.add(orb);
+    var halo = new THREE.Mesh(new THREE.SphereGeometry(0.36, 12, 10), dbFxMat(0xffffff, 0.35)); halo.position.copy(chest); c.body.add(halo);
+    db.mats.push(halo.material); db.rb.push({ m: halo.material, o: 0.1 }); c.ownGeo.push(halo.geometry);
+    c.mats.forEach(function (m) { if (m.color) m.color.lerp(new THREE.Color(0x8a7a9a), 0.3); });
+    db.light = new THREE.PointLight(0xffffff, 2.2, 16, 2); db.light.position.set(0, 2.2, 0.6); c.root.add(db.light);
+  }
+  function dbRainbow(db, e) {
+    var h = (tAll * 0.35) % 1;
+    db.rb.forEach(function (r) { r.m.color.setHSL((h + r.o) % 1, 1, 0.58); });
+    e.c.mats.forEach(function (m, i) { if (m.emissive) m.emissive.setHSL((h + i * 0.09) % 1, 1, 0.16); });
+    if (db.light) db.light.color.setHSL(h, 1, 0.55);
+    if (Math.random() < 0.5) burst(e.pos.x + rnd(-0.8, 0.8), e.pos.y + 0.4 + Math.random() * 3, e.pos.z + rnd(-0.8, 0.8), rbHex(h + Math.random() * 0.3), 1, 0.6, 0.6, 0.14, 0.8);
+  }
+
+  // шприц в углу: светящийся столб, чтобы было видно через всю комнату
+  function dbSyringe(db) {
+    var R = adv.R - 2.6, cs = [[-R, -R], [R, -R], [-R, R], [R, R]], k;
+    do { k = Math.floor(Math.random() * 4); } while (k === db.corner);
+    db.corner = k;
+    var x = cs[k][0], z = cs[k][1];
+    var glass = new THREE.MeshStandardMaterial({ color: col(0xbfeaff), transparent: true, opacity: 0.55, roughness: 0.1, metalness: 0.2 });
+    var liq = new THREE.MeshStandardMaterial({ color: col(0x7dff5a), emissive: glowCol(0x3aff6a, 1.2) });
+    var met = new THREE.MeshStandardMaterial({ color: col(0xcfd6de), metalness: 0.8, roughness: 0.3 });
+    var g = new THREE.Group();
+    var part = function (geo, mat, y) { var m = new THREE.Mesh(geo, mat); m.position.y = y; g.add(m); return m; };
+    part(new THREE.CylinderGeometry(0.16, 0.16, 1.0, 14), glass, 0);
+    part(new THREE.CylinderGeometry(0.12, 0.12, 0.7, 14), liq, -0.1);
+    var nd = part(new THREE.ConeGeometry(0.035, 0.55, 8), met, -0.78); nd.rotation.x = Math.PI;
+    part(new THREE.CylinderGeometry(0.05, 0.05, 0.5, 8), met, 0.72);
+    part(new THREE.CylinderGeometry(0.2, 0.2, 0.06, 12), met, 0.99);
+    g.rotation.z = 0.6; g.scale.setScalar(1.6);
+    var s = new THREE.Group(); s.position.set(x, 1.2, z); s.add(g); scene.add(s);
+    var pil = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.55, 9, 16, 1, true), dbFxMat(0x7dff5a, 0.2)); pil.position.set(x, 4.5, z); scene.add(pil);
+    var lt = new THREE.PointLight(0x7dff5a, 1.6, 9, 2); lt.position.set(0, 0.5, 0); s.add(lt);
+    db.syr = { g: s, pil: pil, x: x, z: z, have: false, drawn: false, prog: 0 };
+  }
+  function dbSyrDrop(db) { if (db.syr) { dbDrop(db.syr.g); dbDrop(db.syr.pil); db.syr = null; } }
+
+  // ---------- атаки: переливающиеся лучи, огонь и мини-дыры ----------
+  function dbFlame(db, x, z) {
+    var life = 3, grp = new THREE.Group(), m1 = dbFxMat(0xffffff, 0.7), m2 = dbFxMat(0xffffff, 0.8);
+    var o = new THREE.Mesh(new THREE.ConeGeometry(1.0, 3.1, 14, 1, true), m1); o.position.y = 1.55;
+    var i2 = new THREE.Mesh(new THREE.ConeGeometry(0.5, 2.1, 12, 1, true), m2); i2.position.y = 1.05;
+    grp.add(o); grp.add(i2); grp.position.set(x, 0, z); scene.add(grp);
+    var tk = 0, ph = Math.random() * 6;
+    addFx(life, function (k, dt) {
+      if (db.dead) { grp.visible = false; return; }
+      var f = (k < 0.1 ? k / 0.1 : k > 0.85 ? (1 - k) / 0.15 : 1) * (0.9 + Math.sin(tAll * 18 + ph) * 0.1);
+      grp.scale.set(f, f * (0.9 + Math.sin(tAll * 11 + ph) * 0.15), f);
+      m1.color.setHSL((tAll * 0.6 + x * 0.08) % 1, 1, 0.55); m2.color.setHSL((tAll * 0.6 + x * 0.08 + 0.3) % 1, 1, 0.7);
+      if (Math.random() < dt * 14) burst(x + rnd(-0.5, 0.5), 0.4 + Math.random() * 1.6, z + rnd(-0.5, 0.5), rbHex(tAll * 0.6 + Math.random() * 0.5), 1, 0.8, 0.5, 0.13, 1.4);
+      tk -= dt;
+      var p = player;
+      if (p && !p.dead && tk <= 0 && f > 0.5 && Math.hypot(p.pos.x - x, p.pos.z - z) < 1.25) { tk = 0.45; hurtPlayer(11, x, z); }
+    }, function () { dbDrop(grp); });
+  }
+  function dbHole(db, x, z) {
+    var life = 5, grp = new THREE.Group();
+    var core = new THREE.Mesh(new THREE.SphereGeometry(0.55, 14, 12), new THREE.MeshBasicMaterial({ color: 0x000000 })); core.position.y = 1.0;
+    var m1 = dbFxMat(0xffffff, 0.9), m2 = dbFxMat(0xffffff, 0.45);
+    var r1 = new THREE.Mesh(new THREE.RingGeometry(0.75, 1.3, 36), m1), r2 = new THREE.Mesh(new THREE.RingGeometry(1.5, 1.85, 36), m2);
+    r1.rotation.x = r2.rotation.x = -Math.PI / 2; r1.position.y = 1.0; r2.position.y = 0.2;
+    var r3 = new THREE.Mesh(new THREE.RingGeometry(0.62, 0.8, 28), m1); r3.rotation.x = -Math.PI / 2; r3.position.y = 1.0;
+    grp.add(core); grp.add(r1); grp.add(r2); grp.add(r3); grp.position.set(x, 0, z); scene.add(grp);
+    var tk = 0;
+    addFx(life, function (k, dt) {
+      if (db.dead) { grp.visible = false; return; }
+      var f = k < 0.08 ? k / 0.08 : k > 0.88 ? (1 - k) / 0.12 : 1;
+      grp.scale.setScalar(Math.max(0.01, f)); r1.rotation.z += dt * 5; r2.rotation.z -= dt * 3; r3.rotation.z -= dt * 8;
+      m1.color.setHSL((tAll * 0.7) % 1, 1, 0.55); m2.color.setHSL((tAll * 0.7 + 0.5) % 1, 1, 0.55);
+      if (Math.random() < dt * 20) { var a = Math.random() * 6.28, rr = 1.6; burst(x + Math.cos(a) * rr, 0.5, z + Math.sin(a) * rr, rbHex(tAll + a), 1, 0.4, 0.5, 0.1, 0.4); }
+      var p = player; if (!p || p.dead || f < 0.6) return;
+      var dx = x - p.pos.x, dz = z - p.pos.z, d = Math.hypot(dx, dz) || 0.001;
+      if (d < 4.5 && !p.dash) { var pull = (0.8 + 2.2 * (1 - d / 4.5)) * dt; p.pos.x += dx / d * pull; p.pos.z += dz / d * pull; clampPos(p.pos); }
+      tk -= dt;
+      if (d < 0.95 && tk <= 0) { tk = 0.5; hurtPlayer(9, x, z); }
+    }, function () { dbDrop(grp); });
+  }
+  function dbAtkStart(db, e, kind) {
+    var p = player, aim = Math.atan2(p.pos.x - e.pos.x, p.pos.z - e.pos.z), cur = { k: kind, t: 0, aim: aim, fired: false, tele: [] };
+    db.cur = cur;
+    if (kind === "beams") {
+      [-0.5, 0, 0.5].forEach(function (d) { cur.tele.push({ ln: dbLine(0xffffff, 0.5), a: aim + d }); });
+    } else if (kind === "fire") {
+      cur.pts = []; cur.fired = 0;
+      for (var i = 0; i < 7; i++) {
+        var dist = 2.8 + i * 2.1, off = Math.sin(i * 1.7) * 0.9, R = adv.R - 1;
+        var x = Math.max(-R, Math.min(R, e.pos.x + Math.sin(aim) * dist + Math.cos(aim) * off)), z = Math.max(-R, Math.min(R, e.pos.z + Math.cos(aim) * dist - Math.sin(aim) * off));
+        cur.pts.push([x, z]); warnCircle(x, z, 1.3, 0.7 + i * 0.1);
+      }
+    } else if (kind === "holes") {
+      cur.pts = [];
+      for (var j = 0; j < 3; j++) {
+        var a = aim + (j - 1) * 2.1 + rnd(-0.4, 0.4), rr = rnd(3.5, 6.5), RR = adv.R - 1.5;
+        var hx = Math.max(-RR, Math.min(RR, p.pos.x + Math.sin(a) * rr)), hz = Math.max(-RR, Math.min(RR, p.pos.z + Math.cos(a) * rr));
+        cur.pts.push([hx, hz]); ringFx(hx, hz, 1.8, 0.6, 0xffffff, 0.8);
+      }
+    }
+  }
+  function dbAtkEnd(db) {
+    if (db.cur) db.cur.tele.forEach(function (t) { t.ln.kill(); });
+    db.cur = null; db.atkCd = db.stage === "fight" ? 1.5 : 2.4;
+  }
+  function dbAtkTick(db, e, dt) {
+    var cur = db.cur, p = player; cur.t += dt;
+    e.face = turn(e.face, cur.aim, dt * 8);
+    if (cur.k === "beams") {
+      if (!cur.fired) {
+        cur.tele.forEach(function (t, i) { t.ln.set(new THREE.Vector3(e.pos.x, 0.12, e.pos.z), new THREE.Vector3(e.pos.x + Math.sin(t.a) * 22, 0.12, e.pos.z + Math.cos(t.a) * 22)); t.ln.m.color.setHSL((tAll * 2 + i * 0.3) % 1, 1, 0.6); t.ln.m.opacity = 0.35 + 0.4 * Math.min(1, cur.t); });
+        if (cur.t >= 0.95) {
+          cur.fired = true; var hitDone = false;
+          cur.tele.forEach(function (t, i) {
+            var fx = Math.sin(t.a), fz = Math.cos(t.a), L = 22;
+            bigBeamFx(new THREE.Vector3(e.pos.x + fx * 1.2, 1.9, e.pos.z + fz * 1.2), new THREE.Vector3(e.pos.x + fx * L, 1.4, e.pos.z + fz * L), rbHex(tAll * 0.5 + i / 3));
+            var ex = p.pos.x - e.pos.x, ez = p.pos.z - e.pos.z, along = ex * fx + ez * fz, side = Math.abs(ex * fz - ez * fx);
+            if (!hitDone && !p.dead && along > 0 && along < L && side < 0.9) { hitDone = true; hurtPlayer(26, e.pos.x, e.pos.z); }
+            t.ln.kill();
+          });
+          cur.tele = []; ringFx(e.pos.x, e.pos.z, 3.4, 0.4, rbHex(tAll), 0.9);
+        }
+      }
+      if (cur.t >= 1.5) dbAtkEnd(db);
+    } else if (cur.k === "fire") {
+      while (cur.fired < cur.pts.length && cur.t >= 0.7 + cur.fired * 0.1) { var q = cur.pts[cur.fired]; dbFlame(db, q[0], q[1]); cur.fired++; }
+      if (cur.t >= 1.7) dbAtkEnd(db);
+    } else if (cur.k === "holes") {
+      if (!cur.fired && cur.t >= 0.6) { cur.fired = true; cur.pts.forEach(function (q) { dbHole(db, q[0], q[1]); }); shake = Math.max(shake, 0.3); }
+      if (cur.t >= 1.0) dbAtkEnd(db);
+    }
+    if (cur.k && cur.t < 1.2) { e.c.armR.rotation.x = -2.3; e.c.armL.rotation.x = -2.3; }
+  }
+
+  // ---------- каждый кадр: ИИ босса (вместо обычного updateEnemy) ----------
+  function dirTick(e, dt) {
+    var db = adv && adv.dboss, p = player; if (!db || db.e !== e) return;
+    e.flash = Math.max(0, e.flash - dt); dbRainbow(db, e); flashChar(e.c, e.flash > 0 ? 0.9 : 0);
+    e.bar.visible = false;
+    if (db.whipAct) return;
+    e.c.root.rotation.y = 0; e.c.body.rotation.y = e.face;
+    if (db.stunT > 0) { db.stunT -= dt; animWalk(e.c, dt, 0); e.c.body.rotation.z = Math.sin(tAll * 40) * 0.04; return; }
+    e.c.body.rotation.z = 0;
+    if (!p || p.dead) { animWalk(e.c, dt, 0); return; }
+    var dx = p.pos.x - e.pos.x, dz = p.pos.z - e.pos.z, dist = Math.hypot(dx, dz) || 0.001, spd = 0;
+    if (db.cur) dbAtkTick(db, e, dt);
+    else {
+      e.face = turn(e.face, Math.atan2(dx, dz), dt * 4);
+      if (dist > 9.5) spd = e.speed; else if (dist < 5.5) spd = -e.speed * 0.7;
+      e.pos.x += Math.sin(e.face) * spd * dt; e.pos.z += Math.cos(e.face) * spd * dt; clampPos(e.pos);
+      db.atkCd -= dt;
+      if (db.atkCd <= 0) { dbAtkStart(db, e, db.order[db.oi++ % db.order.length]); }
+    }
+    animWalk(e.c, dt, Math.abs(spd));
+    if (db.cur && db.cur.t < 1.2) { e.c.armR.rotation.x = -2.3; e.c.armL.rotation.x = -2.3; }
+  }
+
+  // ---------- новая абилка: луч-хлыст ----------
+  function dbWhip(db, e) {
+    var p = player, H = db.H, head = e.c.head, hpar = head.parent, T = 4.6;
+    var sv = { p: head.position.clone(), q: head.quaternion.clone(), s: head.scale.clone() };
+    db.whipAct = true; db.hold = 0; db.whipCD = WHIP_CD; db.stunT = T + 0.4;
+    if (db.cur) dbAtkEnd(db);
+    p.held = 2.7; p.face = Math.atan2(e.pos.x - p.pos.x, e.pos.z - p.pos.z);
+    var mx = (p.pos.x + e.pos.x) / 2, mz = (p.pos.z + e.pos.z) / 2; adv.camOvr = { px: mx, py: 6.2, pz: Math.max(p.pos.z, e.pos.z) + 8, lx: mx, ly: 2.4, lz: mz, show: true };
+    popText(p.pos.x, 3.4, p.pos.z, TR("ЛУЧ-ХЛЫСТ"), "#7dff5a", true);
+    var ln = dbLine(0x39ff88, 0.22), ln2 = dbLine(0xffffff, 0.08), vel = null, slammed = false, struck = false, regrown = false;
+    var ease = function (u) { u = Math.max(0, Math.min(1, u)); return u * u * (3 - 2 * u); };
+    addFx(T, function (k, dt) {
+      if (!adv || adv.dboss !== db) return;
+      var t = k * T, hand = new THREE.Vector3(p.pos.x + Math.sin(p.face) * 0.6, 1.5, p.pos.z + Math.cos(p.face) * 0.6), tgt = new THREE.Vector3(e.pos.x, e.pos.y + H * 0.5, e.pos.z), show = t < 2.45;
+      if (t < 0.45) {                                   // замах: хлыст тянется к Директору
+        var u0 = t / 0.45; tgt.set(e.pos.x, H * 0.5, e.pos.z); tgt.lerpVectors(hand, tgt, u0);
+      } else if (t < 1.25) {                            // подъём: переворачивает вверх ногами
+        var u1 = ease((t - 0.45) / 0.8); e.pos.y = (H + 0.9) * u1; e.c.body.rotation.x = Math.PI * u1;
+        tgt.set(e.pos.x, e.pos.y + H * 0.5 * Math.cos(Math.PI * u1), e.pos.z);
+      } else if (t < 1.45) {                            // удар головой об пол
+        var u2 = ease((t - 1.25) / 0.2); e.pos.y = H + 0.9 - 0.9 * u2; e.c.body.rotation.x = Math.PI;
+        tgt.set(e.pos.x, e.pos.y - H * 0.5, e.pos.z);
+        if (u2 >= 1 && !slammed) { slammed = true; shake = Math.max(shake, 1); ringFx(e.pos.x, e.pos.z, 7, 0.5, rbHex(tAll), 0.95); burst(e.pos.x, 0.3, e.pos.z, rbHex(tAll), 30, 8, 0.8, 0.2, 1); flashFx(e.pos.x, 0.4, e.pos.z, 0xffffff, 6, 0.25); popText(e.pos.x, 2.2, e.pos.z, "БАХ!", "#ffffff", true); }
+      } else if (t < 1.9) {                             // хлыст взлетает вверх над ним
+        tgt.set(e.pos.x + Math.sin(t * 9) * 0.3, H + 3.6, e.pos.z);
+      } else if (t < 2.45) {                            // удар в голову
+        tgt.set(e.pos.x, struck ? 0.4 : 0.2, e.pos.z);
+        if (!struck && t >= 1.95) {
+          struck = true; shake = Math.max(shake, 1.3);
+          hurtEnemy(e, 32 * WHIP_MUL, { big: true, color: "#7dff5a" });
+          var hw = new THREE.Vector3(); head.getWorldPosition(hw); scene.attach(head);
+          vel = { x: rnd(-4, 4), y: 8, z: rnd(-4, 4), sx: rnd(-9, 9), sz: rnd(-9, 9) };
+          burst(hw.x, hw.y, hw.z, 0xffffff, 26, 9, 0.7, 0.22, 1); for (var b = 0; b < 4; b++) burst(hw.x, hw.y, hw.z, rbHex(b / 4), 14, 7, 0.8, 0.2, 1);
+          flashFx(hw.x, hw.y, hw.z, 0xffffff, 5, 0.25);
+        }
+      }
+      if (t >= 1.95 && t < 2.55) { var u3 = ease((t - 1.95) / 0.6); e.pos.y = H * (1 - u3); e.c.body.rotation.x = Math.PI * (1 - u3); }
+      if (t >= 2.55) { e.pos.y = 0; e.c.body.rotation.x = 0; }
+      if (vel) {                                        // голова летит, прыгает и катится
+        vel.y -= 20 * dt; head.position.x += vel.x * dt; head.position.y += vel.y * dt; head.position.z += vel.z * dt;
+        head.rotation.x += vel.sx * dt; head.rotation.z += vel.sz * dt;
+        if (head.position.y < 0.35) { head.position.y = 0.35; vel.y = Math.abs(vel.y) * 0.45; vel.x *= 0.6; vel.z *= 0.6; vel.sx *= 0.6; vel.sz *= 0.6; }
+        var R = adv.R - 1; head.position.x = Math.max(-R, Math.min(R, head.position.x)); head.position.z = Math.max(-R, Math.min(R, head.position.z));
+        if (Math.random() < 0.6) burst(head.position.x, head.position.y, head.position.z, rbHex(tAll * 2), 1, 1, 0.4, 0.14, 0.4);
+      }
+      if (t >= 4.1 && !regrown && struck) {             // голова отрастает обратно
+        regrown = true; dbRegrow(e, head, hpar, sv);
+      }
+      ln.mesh.visible = ln2.mesh.visible = show;
+      if (show) { ln.set(hand, tgt); ln2.set(hand, tgt); ln.m.color.setHSL((0.35 + Math.sin(t * 8) * 0.04), 1, 0.55); }
+    }, function () {
+      ln.kill(); ln2.kill(); e.pos.y = 0; e.c.body.rotation.x = 0;
+      if (!regrown && struck) dbRegrow(e, head, hpar, sv);
+      db.whipAct = false; if (p) p.held = 0; if (adv && adv.dboss === db && adv.state === "boss") adv.camOvr = null;
+    });
+  }
+  function dbRegrow(e, head, hpar, sv) {
+    var w = new THREE.Vector3(); e.c.head.getWorldPosition(w);
+    hpar.add(head); head.position.copy(sv.p); head.quaternion.copy(sv.q); head.scale.copy(sv.s);
+    e.c.head.getWorldPosition(w); flashFx(w.x, w.y, w.z, 0xffffff, 4, 0.3); burst(w.x, w.y, w.z, rbHex(tAll), 20, 6, 0.6, 0.2, 1);
+  }
+
+  // ---------- общий ход боя ----------
+  function labBossBegin() {
+    adv.state = "story"; adv.dboss = null;
+    banner(TR("Секретная лаборатория"), TR("Лифт спустился глубоко под штаб"));
+    var d = makeChar({ kind: "director", scale: 1 }); d.root.position.set(0, 0, -4); scene.add(d.root); adv.director = d;
+    if (player) { player.pos.set(0, 0, 6); player.face = Math.PI; }
+    adv.camOvr = { px: 0, py: 4.6, pz: 13, lx: 0, ly: 1.8, lz: -1.5, show: true };
+    setTimeout(function () { if (adv && adv.state === "story") storyPlay(STORY.labBoss, labBossStart); }, 1800);
+  }
+  function labBossStart() {
+    if (!adv || adv.over) return;
+    adv.camOvr = null;
+    var dch = adv.director; adv.director = null;
+    if (dch) { var dp = dch.root.position; flashFx(dp.x, 1.6, dp.z, 0xffffff, 9, 0.5); ringFx(dp.x, dp.z, 8, 0.7, 0xff9aff, 0.9); burst(dp.x, 1.6, dp.z, 0xffffff, 40, 9, 0.9, 0.24, 1); disposeChar(dch); }
+    shake = Math.max(shake, 1);
+    var e = spawnMon("dirmon", 0, -4, adv.nextId++);
+    e.dirboss = true; e.shield = true; e.hp = e.maxHp = DB_HP; e.c.spawnT = 0; e.c.lift.position.y = 0; e.bar.visible = false;
+    var db = adv.dboss = { e: e, stage: "inject", inj: 0, corner: -1, syr: null, whipCD: 0, hold: 0, whipAct: false, stunT: 1.2, cur: null, atkCd: 2.6, order: ["beams", "holes", "fire"], oi: 0, dead: false, over: false };
+    dbMonsterize(e, db); dbSyringe(db);
+    adv.state = "boss";
+    banner(TR("Директор"), TR("Неуязвим. Найди шприц в углу"));
+  }
+  function updateBoss(dt) {
+    var db = adv.dboss, p = player; if (!db || db.over) return;
+    var e = db.e;
+    if (e.dead) { dbEnd(db); return; }
+    var holding = !!(input.btnAtk || input.keys.Space || input.keys.KeyJ);
+    if (db.stage === "inject") {
+      var s = db.syr;
+      if (s) {
+        s.g.position.y = 1.2 + Math.sin(tAll * 3) * 0.15; s.g.rotation.y += dt * 1.6; s.pil.material.opacity = 0.16 + Math.sin(tAll * 4) * 0.06;
+        if (!s.have) {
+          dbHud(TR("Шприцы: ") + db.inj + " / 3 · найди шприц (зелёный столб света)", null);
+          if (p && !p.dead && Math.hypot(p.pos.x - s.x, p.pos.z - s.z) < 1.7) { s.have = true; s.g.visible = false; s.pil.visible = false; popText(p.pos.x, 3.4, p.pos.z, TR("Шприц у тебя"), "#7dff5a", true); }
+        } else if (!s.drawn) {
+          s.prog = holding && !p.dead && !(p.held > 0) ? s.prog + dt / 1.4 : Math.max(0, s.prog - dt * 1.5);
+          dbHud(TR("Зажми УДАР: выкачай из себя немного крови"), s.prog);
+          if (p && !p.dead && Math.random() < dt * 20) burst(p.pos.x, 1.4, p.pos.z, 0xff4a5c, 1, 1.2, 0.5, 0.12, 0.6);
+          if (s.prog >= 1) {
+            s.drawn = true; p.hp = Math.max(1, p.hp - p.maxHp * 0.08);
+            popText(p.pos.x, 3.4, p.pos.z, TR("Кровь взята"), "#ff6b7a", true); burst(p.pos.x, 1.4, p.pos.z, 0xff4a5c, 16, 4, 0.6, 0.16, 0.8);
+          }
+        } else {
+          dbHud(TR("Шприц заряжен · подбеги к Директору и вколи"), null);
+          if (p && !p.dead && Math.hypot(p.pos.x - e.pos.x, p.pos.z - e.pos.z) < e.r + 1.9) dbInject(db, e);
+        }
+      }
+    } else if (db.stage === "hackReady") {
+      dbHud(TR("ЖМИ ВЗЛОМ!"), null);
+    } else if (db.stage === "fight") {
+      if (db.whipCD > 0) db.whipCD -= dt;
+      if (db.whipAct) dbHud(TR("Луч-хлыст!"), null);
+      else if (db.whipCD > 0) dbHud(TR("Луч-хлыст: перезарядка ") + Math.ceil(db.whipCD) + TR(" с"), 1 - db.whipCD / WHIP_CD);
+      else {
+        if (holding && p && !p.dead && !(p.held > 0)) { db.hold += dt; if (db.hold >= WHIP_HOLD) { dbWhip(db, e); return; } } else db.hold = Math.max(0, db.hold - dt * 2);
+        dbHud(TR("Луч-хлыст готов · держи УДАР"), db.hold / WHIP_HOLD);
+      }
+    }
+  }
+  function dbInject(db, e) {
+    var s = db.syr; dbSyrDrop(db); db.inj++;
+    ringFx(e.pos.x, e.pos.z, 6, 0.5, rbHex(tAll), 0.95); flashFx(e.pos.x, 1.8, e.pos.z, 0x7dff5a, 6, 0.3); burst(e.pos.x, 1.8, e.pos.z, 0x7dff5a, 28, 7, 0.8, 0.2, 1);
+    e.flash = 0.4; shake = Math.max(shake, 0.5); db.stunT = Math.max(db.stunT, 1.6); if (db.cur) dbAtkEnd(db);
+    popText(e.pos.x, e.pos.y + 4.2, e.pos.z, TR("ВКОЛОЛ ") + db.inj + " / 3", "#7dff5a", true);
+    if (db.inj >= 3) { db.stage = "hackReady"; banner(TR("Три укола"), TR("Теперь жми ВЗЛОМ")); }
+    else dbSyringe(db);
+  }
+  function dbossAbil() {
+    var db = adv && adv.dboss; if (!db || db.over || adv.state !== "boss") return false;
+    var e = db.e, p = player;
+    if (db.stage === "inject") { popText(p.pos.x, 3.4, p.pos.z, TR("Рано: сначала три укола"), "#9fb3a8", false); return true; }
+    if (db.stage !== "hackReady") return false;
+    db.stage = "fight"; e.shield = false; db.stunT = Math.max(db.stunT, 2.6); if (db.cur) dbAtkEnd(db); db.whipCD = 0; db.hold = 0;
+    ringFx(p.pos.x, p.pos.z, 9, 0.6, 0x39ff88, 0.9); shake = Math.max(shake, 0.6);
+    for (var i = 0; i < 6; i++) beamFx(new THREE.Vector3(p.pos.x, 1.6, p.pos.z), new THREE.Vector3(e.pos.x + rnd(-0.6, 0.6), e.pos.y + 0.8 + i * 0.4, e.pos.z + rnd(-0.6, 0.6)), 0x39ff88, 0.16, 0.5);
+    flashFx(e.pos.x, 2, e.pos.z, 0x39ff88, 8, 0.4); popText(e.pos.x, e.pos.y + 4.4, e.pos.z, TR("ВЗЛОМ"), "#39ff88", true);
+    banner(TR("Взлом удался"), TR("Щит Директора сломан. Бей!"));
+    return true;
+  }
+  function dbEnd(db) {
+    if (db.over) return; db.over = true; db.dead = true; dbHud(null);
+    var e = db.e; dbSyrDrop(db);
+    if (db.cur) dbAtkEnd(db);
+    if (e.c.head.parent === scene) { scene.remove(e.c.head); }
+    flashFx(e.pos.x, 1.8, e.pos.z, 0xffffff, 10, 0.5); for (var b = 0; b < 5; b++) burst(e.pos.x, 1.8, e.pos.z, rbHex(b / 5), 24, 9, 1, 0.22, 1);
+    shake = Math.max(shake, 1);
+    adv.state = "won"; adv.camOvr = null;
+    banner(TR("Директор повержен"), TR("Новая способность: Луч-хлыст"));
+    setTimeout(virusPartEnd, 3600);
+  }
+  function dbCleanup(db) {
+    db.over = true; db.dead = true; dbHud(null); dbSyrDrop(db);
+    if (db.cur) db.cur.tele.forEach(function (t) { t.ln.kill(); }); db.cur = null;
+    if (db.light && db.light.parent) db.light.parent.remove(db.light);
+    (db.mats || []).forEach(function (m) { m.dispose(); });
+  }
   function virusPartEnd() {
     if (!adv || adv.over) return;
     adv.camOvr = null;
@@ -5862,7 +6235,7 @@ Claudix.ready(function () {
     var fgm = new THREE.Mesh(BAR_FG_G, BAR_FG_M); fgm.position.set(-0.57, 0, 0.01); fgm.renderOrder = 11;
     bar.add(bg); bar.add(fgm); bar.visible = false; c.root.add(bar);
     scene.add(c.root); c.enemy = true; spawnAnim(c);
-    if (B.metal || B.tongue) { if (B.metal) metalize(c); c.spawnT = 0; c.lift.position.y = 0; }
+    if (B.metal || B.tongue || B.dirboss) { if (B.metal) metalize(c); c.spawnT = 0; c.lift.position.y = 0; }
     var hp = B.hp * hpMul;
     var e = { type: type, T: B, c: c, root: c.root, pos: c.root.position, scale: B.scale, r: 0.6 * B.scale,
       hp: hp, maxHp: hp, speed: B.speed, dmg: B.dmg * dmgMul, dmgMul: dmgMul, kb: B.kb, reward: 0,
@@ -5949,6 +6322,7 @@ Claudix.ready(function () {
     return false;
   }
   function updateMonster(e, dt) {
+    if (e.dirboss && !e.dead) { dirTick(e, dt); return; }
     if (adv && !(e.c.spawnT > 0) && !(e.hacked > 0) && !e.possessed && !(e.frozenT > 0) && monSpecial(e, dt)) { clampPos(e.pos); return; }
     if (!e.dead) updateEnemy(e, dt);
     if (e.tongue && !e.dead) tongueTick(e, dt);
@@ -6126,7 +6500,7 @@ Claudix.ready(function () {
       return;
     }
     if (D.story === "floor3") { adv.state = "search"; adv.searched = 0; banner(TR("3 этаж"), TR("Обыщи шкафы")); return; }
-    if (D.story === "lab") { adv.state = "won"; banner(TR("Секретная лаборатория"), TR("Лифт спустился глубоко под штаб")); setTimeout(virusPartEnd, 3200); return; }
+    if (D.story === "lab") { labBossBegin(); return; }
     if (D.story) {
       adv.state = "story"; banner(TR("Код Вируса"), D.name);
       if (player) { player.pos.set(0, 0, -D.R + 9); player.face = Math.PI; }
@@ -6239,6 +6613,7 @@ Claudix.ready(function () {
     if (adv.state === "story" || adv.state === "storyEnd") { storyTick(dt); return; }
     if (adv.state === "heroFight") updateHeroFight(dt);
     if (adv.state === "search") updateSearch(dt);
+    if (adv.state === "boss") updateBoss(dt);
     if (adv.state === "fight") {
       adv.spawnT -= dt;
       if (adv.queue.length && adv.spawnT <= 0 && aliveCount() < 8) {
@@ -6316,6 +6691,7 @@ Claudix.ready(function () {
   }
   function cleanupAdv() {
     if (!adv) return;
+    if (adv.dboss) { dbCleanup(adv.dboss); adv.dboss = null; }
     if (adv.director) { disposeChar(adv.director); adv.director = null; }
     (adv.foes || []).forEach(function (e) { if (e.c && !e.c.dead) disposeChar(e.c); }); adv.foes = [];
     if (adv.chronosC) { disposeChar(adv.chronosC); adv.chronosC = null; }
@@ -6446,7 +6822,7 @@ Claudix.ready(function () {
   })();
 
   if (window.__LG_TEST__) window.__lg = { vstart: function () { startAdv({ s: 0, kind: "virus" }); }, story: function () { return storyQ; }, storyNext: storyNext, adv: function () { return adv; }, enemies: function () { return enemies; }, player: function () { return player; }, save: function () { return save; },
-    hurt: hurtEnemy, mode: function () { return mode; }, projs: function () { return projs; }, ROOMS: ROOMS, net: net, chars: function () { return CHARS; }, GFX: GFX, renderer: renderer, fx: function () { return fxList; }, duel: function () { return duel; }, spawn: function (t) { return spawnEnemy(t); }, run: function () { return run; } };
+    room: function (i) { advBeginRoom(i); }, dboss: function () { return adv && adv.dboss; }, hold: function (v) { input.btnAtk = !!v; }, abil: function () { input.abil = true; }, hurt: hurtEnemy, mode: function () { return mode; }, projs: function () { return projs; }, ROOMS: ROOMS, net: net, chars: function () { return CHARS; }, GFX: GFX, renderer: renderer, fx: function () { return fxList; }, duel: function () { return duel; }, spawn: function (t) { return spawnEnemy(t); }, run: function () { return run; } };
   // ---------- главный цикл ----------
   var lastT = performance.now();
   function loop(now) {
