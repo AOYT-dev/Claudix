@@ -3308,6 +3308,7 @@ Claudix.ready(function () {
   function clampPos(v) {
     var L = duel ? 13 : adv ? adv.R - 0.6 : ARENA - 0.5;
     if (v.x > L) v.x = L; else if (v.x < -L) v.x = -L;
+    if (adv && adv.vats) for (var vi = 0; vi < adv.vats.length; vi++) { var vt = adv.vats[vi], vx = v.x - vt.position.x, vz = v.z - vt.position.z, vd = Math.hypot(vx, vz), vr = 1.75; if (vd < vr) { if (vd < 0.001) { vx = 1; vz = 0; vd = 1; } v.x = vt.position.x + vx / vd * vr; v.z = vt.position.z + vz / vd * vr; } }
     if (v.z > L) v.z = L; else if (v.z < -L) v.z = -L;
   }
   function turn(a, b, k) {
@@ -5822,7 +5823,7 @@ Claudix.ready(function () {
   // ---------- «Код Вируса»: Директор-монстр в секретной лаборатории ----------
   var DB_JACK = 3500 * 1.9;      // столько ХП у Тыквенного короля на 3 этаже
   var DB_HP = DB_JACK * 2;       // у Директора вдвое больше
-  var WHIP_CD = 60, WHIP_MUL = 4, WHIP_HOLD = 1.4;   // перезарядка хлыста, множитель урона, сколько держать УДАР
+  var WHIP_CD = 60, WHIP_DMG = 1000, WHIP_HOLD = 1.4;   // перезарядка хлыста, урон за весь хлыст (удар об пол + удар Вируса), сколько держать УДАР
   MON.dirmon = { name: TR("Директор"), kind: "director", hp: DB_HP, speed: 2.5, dmg: 25, range: 3, cd: 1.5, wind: 0.6, scale: 1.55, kb: 0, accent: 0xffffff, dirboss: true };
   MON_IDS.push("dirmon");
   STORY.labBoss = [
@@ -5874,10 +5875,6 @@ Claudix.ready(function () {
       var eye = rbMesh(new THREE.SphereGeometry(hr * 0.17, 10, 8), s > 0 ? 0.5 : 0.25);
       eye.position.set(s * hr * 0.4, top.y - hr * 0.95, hr * 0.95); c.head.add(eye);
     });
-    var chest = c.body.worldToLocal(new THREE.Vector3(e.pos.x, bb.max.y * 0.62, e.pos.z + 0.3 * e.scale));
-    var orb = rbMesh(new THREE.SphereGeometry(0.2, 12, 10), 0); orb.position.copy(chest); c.body.add(orb);
-    var halo = new THREE.Mesh(new THREE.SphereGeometry(0.36, 12, 10), dbFxMat(0xffffff, 0.35)); halo.position.copy(chest); c.body.add(halo);
-    db.mats.push(halo.material); db.rb.push({ m: halo.material, o: 0.1 }); c.ownGeo.push(halo.geometry);
     c.mats.forEach(function (m) { if (m.color) m.color.lerp(new THREE.Color(0x8a7a9a), 0.3); });
     db.light = new THREE.PointLight(0xffffff, 2.2, 16, 2); db.light.position.set(0, 2.2, 0.6); c.root.add(db.light);
   }
@@ -6031,65 +6028,55 @@ Claudix.ready(function () {
   }
 
   // ---------- новая абилка: луч-хлыст ----------
+  // хлыст поднимает Директора, бьёт головой об пол, швыряет к Вирусу, и Вирус его бьёт
   function dbWhip(db, e) {
-    var p = player, H = db.H, head = e.c.head, hpar = head.parent, T = 4.6;
-    var sv = { p: head.position.clone(), q: head.quaternion.clone(), s: head.scale.clone() };
+    var p = player, H = db.H, T = 3.6, fly0 = 1.5, fly1 = 2.05;
     db.whipAct = true; db.hold = 0; db.whipCD = WHIP_CD; db.stunT = T + 0.4;
     if (db.cur) dbAtkEnd(db);
     p.held = 2.7; p.face = Math.atan2(e.pos.x - p.pos.x, e.pos.z - p.pos.z);
     var mx = (p.pos.x + e.pos.x) / 2, mz = (p.pos.z + e.pos.z) / 2; adv.camOvr = { px: mx, py: 6.2, pz: Math.max(p.pos.z, e.pos.z) + 8, lx: mx, ly: 2.4, lz: mz, show: true };
     popText(p.pos.x, 3.4, p.pos.z, TR("ЛУЧ-ХЛЫСТ"), "#7dff5a", true);
-    var ln = dbLine(0x39ff88, 0.22), ln2 = dbLine(0xffffff, 0.08), vel = null, slammed = false, struck = false, regrown = false;
+    var ln = dbLine(0x39ff88, 0.22), ln2 = dbLine(0xffffff, 0.08), slammed = false, struck = false, from = null, land = null;
     var ease = function (u) { u = Math.max(0, Math.min(1, u)); return u * u * (3 - 2 * u); };
     addFx(T, function (k, dt) {
       if (!adv || adv.dboss !== db) return;
-      var t = k * T, hand = new THREE.Vector3(p.pos.x + Math.sin(p.face) * 0.6, 1.5, p.pos.z + Math.cos(p.face) * 0.6), tgt = new THREE.Vector3(e.pos.x, e.pos.y + H * 0.5, e.pos.z), show = t < 2.45;
+      var t = k * T, hand = new THREE.Vector3(p.pos.x + Math.sin(p.face) * 0.6, 1.5, p.pos.z + Math.cos(p.face) * 0.6), tgt = new THREE.Vector3(e.pos.x, e.pos.y + H * 0.5, e.pos.z), show = t < 2.1;
       if (t < 0.45) {                                   // замах: хлыст тянется к Директору
-        var u0 = t / 0.45; tgt.set(e.pos.x, H * 0.5, e.pos.z); tgt.lerpVectors(hand, tgt, u0);
+        tgt.set(e.pos.x, H * 0.5, e.pos.z); tgt.lerpVectors(hand, tgt, t / 0.45);
       } else if (t < 1.25) {                            // подъём: переворачивает вверх ногами
         var u1 = ease((t - 0.45) / 0.8); e.pos.y = (H + 0.9) * u1; e.c.body.rotation.x = Math.PI * u1;
         tgt.set(e.pos.x, e.pos.y + H * 0.5 * Math.cos(Math.PI * u1), e.pos.z);
-      } else if (t < 1.45) {                            // удар головой об пол
+      } else if (t < fly0) {                            // удар головой об пол
         var u2 = ease((t - 1.25) / 0.2); e.pos.y = H + 0.9 - 0.9 * u2; e.c.body.rotation.x = Math.PI;
         tgt.set(e.pos.x, e.pos.y - H * 0.5, e.pos.z);
-        if (u2 >= 1 && !slammed) { slammed = true; shake = Math.max(shake, 1); ringFx(e.pos.x, e.pos.z, 7, 0.5, rbHex(tAll), 0.95); burst(e.pos.x, 0.3, e.pos.z, rbHex(tAll), 30, 8, 0.8, 0.2, 1); flashFx(e.pos.x, 0.4, e.pos.z, 0xffffff, 6, 0.25); popText(e.pos.x, 2.2, e.pos.z, "БАХ!", "#ffffff", true); }
-      } else if (t < 1.9) {                             // хлыст взлетает вверх над ним
-        tgt.set(e.pos.x + Math.sin(t * 9) * 0.3, H + 3.6, e.pos.z);
-      } else if (t < 2.45) {                            // удар в голову
-        tgt.set(e.pos.x, struck ? 0.4 : 0.2, e.pos.z);
-        if (!struck && t >= 1.95) {
-          struck = true; shake = Math.max(shake, 1.3);
-          hurtEnemy(e, 32 * WHIP_MUL, { big: true, color: "#7dff5a" });
-          var hw = new THREE.Vector3(); head.getWorldPosition(hw); scene.attach(head);
-          vel = { x: rnd(-4, 4), y: 8, z: rnd(-4, 4), sx: rnd(-9, 9), sz: rnd(-9, 9) };
-          burst(hw.x, hw.y, hw.z, 0xffffff, 26, 9, 0.7, 0.22, 1); for (var b = 0; b < 4; b++) burst(hw.x, hw.y, hw.z, rbHex(b / 4), 14, 7, 0.8, 0.2, 1);
-          flashFx(hw.x, hw.y, hw.z, 0xffffff, 5, 0.25);
+        if (u2 >= 1 && !slammed) {
+          slammed = true; shake = Math.max(shake, 1); ringFx(e.pos.x, e.pos.z, 7, 0.5, rbHex(tAll), 0.95); burst(e.pos.x, 0.3, e.pos.z, rbHex(tAll), 30, 8, 0.8, 0.2, 1); flashFx(e.pos.x, 0.4, e.pos.z, 0xffffff, 6, 0.25);
+          hurtEnemy(e, WHIP_DMG * 0.4, { raw: true, big: true, color: "#ffffff" });
+          from = e.pos.clone(); var fx = Math.sin(p.face), fz = Math.cos(p.face); land = new THREE.Vector3(p.pos.x + fx * 1.7, 0, p.pos.z + fz * 1.7);
         }
-      }
-      if (t >= 1.95 && t < 2.55) { var u3 = ease((t - 1.95) / 0.6); e.pos.y = H * (1 - u3); e.c.body.rotation.x = Math.PI * (1 - u3); }
-      if (t >= 2.55) { e.pos.y = 0; e.c.body.rotation.x = 0; }
-      if (vel) {                                        // голова летит, прыгает и катится
-        vel.y -= 20 * dt; head.position.x += vel.x * dt; head.position.y += vel.y * dt; head.position.z += vel.z * dt;
-        head.rotation.x += vel.sx * dt; head.rotation.z += vel.sz * dt;
-        if (head.position.y < 0.35) { head.position.y = 0.35; vel.y = Math.abs(vel.y) * 0.45; vel.x *= 0.6; vel.z *= 0.6; vel.sx *= 0.6; vel.sz *= 0.6; }
-        var R = adv.R - 1; head.position.x = Math.max(-R, Math.min(R, head.position.x)); head.position.z = Math.max(-R, Math.min(R, head.position.z));
-        if (Math.random() < 0.6) burst(head.position.x, head.position.y, head.position.z, rbHex(tAll * 2), 1, 1, 0.4, 0.14, 0.4);
-      }
-      if (t >= 4.1 && !regrown && struck) {             // голова отрастает обратно
-        regrown = true; dbRegrow(e, head, hpar, sv);
+      } else if (t < fly1) {                            // хлыст швыряет Директора к Вирусу
+        var u3 = ease((t - fly0) / (fly1 - fly0));
+        e.pos.x = from.x + (land.x - from.x) * u3; e.pos.z = from.z + (land.z - from.z) * u3; e.pos.y = Math.max(0, H * (1 - u3)) + Math.sin(u3 * Math.PI) * 2.2;
+        e.c.body.rotation.x = Math.PI * (1 + u3); e.face = Math.atan2(p.pos.x - e.pos.x, p.pos.z - e.pos.z);
+        tgt.set(e.pos.x, e.pos.y + 1, e.pos.z);
+        if (Math.random() < 0.7) burst(e.pos.x, e.pos.y + 1, e.pos.z, rbHex(tAll * 2), 1, 1, 0.4, 0.16, 0.4);
+      } else {
+        e.pos.y = 0; e.c.body.rotation.x = 0; e.pos.x = land.x; e.pos.z = land.z;
+        if (!struck) {                                  // Вирус бьёт
+          struck = true; shake = Math.max(shake, 1.3); actStart(p.c, "atk_virus", 0.5); p.atkAnim = 0.25;
+          hurtEnemy(e, WHIP_DMG * 0.6, { raw: true, big: true, color: "#7dff5a" });
+          flashFx(e.pos.x, 1.6, e.pos.z, 0x7dff5a, 6, 0.3); ringFx(e.pos.x, e.pos.z, 5, 0.4, 0x39ff88, 0.95);
+          burst(e.pos.x, 1.6, e.pos.z, 0xffffff, 26, 9, 0.7, 0.22, 1); burst(e.pos.x, 1.6, e.pos.z, 0x39ff88, 20, 7, 0.8, 0.2, 1);
+          var kx = Math.sin(p.face), kz = Math.cos(p.face); e.kvx = kx * 14; e.kvz = kz * 14;
+        }
+        if (e.kvx) { e.pos.x += e.kvx * dt; e.pos.z += e.kvz * dt; e.kvx *= Math.max(0, 1 - 6 * dt); e.kvz *= Math.max(0, 1 - 6 * dt); clampPos(e.pos); }
       }
       ln.mesh.visible = ln2.mesh.visible = show;
       if (show) { ln.set(hand, tgt); ln2.set(hand, tgt); ln.m.color.setHSL((0.35 + Math.sin(t * 8) * 0.04), 1, 0.55); }
     }, function () {
-      ln.kill(); ln2.kill(); e.pos.y = 0; e.c.body.rotation.x = 0;
-      if (!regrown && struck) dbRegrow(e, head, hpar, sv);
+      ln.kill(); ln2.kill(); e.pos.y = 0; e.c.body.rotation.x = 0; e.kvx = e.kvz = 0;
       db.whipAct = false; if (p) p.held = 0; if (adv && adv.dboss === db && adv.state === "boss") adv.camOvr = null;
     });
-  }
-  function dbRegrow(e, head, hpar, sv) {
-    var w = new THREE.Vector3(); e.c.head.getWorldPosition(w);
-    hpar.add(head); head.position.copy(sv.p); head.quaternion.copy(sv.q); head.scale.copy(sv.s);
-    e.c.head.getWorldPosition(w); flashFx(w.x, w.y, w.z, 0xffffff, 4, 0.3); burst(w.x, w.y, w.z, rbHex(tAll), 20, 6, 0.6, 0.2, 1);
   }
 
   // ---------- общий ход боя ----------
@@ -6175,7 +6162,6 @@ Claudix.ready(function () {
     if (db.over) return; db.over = true; db.dead = true; dbHud(null);
     var e = db.e; dbSyrDrop(db);
     if (db.cur) dbAtkEnd(db);
-    if (e.c.head.parent === scene) { scene.remove(e.c.head); }
     flashFx(e.pos.x, 1.8, e.pos.z, 0xffffff, 10, 0.5); for (var b = 0; b < 5; b++) burst(e.pos.x, 1.8, e.pos.z, rbHex(b / 5), 24, 9, 1, 0.22, 1);
     shake = Math.max(shake, 1);
     adv.state = "won"; adv.camOvr = null;
