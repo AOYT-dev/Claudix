@@ -118,6 +118,9 @@ input[type="text"], input[type="password"] {
   background: var(--bg); color: var(--fg); font: inherit; font-size: 1rem;
 }
 .hint { margin: 0; font-size: 0.82rem; color: var(--muted); }
+#devBox select, #devBox input[type="number"] { width: 100%; padding: 12px 14px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); color: var(--fg); font: inherit; font-size: 1rem; }
+.devlink { justify-self: start; background: none; border: 0; padding: 2px 0; color: var(--muted); font: inherit; font-size: 0.8rem; text-decoration: underline dotted; cursor: pointer; }
+#devLog { list-style: none; margin: 0; padding: 0; font-size: 0.82rem; color: var(--muted); display: grid; gap: 4px; }
 .road { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
 .road li { display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: start; }
 .road i { width: 10px; height: 10px; border-radius: 50%; border: 2px solid var(--cool); margin-top: 7px; }
@@ -337,6 +340,28 @@ html, body { touch-action: manipulation; -webkit-tap-highlight-color: transparen
           <p class="msg" id="derr" role="alert"></p>
           <button class="btn2 danger" id="delGo" type="button">Удалить навсегда</button>
           <button class="btn2" id="delCancel" type="button">Отмена</button>
+        </div>
+      </div>
+
+      <button class="devlink" id="devOpen" type="button">Окно разработчика</button>
+      <div class="stack" id="devBox" hidden>
+        <h2 style="margin:6px 0 0">Окно разработчика</h2>
+        <div class="stack" id="devGate">
+          <div class="field"><label for="devKey">Код разработчика</label><input type="password" id="devKey" autocomplete="off" autocapitalize="off" spellcheck="false"></div>
+          <p class="msg" id="devGmsg" role="alert"></p>
+          <button class="go2" id="devEnter" type="button">Войти</button>
+        </div>
+        <div class="stack" id="devPanel" hidden>
+          <div class="field"><label for="devNick">Ник игрока</label><input type="text" id="devNick" maxlength="16" autocomplete="off" autocapitalize="off" spellcheck="false"></div>
+          <div class="field"><label for="devGame">Игра</label><select id="devGame"><option value="liga">Лига Улиц</option><option value="lemon">Лимонный Икс</option><option value="viraj">Вираж-9</option></select></div>
+          <div class="field" id="devKindRow"><label for="devKind">Подарок</label><select id="devKind"><option value="money">Монеты</option><option value="hero">Герой</option><option value="sp">Скиллпойнты ★</option></select></div>
+          <div class="field" id="devAmtRow"><label for="devAmt" id="devAmtLbl">Сколько монет</label><input type="number" id="devAmt" min="1" value="5000" inputmode="numeric"></div>
+          <div class="field" id="devHeroRow" hidden><label for="devHero">Какого героя</label><select id="devHero"><option value="storm">Шторм-Джей</option><option value="shade">Тень-9</option><option value="graviton">Гравитон</option><option value="flame">Пламень</option><option value="abyss">Бездна</option><option value="virus">Вирус</option><option value="phantom">Фантом</option><option value="titan">Титан</option><option value="chronos">Хронос</option></select></div>
+          <div class="field" id="devSpRow" hidden><label for="devSp">Сколько скиллпойнтов</label><input type="number" id="devSp" min="1" max="100" value="2" inputmode="numeric"></div>
+          <button class="go2" id="devSend" type="button">Отправить подарок</button>
+          <p class="msg" id="devMsg" aria-live="polite"></p>
+          <ul id="devLog"></ul>
+          <button class="btn2" id="devOut" type="button">Закрыть окно разработчика</button>
         </div>
       </div>
     </div>
@@ -563,6 +588,54 @@ html, body { touch-action: manipulation; -webkit-tap-highlight-color: transparen
   paintView();
   // проверяем сессию на сервере и подтягиваем свежие сохранения с других устройств
   if (session()) C.validate().then(function (ok) { return ok ? C.pullAll() : false; }).then(paintView);
+})();
+
+// ---------- окно разработчика: подарки игрокам по нику (код проверяет сервер, тут он только в памяти вкладки) ----------
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var KEY = "", HEROES = { storm: "Шторм-Джей", shade: "Тень-9", graviton: "Гравитон", flame: "Пламень", abyss: "Бездна", virus: "Вирус", phantom: "Фантом", titan: "Титан", chronos: "Хронос" };
+  var ERR = { bad_key: "Неверный код", off: "Окно выключено: на сервере не задан ADMIN_KEY", slow_down: "Слишком много попыток, подожди 10 минут", no_user: "Такого ника нет", bad_name: "Ник написан неправильно", bad_amount: "Слишком большое число", bad_hero: "Такого героя нет", bad_game: "Такой игры нет", empty: "Нечего дарить", busy: "Игрок сейчас сохраняется, попробуй ещё раз" };
+  function call(p) {
+    return fetch("/api/admin/gift", { method: "POST", headers: { "content-type": "application/json", "x-admin-key": KEY }, body: JSON.stringify(p) })
+      .then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { return { status: r.status, j: j }; }); });
+  }
+  function say(el, t, ok) { el.textContent = t; el.className = "msg" + (ok === true ? " ok" : ok === false ? " bad" : ""); }
+  function open() { $("devBox").hidden = false; $("devOpen").hidden = true; (KEY ? $("devNick") : $("devKey")).focus(); }
+  function close() { KEY = ""; $("devBox").hidden = true; $("devOpen").hidden = false; $("devPanel").hidden = true; $("devGate").hidden = false; }
+  function layout() {
+    var g = $("devGame").value, k = g === "liga" ? $("devKind").value : "money";
+    $("devKindRow").hidden = g !== "liga"; $("devAmtRow").hidden = k !== "money"; $("devHeroRow").hidden = k !== "hero"; $("devSpRow").hidden = k !== "sp";
+    $("devAmtLbl").textContent = g === "lemon" ? "Сколько лимонов" : "Сколько монет";
+  }
+  $("devOpen").onclick = open; $("devOut").onclick = close;
+  $("devGame").onchange = layout; $("devKind").onchange = layout;
+  $("devEnter").onclick = function () {
+    KEY = $("devKey").value; say($("devGmsg"), "", null); if (!KEY) return;
+    $("devEnter").disabled = true;
+    call({}).then(function (r) {   // верный код → сервер ругается на пустой ник (400), неверный → 401
+      $("devEnter").disabled = false;
+      if (r.status === 401 || r.status === 404 || r.status === 429) { KEY = ""; say($("devGmsg"), ERR[r.j.error] || "Не вышло", false); return; }
+      $("devKey").value = ""; $("devGate").hidden = true; $("devPanel").hidden = false; layout(); $("devNick").focus();
+    }, function () { $("devEnter").disabled = false; say($("devGmsg"), "Нет связи с сервером", false); });
+  };
+  $("devKey").addEventListener("keydown", function (e) { if (e.key === "Enter") $("devEnter").click(); });
+  $("devSend").onclick = function () {
+    var nick = $("devNick").value.trim(), g = $("devGame").value, k = g === "liga" ? $("devKind").value : "money", p = { name: nick, game: g }, what;
+    if (!nick) { say($("devMsg"), "Впиши ник", false); return; }
+    if (g !== "liga") { p.amount = Math.floor(+$("devAmt").value || 0); what = p.amount + (g === "lemon" ? " лимонов" : " монет") + " (" + $("devGame").selectedOptions[0].text + ")"; }
+    else if (k === "money") { p.money = Math.floor(+$("devAmt").value || 0); what = p.money + " монет (Лига Улиц)"; }
+    else if (k === "hero") { p.hero = $("devHero").value; what = "героя " + HEROES[p.hero]; }
+    else { p.sp = Math.floor(+$("devSp").value || 0); what = p.sp + " скиллпойнт(ов) ★"; }
+    $("devSend").disabled = true; say($("devMsg"), "Отправляю…", null);
+    call(p).then(function (r) {
+      $("devSend").disabled = false;
+      if (r.status === 200 && r.j.ok) {
+        say($("devMsg"), "Готово: " + r.j.name + " получит " + what, true);
+        var li = document.createElement("li"); li.textContent = new Date().toLocaleTimeString("ru-RU") + " · " + r.j.name + " ← " + what; $("devLog").insertBefore(li, $("devLog").firstChild);
+      } else say($("devMsg"), ERR[r.j.error] || "Ошибка " + r.status, false);
+    }, function () { $("devSend").disabled = false; say($("devMsg"), "Нет связи с сервером", false); });
+  };
+  if (location.hash === "#dev") open();
 })();
 </script>
 
