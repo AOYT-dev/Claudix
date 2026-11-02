@@ -217,6 +217,10 @@ h1 {
 
 /* ---------- Магазин ---------- */
 .shop { display: flex; flex-direction: column; gap: 30px; min-width: 0; }
+.bulk { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.bulk span { color: var(--muted); font-size: 0.9rem; margin-right: 2px; }
+.bulk button { min-width: 56px; padding: 8px 12px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); color: var(--fg); font-family: var(--font-mono); font-weight: 700; font-size: 0.9rem; cursor: pointer; }
+.bulk button[aria-pressed="true"] { background: var(--lemon); border-color: var(--lemon-lo); color: var(--on-lemon); }
 .block { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
 h2 { margin: 0; font-family: var(--font-display); font-weight: 600; font-size: 1.1rem; }
 .sub { margin: -6px 0 0; color: var(--muted); font-size: 0.9rem; }
@@ -413,6 +417,7 @@ document.addEventListener("DOMContentLoaded", function () {
     </section>
 
     <section class="shop">
+      <div class="bulk" id="bulk" role="group" aria-label="Сколько прокачек за раз"><span>Покупать по:</span><button type="button" data-n="1">×1</button><button type="button" data-n="5">×5</button><button type="button" data-n="25">×25</button><button type="button" data-n="100">×100</button></div>
       <div class="block">
         <h2>Иксы</h2>
         <p class="sub">Покупаешь один раз, и всё умножается. Иксы перемножаются между собой.</p>
@@ -537,42 +542,59 @@ Claudix.ready(function () {
   var items = [
     {
       name: TR("Сила клика"), desc: TR("+1 лимон за клик"),
-      cost: function () { return Math.floor(15 * Math.pow(1.18, s.clickLvl)); },
+      price: function (lv) { return Math.floor(15 * Math.pow(1.18, lv)); }, lv: function () { return s.clickLvl; },
       own: function () { return TR("ур. ") + s.clickLvl; },
-      buy: function () { s.clickLvl++; }
+      buy: function (n) { s.clickLvl += n; }
     }
   ].concat(GENS.map(function (g, i) {
     return {
       name: g.name, desc: g.desc,
-      cost: function () { return Math.floor(g.base * Math.pow(g.g, s.gens[i])); },
+      price: function (lv) { return Math.floor(g.base * Math.pow(g.g, lv)); }, lv: function () { return s.gens[i]; },
       own: function () { return s.gens[i] + TR(" шт"); },
-      buy: function () { s.gens[i]++; }
+      buy: function (n) { s.gens[i] += n; }
     };
   }));
   var infItem = {
     name: TR("Икс без конца"), desc: TR("Каждая покупка удваивает всё"),
-    cost: function () { return INF_BASE * Math.pow(INF_G, s.inf); },
+    price: function (lv) { return INF_BASE * Math.pow(INF_G, lv); }, lv: function () { return s.inf; },
     own: function () { return TR("×2 · куплено ") + s.inf; },
-    buy: function () { s.inf++; }
+    buy: function (n) { s.inf += n; }
   };
 
   var autoItem = {
     name: TR("Автокликер"), desc: TR("Сам тапает по лимону. 1 тап/сек"),
-    cost: function () { return AUTO_COST; },
     ok: function () { return !s.auto; },
     label: function () { return s.auto ? TR("куплено") : null; },
     own: function () { return s.auto ? TR("работает") : TR("выкл"); },
-    buy: function () { s.auto = true; }
+    buy: function () { s.auto = true; }, cost: function () { return AUTO_COST; }
   };
   var speedItem = {
     name: TR("Ускорение автокликера"), desc: TR("+1 тап/сек. Дорого, зато быстро"),
-    cost: function () { return s.autoLvl >= SPEED_MAX ? Infinity : SPEED_BASE * Math.pow(SPEED_G, s.autoLvl); },
+    price: function (lv) { return SPEED_BASE * Math.pow(SPEED_G, lv); }, lv: function () { return s.autoLvl; }, max: SPEED_MAX,
     ok: function () { return s.auto && s.autoLvl < SPEED_MAX; },
     label: function () { return s.autoLvl >= SPEED_MAX ? TR("максимум") : null; },
     own: function () { return s.auto ? (1 + s.autoLvl) + TR(" тап/сек") : TR("нужен автокликер"); },
-    buy: function () { s.autoLvl++; }
+    buy: function (n) { s.autoLvl += n; }
   };
 
+  // сколько прокачек покупаем за раз: 1, 5, 25 или 100 (выбор помнится в этом браузере)
+  var BULK = 1;
+  try { BULK = [1, 5, 25, 100].indexOf(+localStorage.getItem("limonny-bulk")) >= 0 ? +localStorage.getItem("limonny-bulk") : 1; } catch (e) { /* ничего */ }
+  function bulkN(it) { if (!it.price) return 1; var n = BULK; if (it.max != null) n = Math.min(n, it.max - it.lv()); return Math.max(0, n); }
+  function costOf(it) {
+    if (!it.price) return it.cost();
+    var n = bulkN(it), lv = it.lv(), sum = 0;
+    if (n <= 0) return Infinity;
+    for (var k = 0; k < n; k++) sum += it.price(lv + k);
+    return sum;
+  }
+  function paintBulk() { var bs = $("bulk").querySelectorAll("button"); for (var i = 0; i < bs.length; i++) bs[i].setAttribute("aria-pressed", +bs[i].dataset.n === BULK ? "true" : "false"); }
+  $("bulk").addEventListener("click", function (e) {
+    var b = e.target.closest("button"); if (!b) return;
+    BULK = +b.dataset.n; try { localStorage.setItem("limonny-bulk", String(BULK)); } catch (er) { /* ничего */ }
+    paintBulk(); updateShop();
+  });
+  paintBulk();
   function makeItem(it, host) {
     var b = document.createElement("button");
     b.type = "button";
@@ -604,10 +626,10 @@ Claudix.ready(function () {
 
   // ---------- покупки ----------
   function buyItem(it) {
-    var c = it.cost();
-    if ((it.ok && !it.ok()) || s.lemons < c) return;
+    var c = costOf(it), n = bulkN(it);
+    if ((it.ok && !it.ok()) || n <= 0 || s.lemons < c) return;
     s.lemons -= c;
-    it.buy();
+    it.buy(n);
     if (it === infItem) pop(xEl.parentNode);
     updateAll();
     save();
@@ -693,9 +715,9 @@ Claudix.ready(function () {
   function updateShop() {
     var all = items.concat([infItem, autoItem, speedItem]);
     for (var i = 0; i < all.length; i++) {
-      var it = all[i], c = it.cost(), can = (!it.ok || it.ok()) && s.lemons >= c;
+      var it = all[i], c = costOf(it), can = (!it.ok || it.ok()) && s.lemons >= c;
       var lab = it.label ? it.label() : null;
-      it.costEl.textContent = lab || fmt(c);
+      it.costEl.textContent = lab || ((it.price && bulkN(it) > 1 ? "×" + bulkN(it) + " · " : "") + fmt(c));
       it.costEl.classList.toggle("text", !!lab);
       it.ownEl.textContent = it.own();
       it.el.classList.toggle("can", can);
