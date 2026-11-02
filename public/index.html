@@ -622,7 +622,7 @@ html, body { touch-action: manipulation; -webkit-tap-highlight-color: transparen
   $("devSend").onclick = function () {
     var nick = $("devNick").value.trim(), g = $("devGame").value, k = g === "liga" ? $("devKind").value : "money", p = { name: nick, game: g }, what;
     if (!nick) { say($("devMsg"), "Впиши ник", false); return; }
-    if (g !== "liga") { p.amount = Math.floor(+$("devAmt").value || 0); what = p.amount + (g === "lemon" ? " лимонов" : " монет") + " (" + $("devGame").selectedOptions[0].text + ")"; }
+    if (g !== "liga") { p.amount = Math.floor(+$("devAmt").value || 0); what = p.amount.toLocaleString("ru-RU", { maximumFractionDigits: 0 }) + (g === "lemon" ? " лимонов" : " монет") + " (" + $("devGame").selectedOptions[0].text + ")"; }
     else if (k === "money") { p.money = Math.floor(+$("devAmt").value || 0); what = p.money + " монет (Лига Улиц)"; }
     else if (k === "hero") { p.hero = $("devHero").value; what = "героя " + HEROES[p.hero]; }
     else { p.sp = Math.floor(+$("devSp").value || 0); what = p.sp + " скиллпойнт(ов) ★"; }
