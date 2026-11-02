@@ -121,6 +121,36 @@ function validSave(str) {
   try { const o = JSON.parse(str); return !!o && typeof o === "object" && !Array.isArray(o); } catch (e) { return false; }
 }
 
+
+// ---- подарки от разработчика (меняют сохранение Лиги Улиц игрока) ----
+const LIGA_HEROES = ["cobalt", "storm", "shade", "graviton", "flame", "abyss", "virus", "phantom", "titan", "chronos"];
+async function giftTo(env, b) {
+  const name = typeof b.name === "string" ? b.name.trim() : "";
+  if (!NAME_RE.test(name)) return fail("bad_name", 400);
+  const uid = name.toLowerCase();
+  const u = await env.DB.prepare("SELECT name FROM users WHERE uid = ?1").bind(uid).first();
+  if (!u) return fail("no_user", 404);
+  const money = Math.floor(+b.money || 0), sp = Math.floor(+b.sp || 0), hero = typeof b.hero === "string" ? b.hero : "";
+  if (money < 0 || money > 1e7 || sp < 0 || sp > 100) return fail("bad_amount", 400);
+  if (hero && !LIGA_HEROES.includes(hero)) return fail("bad_hero", 400);
+  if (!money && !sp && !hero) return fail("empty", 400);
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const row = await env.DB.prepare("SELECT data, updated FROM saves WHERE uid = ?1 AND game = 'liga'").bind(uid).first();
+    let o = { money: 0, owned: ["cobalt"], sel: "cobalt", best: 0, pwr: 0, rad: 0 };
+    if (row) { try { const p = JSON.parse(row.data); if (p && typeof p === "object" && !Array.isArray(p)) o = p; } catch (e) { /* возьмём чистое */ } }
+    o.money = Math.min(1e9, Math.max(0, Math.floor(+o.money || 0)) + money);
+    o.sp = Math.min(999, Math.max(0, Math.floor(+o.sp || 0)) + sp);
+    if (!Array.isArray(o.owned)) o.owned = ["cobalt"];
+    if (hero && !o.owned.includes(hero)) o.owned.push(hero);
+    const data = JSON.stringify(o), now = Math.max(Date.now(), (row ? row.updated : 0) + 1);
+    let changed;
+    if (row) changed = (await env.DB.prepare("UPDATE saves SET data = ?3, updated = ?4, score = ?6 WHERE uid = ?1 AND game = 'liga' AND updated = ?5").bind(uid, "liga", data, now, row.updated, scoreOf("liga", data)).run()).meta.changes === 1;
+    else changed = (await env.DB.prepare("INSERT OR IGNORE INTO saves (uid, game, data, updated, score) VALUES (?1, 'liga', ?2, ?3, ?4)").bind(uid, data, now, scoreOf("liga", data)).run()).meta.changes === 1;
+    if (changed) return json({ ok: true, name: u.name, money, sp, hero, total: o.money });
+  }
+  return fail("busy", 409);
+}
+
 // ---- маршруты ----
 async function route(req, env) {
   const url = new URL(req.url);
@@ -195,6 +225,15 @@ async function route(req, env) {
     }
     await clearFails(env, "l:" + uid);
     return json({ token: await startSession(env, uid), user: uid, name: u.name });
+  }
+
+  // Окно разработчика: подарок игроку по нику. Работает только если в Cloudflare задан секрет ADMIN_KEY.
+  if (req.method === "POST" && path === "/api/admin/gift") {
+    if (!env.ADMIN_KEY || String(env.ADMIN_KEY).length < 8) return fail("off", 404);
+    if (await blocked(env, "a:" + ip, 8, 600e3)) return fail("slow_down", 429);
+    const key = req.headers.get("x-admin-key") || "";
+    if (!same(await sha(key), await sha(String(env.ADMIN_KEY)))) { await bump(env, "a:" + ip, 600e3); return fail("bad_key", 401); }
+    return giftTo(env, await body(req));
   }
 
   if (path === "/api/room" || path === "/api/race") {
