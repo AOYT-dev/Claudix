@@ -141,7 +141,7 @@ async function giftTo(env, b) {
     if (!money && !sp && !hero) return fail("empty", 400);
   } else {
     if (!(amount > 0)) return fail("empty", 400);
-    if (amount > (game === "lemon" ? 1e15 : 1e7)) return fail("bad_amount", 400);
+    if (amount > (game === "lemon" ? 1e33 : 1e7)) return fail("bad_amount", 400); // лимоны до 1 дециллиона
   }
   for (let attempt = 0; attempt < 3; attempt++) {
     const row = await env.DB.prepare("SELECT data, updated FROM saves WHERE uid = ?1 AND game = ?2").bind(uid, game).first();
