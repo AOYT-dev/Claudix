@@ -130,23 +130,41 @@ async function giftTo(env, b) {
   const uid = name.toLowerCase();
   const u = await env.DB.prepare("SELECT name FROM users WHERE uid = ?1").bind(uid).first();
   if (!u) return fail("no_user", 404);
+  const game = typeof b.game === "string" ? b.game : "liga";
+  if (!["liga", "lemon", "viraj"].includes(game)) return fail("bad_game", 400);
+  // что дарим: Лига Улиц — монеты, скиллпойнты, герой; Лимонный Икс — лимоны; Вираж-9 — монеты
   const money = Math.floor(+b.money || 0), sp = Math.floor(+b.sp || 0), hero = typeof b.hero === "string" ? b.hero : "";
-  if (money < 0 || money > 1e7 || sp < 0 || sp > 100) return fail("bad_amount", 400);
-  if (hero && !LIGA_HEROES.includes(hero)) return fail("bad_hero", 400);
-  if (!money && !sp && !hero) return fail("empty", 400);
+  const amount = Math.floor(+b.amount || 0);
+  if (game === "liga") {
+    if (money < 0 || money > 1e7 || sp < 0 || sp > 100) return fail("bad_amount", 400);
+    if (hero && !LIGA_HEROES.includes(hero)) return fail("bad_hero", 400);
+    if (!money && !sp && !hero) return fail("empty", 400);
+  } else {
+    if (!(amount > 0)) return fail("empty", 400);
+    if (amount > (game === "lemon" ? 1e15 : 1e7)) return fail("bad_amount", 400);
+  }
   for (let attempt = 0; attempt < 3; attempt++) {
-    const row = await env.DB.prepare("SELECT data, updated FROM saves WHERE uid = ?1 AND game = 'liga'").bind(uid).first();
-    let o = { money: 0, owned: ["cobalt"], sel: "cobalt", best: 0, pwr: 0, rad: 0 };
+    const row = await env.DB.prepare("SELECT data, updated FROM saves WHERE uid = ?1 AND game = ?2").bind(uid, game).first();
+    let o = game === "liga" ? { money: 0, owned: ["cobalt"], sel: "cobalt", best: 0, pwr: 0, rad: 0 } : game === "viraj" ? { v: 1 } : {};
     if (row) { try { const p = JSON.parse(row.data); if (p && typeof p === "object" && !Array.isArray(p)) o = p; } catch (e) { /* возьмём чистое */ } }
-    o.money = Math.min(1e9, Math.max(0, Math.floor(+o.money || 0)) + money);
-    o.sp = Math.min(999, Math.max(0, Math.floor(+o.sp || 0)) + sp);
-    if (!Array.isArray(o.owned)) o.owned = ["cobalt"];
-    if (hero && !o.owned.includes(hero)) o.owned.push(hero);
+    let total;
+    if (game === "liga") {
+      o.money = Math.min(1e9, Math.max(0, Math.floor(+o.money || 0)) + money);
+      o.sp = Math.min(999, Math.max(0, Math.floor(+o.sp || 0)) + sp);
+      if (!Array.isArray(o.owned)) o.owned = ["cobalt"];
+      if (hero && !o.owned.includes(hero)) o.owned.push(hero);
+      total = o.money;
+    } else if (game === "lemon") {
+      const cur = typeof o.lemons === "number" && isFinite(o.lemons) && o.lemons > 0 ? o.lemons : 0;
+      o.lemons = Math.min(1e300, cur + amount); total = o.lemons;
+    } else {
+      o.coins = Math.min(1e9, Math.max(0, Math.floor(+o.coins || 0)) + amount); total = o.coins;
+    }
     const data = JSON.stringify(o), now = Math.max(Date.now(), (row ? row.updated : 0) + 1);
     let changed;
-    if (row) changed = (await env.DB.prepare("UPDATE saves SET data = ?3, updated = ?4, score = ?6 WHERE uid = ?1 AND game = 'liga' AND updated = ?5").bind(uid, "liga", data, now, row.updated, scoreOf("liga", data)).run()).meta.changes === 1;
-    else changed = (await env.DB.prepare("INSERT OR IGNORE INTO saves (uid, game, data, updated, score) VALUES (?1, 'liga', ?2, ?3, ?4)").bind(uid, data, now, scoreOf("liga", data)).run()).meta.changes === 1;
-    if (changed) return json({ ok: true, name: u.name, money, sp, hero, total: o.money });
+    if (row) changed = (await env.DB.prepare("UPDATE saves SET data = ?3, updated = ?4, score = ?6 WHERE uid = ?1 AND game = ?2 AND updated = ?5").bind(uid, game, data, now, row.updated, scoreOf(game, data)).run()).meta.changes === 1;
+    else changed = (await env.DB.prepare("INSERT OR IGNORE INTO saves (uid, game, data, updated, score) VALUES (?1, ?2, ?3, ?4, ?5)").bind(uid, game, data, now, scoreOf(game, data)).run()).meta.changes === 1;
+    if (changed) return json({ ok: true, name: u.name, game, money, sp, hero, amount, total });
   }
   return fail("busy", 409);
 }

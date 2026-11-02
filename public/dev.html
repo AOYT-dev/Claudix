@@ -38,13 +38,15 @@
     <div class="card">
       <label for="nick">Ник игрока</label>
       <input id="nick" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="например, Sasha_123">
-      <label for="kind">Подарок (Лига Улиц)</label>
+      <label for="game">Игра</label>
+      <select id="game"><option value="liga">Лига Улиц</option><option value="lemon">Лимонный Икс</option><option value="viraj">Вираж-9</option></select>
+      <div id="f-kind"><label for="kind">Подарок</label>
       <select id="kind">
         <option value="money">Монеты</option>
         <option value="hero">Герой</option>
         <option value="sp">Скиллпойнты ★</option>
-      </select>
-      <div id="f-money"><label for="amount">Сколько монет</label><input id="amount" type="number" min="1" max="10000000" value="5000" inputmode="numeric"></div>
+      </select></div>
+      <div id="f-money"><label for="amount" id="amountLbl">Сколько монет</label><input id="amount" type="number" min="1" max="10000000" value="5000" inputmode="numeric"></div>
       <div id="f-hero" hidden><label for="hero">Какого героя</label>
         <select id="hero">
           <option value="storm">Шторм-Джей</option><option value="shade">Тень-9</option><option value="graviton">Гравитон</option>
@@ -63,7 +65,7 @@
 (function () {
   var $ = function (id) { return document.getElementById(id); };
   var KEY = "", HEROES = { storm: "Шторм-Джей", shade: "Тень-9", graviton: "Гравитон", flame: "Пламень", abyss: "Бездна", virus: "Вирус", phantom: "Фантом", titan: "Титан", chronos: "Хронос" };
-  var ERR = { bad_key: "Неверный код", off: "Окно выключено: на сервере не задан секрет ADMIN_KEY", slow_down: "Слишком много попыток, подожди 10 минут", no_user: "Такого ника нет", bad_name: "Ник написан неправильно", bad_amount: "Слишком большое число", bad_hero: "Такого героя нет", empty: "Нечего дарить", busy: "Игрок сейчас сохраняется, попробуй ещё раз" };
+  var ERR = { bad_key: "Неверный код", off: "Окно выключено: на сервере не задан секрет ADMIN_KEY", slow_down: "Слишком много попыток, подожди 10 минут", no_user: "Такого ника нет", bad_name: "Ник написан неправильно", bad_amount: "Слишком большое число", bad_hero: "Такого героя нет", bad_game: "Такой игры нет", empty: "Нечего дарить", busy: "Игрок сейчас сохраняется, попробуй ещё раз" };
 
   // код живёт только в памяти этой вкладки, никуда не сохраняется
   function call(payload) {
@@ -83,12 +85,18 @@
   };
   $("key").addEventListener("keydown", function (e) { if (e.key === "Enter") $("enter").click(); });
   $("out").onclick = function () { KEY = ""; $("panel").hidden = true; $("gate").hidden = false; };
-  $("kind").onchange = function () { var k = $("kind").value; $("f-money").hidden = k !== "money"; $("f-hero").hidden = k !== "hero"; $("f-sp").hidden = k !== "sp"; };
+  function layout() {
+    var g = $("game").value, k = g === "liga" ? $("kind").value : "money";
+    $("f-kind").hidden = g !== "liga"; $("f-money").hidden = k !== "money"; $("f-hero").hidden = k !== "hero"; $("f-sp").hidden = k !== "sp";
+    $("amountLbl").textContent = g === "lemon" ? "Сколько лимонов" : "Сколько монет";
+  }
+  $("kind").onchange = layout; $("game").onchange = layout;
 
   $("send").onclick = function () {
-    var nick = $("nick").value.trim(), kind = $("kind").value, p = { name: nick }, what;
+    var nick = $("nick").value.trim(), game = $("game").value, kind = game === "liga" ? $("kind").value : "money", p = { name: nick, game: game }, what;
     if (!nick) { say("Впиши ник", false); return; }
-    if (kind === "money") { p.money = Math.floor(+$("amount").value || 0); what = p.money + " монет"; }
+    if (game !== "liga") { p.amount = Math.floor(+$("amount").value || 0); what = p.amount + (game === "lemon" ? " лимонов" : " монет") + " (" + $("game").selectedOptions[0].text + ")"; }
+    else if (kind === "money") { p.money = Math.floor(+$("amount").value || 0); what = p.money + " монет"; }
     else if (kind === "hero") { p.hero = $("hero").value; what = "героя " + HEROES[p.hero]; }
     else { p.sp = Math.floor(+$("spn").value || 0); what = p.sp + " скиллпойнт(ов) ★"; }
     $("send").disabled = true; say("Отправляю…", null);
