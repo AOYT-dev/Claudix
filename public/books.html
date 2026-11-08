@@ -178,7 +178,7 @@ button{font:inherit;color:inherit}
 
 <div id="lib">
   <header class="lib-head">
-    <a class="home-link" id="homeLink" href="/" hidden>‹ В Claudix</a>
+    <a class="home-link" id="homeLink" href="https://claudix.aoyt.workers.dev/" target="_top">‹ В Claudix</a>
     <div class="eyebrow">Claudix · Книги</div>
     <h1>Библиотека</h1>
     <p>Вся вселенная AOYT в книгах. Открой обложку и листай.</p>
@@ -3238,6 +3238,6 @@ var rzT = 0; addEventListener("resize", function () { clearTimeout(rzT); rzT = s
 renderLibrary();
 if (window.__TEST__) window.__BK = { R: R, S: S, openBook: openBook, next: next, prev: prev, go: go, closeBook: closeBook, relayout: relayout, bump: bump };
 })();
-  try { if (/books\.html$/.test(location.pathname)) document.getElementById("homeLink").hidden = false; } catch (e) {}
+  try { if (/books\.html$/.test(location.pathname)) { var hl = document.getElementById("homeLink"); hl.href = "/"; hl.removeAttribute("target"); } } catch (e) {}
 </script>
 </body></html>
