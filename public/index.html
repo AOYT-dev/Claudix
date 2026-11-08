@@ -151,6 +151,7 @@ input[type="text"], input[type="password"] {
   background: var(--bg); color: var(--fg); font: inherit; font-size: 1rem;
 }
 .hint { margin: 0; font-size: 0.82rem; color: var(--muted); }
+#devQuick { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
 #devBox select, #devBox input[type="number"] { width: 100%; padding: 12px 14px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); color: var(--fg); font: inherit; font-size: 1rem; }
 .devlink { justify-self: start; background: none; border: 0; padding: 2px 0; color: var(--muted); font: inherit; font-size: 0.8rem; text-decoration: underline dotted; cursor: pointer; }
 #devLog { list-style: none; margin: 0; padding: 0; font-size: 0.82rem; color: var(--muted); display: grid; gap: 4px; }
@@ -430,7 +431,7 @@ html, body { touch-action: manipulation; -webkit-tap-highlight-color: transparen
           <div class="field"><label for="devNick">Ник игрока</label><input type="text" id="devNick" maxlength="16" autocomplete="off" autocapitalize="off" spellcheck="false"></div>
           <div class="field"><label for="devGame">Игра</label><select id="devGame"><option value="liga">Лига Улиц</option><option value="lemon">Лимонный Икс</option><option value="viraj">Вираж-9</option></select></div>
           <div class="field" id="devKindRow"><label for="devKind">Подарок</label><select id="devKind"><option value="money">Монеты</option><option value="hero">Герой</option><option value="sp">Скиллпойнты ★</option></select></div>
-          <div class="field" id="devAmtRow"><label for="devAmt" id="devAmtLbl">Сколько монет</label><input type="number" id="devAmt" min="1" value="5000" inputmode="numeric"></div>
+          <div class="field" id="devAmtRow"><label for="devAmt" id="devAmtLbl">Сколько монет</label><input type="number" id="devAmt" min="1" value="5000" inputmode="numeric"><div class="quick" id="devQuick" hidden><button type="button" class="uchip" data-v="1e33">Дециллион</button><button type="button" class="uchip" data-v="1e50">10⁵⁰</button><button type="button" class="uchip" data-v="1e100">Гугол</button></div></div>
           <div class="field" id="devHeroRow" hidden><label for="devHero">Какого героя</label><select id="devHero"><option value="storm">Шторм-Джей</option><option value="shade">Тень-9</option><option value="graviton">Гравитон</option><option value="flame">Пламень</option><option value="abyss">Бездна</option><option value="virus">Вирус</option><option value="phantom">Фантом</option><option value="titan">Титан</option><option value="chronos">Хронос</option></select></div>
           <div class="field" id="devSpRow" hidden><label for="devSp">Сколько скиллпойнтов</label><input type="number" id="devSp" min="1" max="100" value="2" inputmode="numeric"></div>
           <button class="go2" id="devSend" type="button">Отправить подарок</button>
@@ -681,6 +682,7 @@ html, body { touch-action: manipulation; -webkit-tap-highlight-color: transparen
     var g = $("devGame").value, k = g === "liga" ? $("devKind").value : "money";
     $("devKindRow").hidden = g !== "liga"; $("devAmtRow").hidden = k !== "money"; $("devHeroRow").hidden = k !== "hero"; $("devSpRow").hidden = k !== "sp";
     $("devAmtLbl").textContent = g === "lemon" ? "Сколько лимонов" : "Сколько монет";
+    $("devQuick").hidden = g !== "lemon";
   }
   $("devOpen").onclick = open; $("devOut").onclick = close;
   $("devGame").onchange = layout; $("devKind").onchange = layout;
@@ -694,10 +696,12 @@ html, body { touch-action: manipulation; -webkit-tap-highlight-color: transparen
     }, function () { $("devEnter").disabled = false; say($("devGmsg"), "Нет связи с сервером", false); });
   };
   $("devKey").addEventListener("keydown", function (e) { if (e.key === "Enter") $("devEnter").click(); });
+  function bigAmt(n) { if (n === 1e100) return "1 гугол"; if (n >= 1e21) return n.toExponential(2).replace("e+", " × 10^").replace(".", ","); return n.toLocaleString("ru-RU", { maximumFractionDigits: 0 }); }
+  [].forEach.call(document.querySelectorAll("#devQuick button"), function (b) { b.onclick = function () { $("devAmt").value = b.getAttribute("data-v"); }; });
   $("devSend").onclick = function () {
     var nick = $("devNick").value.trim(), g = $("devGame").value, k = g === "liga" ? $("devKind").value : "money", p = { name: nick, game: g }, what;
     if (!nick) { say($("devMsg"), "Впиши ник", false); return; }
-    if (g !== "liga") { p.amount = Math.floor(+$("devAmt").value || 0); what = p.amount.toLocaleString("ru-RU", { maximumFractionDigits: 0 }) + (g === "lemon" ? " лимонов" : " монет") + " (" + $("devGame").selectedOptions[0].text + ")"; }
+    if (g !== "liga") { p.amount = Math.floor(+$("devAmt").value || 0); what = bigAmt(p.amount) + (g === "lemon" ? " лимонов" : " монет") + " (" + $("devGame").selectedOptions[0].text + ")"; }
     else if (k === "money") { p.money = Math.floor(+$("devAmt").value || 0); what = p.money + " монет (Лига Улиц)"; }
     else if (k === "hero") { p.hero = $("devHero").value; what = "героя " + HEROES[p.hero]; }
     else { p.sp = Math.floor(+$("devSp").value || 0); what = p.sp + " скиллпойнт(ов) ★"; }
