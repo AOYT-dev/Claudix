@@ -1,0 +1,3239 @@
+<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}body{margin:0;font:14px system-ui}img{max-width:100%}[hidden]{display:none!important}</style></head><body><title>Claudix Книги</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,600;1,7..72,400&family=PT+Serif:ital,wght@0,400;0,700;1,400&family=Russo+One&family=Unbounded:wght@500;800&display=swap">
+<style>
+/* Layout: библиотека как в Apple Books (сетка обложек по сериям) + полноэкранная читалка с перелистыванием страниц */
+:root{
+  --bg:#f2f1ed; --surface:#ffffff; --fg:#18171b; --muted:#77736b; --line:rgba(24,23,27,.1); --accent:#2459e8; --chip:#e6e3dc;
+  --rd-bg:#fffdf9; --rd-fg:#1d1b18; --rd-muted:#8d887e;
+  --ui:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --f-literata:"Literata",Georgia,"Times New Roman",serif;
+  --f-ptserif:"PT Serif",Georgia,"Times New Roman",serif;
+  --f-system:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,Arial,sans-serif;
+  --f-times:"Times New Roman",Times,"Liberation Serif","Nimbus Roman",serif;
+  --f-impulse:"Russo One","Arial Black",Impact,sans-serif;
+  --f-league:"Unbounded","Arial Black",Impact,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0e0e11; --surface:#1b1b20; --fg:#f1efe9; --muted:#9b978e; --line:rgba(255,255,255,.1); --accent:#7397ff; --chip:#26262c;
+  --rd-bg:#121214; --rd-fg:#d8d4cb; --rd-muted:#7f7b72; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0e0e11; --surface:#1b1b20; --fg:#f1efe9; --muted:#9b978e; --line:rgba(255,255,255,.1); --accent:#7397ff; --chip:#26262c;
+  --rd-bg:#121214; --rd-fg:#d8d4cb; --rd-muted:#7f7b72; color-scheme:dark}
+[hidden]{display:none!important}
+html,body{height:100%}
+body{background:var(--bg);color:var(--fg);font-family:var(--ui);-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+
+/* ---------- библиотека ---------- */
+#lib{max-width:1080px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 72px;display:flex;flex-direction:column;gap:38px}
+.lib-head{display:flex;flex-direction:column;gap:6px}
+.eyebrow{font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.lib-head h1{margin:0;font-size:clamp(32px,6vw,44px);font-weight:800;letter-spacing:-.02em;text-wrap:balance}
+.lib-head p{margin:0;color:var(--muted);font-size:16px}
+.cont{display:grid;grid-template-columns:auto 1fr;gap:20px;align-items:center;background:var(--surface);border-radius:16px;padding:18px;box-shadow:0 1px 0 var(--line)}
+.cont .cover{width:96px}
+.cont-txt{min-width:0;display:flex;flex-direction:column;gap:8px}
+.cont-k{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.cont-t{font-size:22px;font-weight:700;letter-spacing:-.01em}
+.cont-bar{height:4px;border-radius:2px;background:var(--chip);overflow:hidden;max-width:320px}
+.cont-bar i{display:block;height:100%;background:var(--accent);border-radius:2px}
+.cont-row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.cont-p{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+.btn{border:0;background:var(--accent);color:#fff;border-radius:999px;padding:10px 20px;font-weight:600;font-size:15px;cursor:pointer;min-height:40px}
+.btn:hover{filter:brightness(1.08)}
+.shelf{display:flex;flex-direction:column;gap:16px}
+.shelf-h{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 10px;border-bottom:1px solid var(--line);padding-bottom:10px}
+.shelf-h h2{margin:0;font-size:22px;font-weight:750;letter-spacing:-.01em}
+.shelf-h span{color:var(--muted);font-size:14px}
+.subshelves{display:flex;flex-direction:column;gap:22px}.sub{display:flex;flex-direction:column;gap:12px}
+.sub-h{margin:0;font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:26px 20px;align-items:end}
+.book{all:unset;cursor:pointer;display:flex;flex-direction:column;gap:9px;min-width:0;-webkit-tap-highlight-color:transparent}
+.book:focus-visible .cover{outline:2px solid var(--accent);outline-offset:4px}
+.book:hover .cover{transform:translateY(-3px)}
+.book .meta{display:flex;flex-direction:column;gap:2px;min-width:0}
+.book .bt{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.book .bp{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.book.soon .cover{filter:saturate(.55) brightness(.82)}
+.book.soon .bp{color:var(--muted)}
+.cover{position:relative;width:100%;max-width:100%;aspect-ratio:2/3;border-radius:3px 6px 6px 3px;background:#111 center/cover no-repeat;box-shadow:0 1px 1px rgba(0,0,0,.25),0 12px 26px -10px rgba(0,0,0,.55);overflow:hidden;container-type:inline-size;transition:transform .2s ease}
+.cover::before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(0,0,0,.35) 0,rgba(255,255,255,.18) 2.5%,rgba(0,0,0,.08) 5%,transparent 9%);pointer-events:none}
+.ct{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:space-between;padding:9cqw 8cqw 8cqw 11cqw;color:#fff;text-align:left}
+.ct .lbl{font:600 5.6cqw/1 var(--ui);letter-spacing:.22em;text-transform:uppercase;opacity:.85}
+.ct .ttl{font-family:var(--f-impulse);font-size:15.5cqw;line-height:.95;letter-spacing:.03em;text-shadow:0 0 6cqw rgba(80,150,255,.55)}
+.ct .ttl small{display:block;font-size:.42em;letter-spacing:.12em;margin-top:2cqw;opacity:.9}
+.ct .au{font:600 5cqw/1 var(--ui);letter-spacing:.2em;text-transform:uppercase;opacity:.75}
+.cover.league .ttl{font-family:var(--f-league);font-weight:800;font-size:12.5cqw;letter-spacing:0;text-shadow:0 2cqw 6cqw rgba(0,0,0,.5)}
+.cover.imp2 .ttl{text-shadow:0 0 6cqw rgba(190,255,70,.5)}
+.cover.imp3 .ttl{text-shadow:0 0 6cqw rgba(255,140,40,.55)}
+.badge{position:absolute;right:6cqw;top:6cqw;background:rgba(0,0,0,.55);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);color:#fff;font:600 5cqw/1 var(--ui);letter-spacing:.06em;padding:2.5cqw 4cqw;border-radius:99px}
+#toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);background:var(--fg);color:var(--bg);padding:12px 18px;border-radius:12px;font-size:14px;opacity:0;pointer-events:none;transition:.25s;z-index:90;max-width:calc(100vw - 32px);text-align:center}
+#toast.on{opacity:1;transform:translate(-50%,0)}
+
+/* ---------- читалка ---------- */
+#reader{position:fixed;inset:0;z-index:50;--rbg:var(--rd-bg);--rfg:var(--rd-fg);--rmuted:var(--rd-muted);background:var(--rbg);color:var(--rfg);user-select:none;-webkit-user-select:none;overflow:hidden;--rfont:var(--f-times);--rsize:17px;--rlh:1.32}
+#reader[data-rt="original"]{--rbg:#ffffff;--rfg:#141414;--rmuted:#8e8e8e;color-scheme:light}
+#reader[data-rt="paper"]{--rbg:#f5edd9;--rfg:#3a2e21;--rmuted:#9b8a6f;color-scheme:light}
+#reader[data-rt="quiet"]{--rbg:#4a4a4f;--rfg:#ebe8e2;--rmuted:#adaaa4;color-scheme:dark}
+#reader[data-rt="night"]{--rbg:#000000;--rfg:#cdc8be;--rmuted:#77736b;color-scheme:dark}
+#reader[data-font="ptserif"]{--rfont:var(--f-ptserif)}
+#reader[data-font="literata"]{--rfont:var(--f-literata)}
+#reader[data-font="times"]{--rfont:var(--f-times)}
+#reader[data-font="system"]{--rfont:var(--f-system)}
+.r-bar{position:absolute;left:0;right:0;z-index:20;box-sizing:border-box;display:flex;align-items:center;gap:8px;padding-left:max(10px,env(safe-area-inset-left,0px));padding-right:max(10px,env(safe-area-inset-right,0px));transition:opacity .25s,transform .25s}
+.r-top{top:0;padding-top:calc(env(safe-area-inset-top,0px) + 6px);height:calc(env(safe-area-inset-top,0px) + 46px)}
+.r-bottom{bottom:0;padding-bottom:calc(env(safe-area-inset-bottom,0px) + 8px);flex-direction:column;align-items:stretch;gap:6px;height:auto}
+#reader:not(.chrome) .r-bar{opacity:0;pointer-events:none}
+#reader:not(.chrome) .r-top{transform:translateY(-8px)}
+#reader:not(.chrome) .r-bottom{transform:translateY(8px)}
+.r-bar{background:color-mix(in srgb,var(--rbg) 88%,transparent);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+.ib{border:0;background:transparent;color:var(--rfg);min-width:40px;height:40px;border-radius:10px;display:inline-flex;align-items:center;justify-content:center;gap:4px;cursor:pointer;font-size:16px;padding:0 8px}
+.ib:hover{background:color-mix(in srgb,var(--rfg) 8%,transparent)}
+.ib svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+#rBack{font-weight:600;font-size:15px;color:var(--rfg)}
+.r-title{flex:1;min-width:0;text-align:center;font:600 14px/1.2 var(--ui);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#rAa{font-family:Georgia,serif;font-size:19px;font-weight:600}
+.r-prog{display:flex;align-items:center;gap:10px;padding:0 6px}
+#rScrub{flex:1;accent-color:var(--rfg);height:28px}
+.r-info{font:500 12px/1.3 var(--ui);color:var(--rmuted);text-align:center;font-variant-numeric:tabular-nums;min-height:16px}
+#rNext{align-self:center;margin-top:2px}
+#reader.spread .r-bar{opacity:1;pointer-events:auto;transform:none;background:var(--rbg);backdrop-filter:none;-webkit-backdrop-filter:none}
+#reader.spread .r-bottom{flex-direction:row;align-items:center;gap:14px;height:calc(env(safe-area-inset-bottom,0px) + 46px);padding-bottom:env(safe-area-inset-bottom,0px);padding-left:max(18px,env(safe-area-inset-left,0px));padding-right:max(18px,env(safe-area-inset-right,0px))}
+#reader.spread .r-prog{flex:1;padding:0}
+#reader.spread .r-info{white-space:nowrap}
+#reader.spread #rNext{margin:0}
+#stage{position:absolute;left:env(safe-area-inset-left,0px);right:env(safe-area-inset-right,0px);top:calc(env(safe-area-inset-top,0px) + 6px);bottom:calc(env(safe-area-inset-bottom,0px) + 2px);margin:0 auto;max-width:1500px;perspective:4200px;touch-action:none;cursor:default}
+.pg{position:absolute;top:0;bottom:0;background:var(--rbg);overflow:hidden}
+#uL,#uR{z-index:1}
+#reader.spread #stage{top:calc(env(safe-area-inset-top,0px) + 50px);bottom:calc(env(safe-area-inset-bottom,0px) + 46px)}
+#reader.single #uL{display:none}
+#reader.single #uR,#reader.single #leaf{left:0;right:0}
+#reader.spread #uL{left:0;width:50%}
+#reader.spread #uR,#reader.spread #leaf{left:50%;width:50%}
+#leaf{position:absolute;top:0;bottom:0;z-index:3;transform-origin:0 50%;transform-style:preserve-3d;visibility:hidden;will-change:transform}
+#leaf .pg{left:0;right:0;backface-visibility:hidden;-webkit-backface-visibility:hidden}
+#leaf .back{transform:rotateY(180deg)}
+#reader.single #leaf .back .hd,#reader.single #leaf .back .pb,#reader.single #leaf .back .pn{display:none}
+#reader.single #leaf .back{background:linear-gradient(90deg,color-mix(in srgb,var(--rbg) 86%,#000) 0%,var(--rbg) 40%,color-mix(in srgb,var(--rbg) 93%,#000) 100%)}
+.spine{display:none;position:absolute;top:0;bottom:0;left:50%;width:70px;margin-left:-35px;z-index:2;pointer-events:none;background:linear-gradient(90deg,rgba(0,0,0,0),rgba(0,0,0,.04) 40%,rgba(0,0,0,.085) 50%,rgba(0,0,0,.04) 60%,rgba(0,0,0,0))}
+#reader.spread .spine{display:block}
+.hd{position:absolute;top:13px;left:var(--px,18px);right:var(--px,18px);text-align:center;font:500 11px/1.2 var(--ui);letter-spacing:.14em;text-transform:uppercase;color:var(--rmuted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pb{position:absolute;overflow:hidden;left:var(--px,18px);right:var(--px,18px);top:38px;bottom:28px}
+.pn{position:absolute;left:0;right:0;bottom:8px;text-align:center;font:500 11px/1 var(--ui);color:var(--rmuted);font-variant-numeric:tabular-nums}
+.shade{position:absolute;inset:0;pointer-events:none;opacity:0;background:linear-gradient(90deg,rgba(0,0,0,.32),rgba(0,0,0,.07) 55%,rgba(0,0,0,0))}
+#uL .shade{background:linear-gradient(270deg,rgba(0,0,0,.28),rgba(0,0,0,.06) 55%,rgba(0,0,0,0))}
+.gloss{position:absolute;inset:0;pointer-events:none;opacity:0;background:linear-gradient(270deg,rgba(255,255,255,.28),rgba(255,255,255,0) 22%,rgba(0,0,0,0) 70%,rgba(0,0,0,.16))}
+.flow{position:relative;height:100%;font-family:var(--rfont);font-size:var(--rsize);line-height:var(--rlh);color:var(--rfg);text-align:justify;hyphens:auto;-webkit-hyphens:auto;orphans:2;widows:2;column-fill:auto;will-change:transform}
+.flow p{margin:0;text-indent:1.5em}
+.flow h2{break-before:column;-webkit-column-break-before:always;margin:2.6em 0 1em;font-family:var(--rfont);font-weight:700;line-height:1.2;text-align:left;text-indent:0;hyphens:manual;-webkit-hyphens:manual}
+.flow h2 .gl{display:block;font-size:1.6em;padding-left:1.15em}
+.flow h2 .gt{display:block;font-style:italic;text-transform:uppercase;font-size:.95em;text-align:center;margin-top:.75em;text-wrap:balance}
+.flow h2.post .gl{color:#b8322a}
+.flow .tp{height:100%;box-sizing:border-box;break-after:column;-webkit-column-break-after:always;display:flex;flex-direction:column;align-items:center;gap:1em;padding-top:4%;text-align:center;text-indent:0}
+.flow .tp h1{margin:0;font-family:var(--rfont);font-size:1.95em;line-height:1.3;font-weight:700;text-wrap:balance}
+.flow .tp img{width:min(52%,36vh);aspect-ratio:1/1;border-radius:50%;object-fit:cover;object-position:50% 58%}
+.flow .tp .ann{width:100%;font-style:italic;text-align:justify;line-height:1.3;margin-top:.9em}
+.flow .tp .ann p{text-indent:1.5em}
+.flow .tp .c{margin-top:auto;padding-bottom:3%;font:400 .7em/1.5 var(--ui);color:var(--rmuted)}
+.flow .end{break-before:column;-webkit-column-break-before:always;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.6em;text-align:center;text-indent:0}
+.flow .end b{font-size:1.4em;font-weight:600;letter-spacing:.3em}
+.flow .end span{font:500 .72em/1.5 var(--ui);color:var(--rmuted)}
+.pop{position:absolute;z-index:40;right:max(10px,env(safe-area-inset-right,0px));top:calc(env(safe-area-inset-top,0px) + 52px);width:min(320px,calc(100vw - 20px));background:color-mix(in srgb,var(--rbg) 94%,var(--rfg));color:var(--rfg);border-radius:16px;padding:14px;box-shadow:0 20px 60px -20px rgba(0,0,0,.6),0 0 0 1px color-mix(in srgb,var(--rfg) 10%,transparent);display:flex;flex-direction:column;gap:14px}
+.seg{display:grid;grid-template-columns:1fr 1fr;border-radius:12px;overflow:hidden;background:color-mix(in srgb,var(--rfg) 7%,transparent)}
+.seg button{border:0;background:transparent;height:46px;cursor:pointer;color:var(--rfg)}
+.seg button+button{border-left:1px solid color-mix(in srgb,var(--rfg) 12%,transparent)}
+.seg button.on{background:color-mix(in srgb,var(--rfg) 13%,transparent);font-weight:600}
+#lhSeg button{font:500 14px var(--ui)}
+#fsDown{font-family:Georgia,serif;font-size:15px}
+#fsUp{font-family:Georgia,serif;font-size:24px}
+.themes{display:flex;justify-content:space-between;gap:8px}
+.themes button{width:48px;height:48px;border-radius:50%;cursor:pointer;font:600 15px Georgia,serif;display:flex;align-items:center;justify-content:center;border:2px solid transparent;box-shadow:0 0 0 1px rgba(127,127,127,.35)}
+.themes button.on{border-color:var(--accent)}
+.themes [data-rt="auto"]{background:linear-gradient(135deg,#fff 50%,#121214 50%);color:#888;font:600 11px var(--ui)}
+.themes [data-rt="original"]{background:#fff;color:#141414}
+.themes [data-rt="paper"]{background:#f5edd9;color:#3a2e21}
+.themes [data-rt="quiet"]{background:#4a4a4f;color:#ebe8e2}
+.themes [data-rt="night"]{background:#000;color:#cdc8be}
+.fonts{display:flex;flex-direction:column;border-radius:12px;overflow:hidden;background:color-mix(in srgb,var(--rfg) 7%,transparent)}
+.fonts button{border:0;background:transparent;text-align:left;padding:12px 14px;cursor:pointer;color:var(--rfg);font-size:17px;display:flex;justify-content:space-between;align-items:center}
+.fonts button+button{border-top:1px solid color-mix(in srgb,var(--rfg) 10%,transparent)}
+.fonts button.on::after{content:"✓";color:var(--accent);font-family:var(--ui)}
+.sheet{position:absolute;z-index:40;left:0;right:0;bottom:0;max-height:78%;background:color-mix(in srgb,var(--rbg) 94%,var(--rfg));border-radius:18px 18px 0 0;box-shadow:0 -20px 60px -20px rgba(0,0,0,.5);display:flex;flex-direction:column;padding-bottom:env(safe-area-inset-bottom,0px)}
+.sheet-h{display:flex;align-items:center;justify-content:space-between;padding:14px max(16px,env(safe-area-inset-right,0px)) 10px max(16px,env(safe-area-inset-left,0px));font:700 17px var(--ui)}
+.sheet ol{list-style:none;margin:0;padding:0 max(8px,env(safe-area-inset-right,0px)) 16px max(8px,env(safe-area-inset-left,0px));overflow:auto}
+.sheet li button{all:unset;box-sizing:border-box;width:100%;display:flex;gap:12px;align-items:baseline;padding:12px 10px;border-radius:10px;cursor:pointer;font:400 16px/1.3 var(--ui)}
+.sheet li button:hover,.sheet li button:focus-visible{background:color-mix(in srgb,var(--rfg) 7%,transparent)}
+.sheet li button .n{color:var(--rmuted);font-size:13px;width:22px;flex:none;font-variant-numeric:tabular-nums}
+.sheet li button .t{flex:1;min-width:0}
+.sheet li button .p{color:var(--rmuted);font-size:13px;font-variant-numeric:tabular-nums}
+.sheet li.cur button{color:var(--accent);font-weight:600}
+@media (prefers-reduced-motion:reduce){.cover,.r-bar{transition:none}}
+</style>
+
+<div id="lib">
+  <header class="lib-head">
+    <div class="eyebrow">Claudix · Книги</div>
+    <h1>Библиотека</h1>
+    <p>Вся киновселенная AOYT в книгах. Открой обложку и листай.</p>
+  </header>
+  <section id="cont" class="cont" aria-label="Продолжить чтение"></section>
+  <section class="shelf"><div class="shelf-h"><h2>Импульс</h2><span>трилогия · 16+</span></div><div class="grid" id="g-imp"></div></section>
+  <section class="shelf"><div class="shelf-h"><h2>Лига Улиц</h2><span>полные книги и досье героев</span></div><div id="g-league" class="subshelves"><div class="sub"><h3 class="sub-h">Полные книги</h3><div class="grid" id="g-league-full"></div></div><div class="sub"><h3 class="sub-h">Досье</h3><div class="grid" id="g-league-dos"></div></div></div></section>
+  <section class="shelf"><div class="shelf-h"><h2>Пишется</h2><span>появятся, когда будут закончены</span></div><div class="grid" id="g-wip"></div></section>
+</div>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<div id="reader" hidden data-rt="auto" class="single">
+  <div class="r-bar r-top">
+    <button class="ib" id="rBack" aria-label="В библиотеку"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>Библиотека</button>
+    <div class="r-title" id="rTitle"></div>
+    <button class="ib" id="rToc" aria-label="Оглавление"><svg viewBox="0 0 24 24"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/></svg></button>
+    <button class="ib" id="rAa" aria-label="Шрифт и тема">Aa</button>
+  </div>
+  <div id="stage">
+    <div class="pg" id="uL"><div class="hd"></div><div class="pb"><div class="flow" lang="ru"></div></div><div class="pn"></div><div class="shade"></div></div>
+    <div class="pg" id="uR"><div class="hd"></div><div class="pb"><div class="flow" lang="ru"></div></div><div class="pn"></div><div class="shade"></div></div>
+    <div class="spine"></div>
+    <div id="leaf">
+      <div class="pg face" id="lF"><div class="hd"></div><div class="pb"><div class="flow" lang="ru"></div></div><div class="pn"></div><div class="gloss"></div></div>
+      <div class="pg back" id="lB"><div class="hd"></div><div class="pb"><div class="flow" lang="ru"></div></div><div class="pn"></div><div class="gloss"></div></div>
+    </div>
+  </div>
+  <div class="r-bar r-bottom">
+    <div class="r-prog"><input type="range" id="rScrub" min="0" max="0" value="0" aria-label="Страница"></div>
+    <div class="r-info" id="rInfo"></div>
+    <button class="btn" id="rNext" hidden></button>
+  </div>
+  <div class="pop" id="aa" hidden>
+    <div class="seg"><button id="fsDown" aria-label="Мельче">A</button><button id="fsUp" aria-label="Крупнее">A</button></div>
+    <div class="seg" id="lhSeg"><button data-lh="tight">Плотно</button><button data-lh="loose">Свободно</button></div>
+    <div class="themes" id="themes">
+      <button data-rt="auto" aria-label="Как в системе">Авто</button>
+      <button data-rt="original" aria-label="Белая">Aa</button>
+      <button data-rt="paper" aria-label="Бумага">Aa</button>
+      <button data-rt="quiet" aria-label="Тихая">Aa</button>
+      <button data-rt="night" aria-label="Ночь">Aa</button>
+    </div>
+    <div class="fonts" id="fonts">
+      <button data-f="times" style="font-family:var(--f-times)">Times New Roman</button>
+      <button data-f="literata" style="font-family:var(--f-literata)">Literata</button>
+      <button data-f="ptserif" style="font-family:var(--f-ptserif)">PT Serif</button>
+      <button data-f="system" style="font-family:var(--f-system)">Системный</button>
+    </div>
+  </div>
+  <div class="sheet" id="toc" hidden>
+    <div class="sheet-h"><span id="tocTitle">Оглавление</span><button class="ib" id="tocClose" aria-label="Закрыть"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+    <ol id="tocList"></ol>
+  </div>
+</div>
+
+<script>
+// ===== ТЕКСТЫ КНИГ =====
+var BOOK_TEXTS = {
+
+imp1: [
+{ t: "Новый Макс", x: `
+Весной 2026 года Макса в школе знал каждый. Только не как героя, а как мишень.
+
+Он был полным и стеснялся этого. Носил толстовки на размер больше, на физре переодевался последним, а в столовой садился так, чтобы его не было видно от двери. Не помогало. Его толкали в коридорах, прятали рюкзак, снимали на телефон, как он не может подтянуться ни разу. Громче всех смеялся один парень из его класса — высокий, наглый, с вечной ухмылкой. Новые клички для Макса он придумывал быстрее, чем учителя успевали проверить домашку.
+
+Последнего звонка той весной Макс ждал как спасения.
+
+Лето прошло. Наступил сентябрь, и первую учебную неделю Макс в школу не пришёл. Никто особо не удивился.
+
+В ту же неделю в городе заметили фигуру.
+
+Её снимали издалека и на бегу, поэтому видео выходили смазанными. Человек в облегающем чёрно-синем костюме с белыми линзами на маске. Костюм тянулся, как резина, и при этом держал удары. На запястьях — энергетические пушки, которые стреляли короткими синими вспышками. На ногах — джетпаки. Летал он не на огне, а толчками воздуха, будто отталкивался от самого неба. В новостях его прозвали Импульсом.
+
+На следующей неделе Макс вернулся в школу.
+
+Его не узнали. Он вытянулся, плечи стали шире, старая толстовка сидела на нём как футболка. Лицо осталось тем же, но держался он по-другому: спокойно, без привычной сутулости. Учительница два раза переспросила его фамилию по журналу.
+
+На физкультуре, в раздевалке, Макс стянул футболку, и все увидели у него на спине и боках круглые присоски, похожие на медицинские датчики. Он быстро, одну за другой, отлепил их и сунул в рюкзак.
+
+— Это что, муляж? — громко спросил тот самый парень. — Купил себе пресс в интернете?
+
+Он толкнул Макса в грудь. Потом ударил — по-настоящему, как бил всю прошлую весну.
+
+Макс даже не покачнулся. Он перехватил его руку, развернул и впечатал в стену раздевалки так, что с полки посыпались кроссовки. Задира сполз на пол и больше не смеялся.
+
+В раздевалке стало очень тихо.
+
+Макс надел футболку, застегнул рюкзак и вышел. А вечером над городом снова мелькнул чёрно-синий силуэт.
+
+Следующие дни прошли почти спокойно. Днём Макс сидел на уроках и делал вид, что ничего особенного не произошло. В классе шептались: одни говорили, что он всё лето провёл в спортивном лагере, другие — что сидел на какой-то жёсткой диете. Сам Макс не рассказывал ничего.
+
+Ночью он учился. Учился держать ингибитор так, чтобы сила не рвалась наружу. Учился летать на воздушных импульсах, не врезаясь в антенны. Учился стрелять из пушек так, чтобы синяя вспышка сбивала с ног, но не ломала кости. Импульс снимал кошек с проводов, разгонял драки у баров и один раз вытащил водителя из горящей машины. Город начал к нему привыкать.
+`},
+{ t: "Суперсолдаты", x: `
+Через несколько дней в город пришли двое.
+
+Они шли по главной улице средь бела дня, и прохожие расступались сами. Высокие, широкоплечие, в одинаковой тёмной броне без опознавательных знаков. Двигались слишком быстро для людей своего роста. Камера на перекрёстке потом показала, как один из них одной рукой сдвинул с дороги полицейскую машину.
+
+Суперсолдаты, как с военного плаката. Говорили, что их сделали в какой-то секретной корпорации. Но в тот день Макс знал только одно: это его первая настоящая вылазка.
+
+Он встретил их на крыше торгового центра. Первый выстрел энергетической пушки отбросил одного солдата на два метра — и всё. Солдат встал, отряхнулся и пошёл вперёд. Второй прыгнул с места на высоту третьего этажа.
+
+Драка вышла жёсткой. Солдаты били, как грузовики, и почти не уставали. Макс держал дистанцию, отскакивал воздушными импульсами, стрелял короткими очередями. Одного он всё-таки сбил с ног. А второй в этот момент зашёл ему за спину.
+
+Макс почувствовал лёгкий толчок у шеи, будто в него бросили камешек. Обернулся — и увидел, как оба солдата бегут к краю крыши. Они прыгнули вниз, и через секунду за домами взревел двигатель.
+
+Больше их никто не видел.
+
+Ночью Макс осмотрел себя перед зеркалом. Ни ран, ни синяков, ни следов. Проверил костюм, пролистал запись с камеры в маске. Ничего.
+
+Он решил, что ему показалось.
+
+Город обсуждал драку на крыше ещё неделю. Видео с камер разлетелось по сети, Импульса стали рисовать на стенах гаражей, а в комментариях спорили, кто он такой: военный эксперимент, богатый псих или пришелец. Про двух солдат в броне никто больше ничего не слышал. Как будто их и не было.
+`},
+{ t: "Бомба", x: `
+Через неделю Макс узнал, что в школу летит бомба.
+
+Он услышал это на перемене, по полицейской волне, которую слушал в наушнике: объект весом в несколько тонн, курс прямо на их район. До удара две минуты.
+
+Две минуты.
+
+Макс сорвал пожарную сигнализацию и закричал так, как не кричал никогда. Он гнал всех по лестницам: учеников, учителей, охранника, буфетчицу. Вытаскивал из классов тех, кто решил, что это учебная тревога. Отправлял подальше — за стадион, за дорогу, за гаражи. Школа опустела.
+
+Потом он заскочил в туалет, переоделся и рванул по лестнице на крышу.
+
+Бомба уже была видна: чёрная точка, которая росла на глазах. Макс встал в центре крыши, расставил ноги и поднял руки.
+
+Многотонная махина врезалась ему в ладони. Касаясь металла, Макс бил в неё импульсами — короткими, точными, по проводам и механизмам внутри. Часть систем погасла. Но не всё.
+
+Бомба давила. Она медленно опустила Макса на колени, потом ещё ниже. Бетон под ним трещал, руки дрожали. Ещё немного — и его раздавит вместе с крышей.
+
+Тогда Макс снял ингибитор.
+
+Сила внутри него рванула вверх, как вода из прорванной трубы. Бомба вдруг стала лёгкой, будто пустая коробка. Макс поднялся, поднял её над головой и взлетел.
+
+Он полетел к водоёму за городом. Над водой остановился, опустил бомбу на поверхность и накрыл её одноразовым энергетическим куполом — прозрачным, сияющим, плотным. Чтобы не погибли рыбы.
+
+Бомба взорвалась.
+
+Купол вспух, задрожал, но выдержал. Внутри полыхнуло белое пламя, вода под куполом вскипела. А потом всё стихло, и купол рассыпался искрами.
+
+Макс завис над водой, тяжело дыша. Сила внутри всё ещё росла. Он достал запасной ингибитор и защёлкнул его на запястье.
+
+Вечером, в ванной, он почесал за ухом и нащупал под кожей что-то твёрдое. Маленькое, круглое, размером с семечку.
+
+Трекер.
+
+Вот что бросил в него суперсолдат на крыше. Всё это время его вели.
+
+Макс взял нож, стиснул зубы и вырезал трекер из-под кожи. Он долго смотрел на крошечную железку на краю раковины. Кто-то знал, где он бывает. И этот кто-то только что отправил бомбу в его школу.
+`},
+{ t: "Это низко", x: `
+В понедельник был урок истории. Окно в классе было приоткрыто, и сначала все услышали жужжание.
+
+Потом в окно влетел дрон.
+
+Чёрный, размером с большую тарелку, на четырёх винтах. Снизу у него раскрылась панель, а в ней веером торчали лезвия — метательные ножи.
+
+— Ложись! — крикнул Макс.
+
+Половина класса рухнула под парты. Дрон медленно развернулся и навёл ножи на одного парня — здоровенного качка с последнего ряда. Тот ложиться не стал. Он вскочил, схватил стул и замахнулся.
+
+— Я его сейчас разнесу!
+
+Стул только чиркнул по винту. Дрон дёрнулся, завис прямо перед лицом качка, и внутри у него что-то щёлкнуло. Механизм взвёлся.
+
+За полсекунды до выстрела Макс оказался рядом. В его руке мелькнуло что-то синее — и дрон развалился на две ровные половинки. Ножи со звоном посыпались на пол.
+
+Качок так и стоял со стулом в руках. Никто так и не понял, чем Макс это сделал.
+
+Остаток урока класс сидел тихо. Учительница вызвала охрану, охрана — полицию, полиция унесла половинки дрона в пакетах. Кто и зачем его отправил, так и не выяснили. А Макс весь день ловил на себе взгляды: одноклассники смотрели на него так, будто начинали о чём-то догадываться. Качок после уроков подошёл к нему, долго мялся и наконец буркнул «спасибо».
+
+Через несколько дней Импульс возвращался с патруля через промзону, когда из-за контейнеров вышли шестеро.
+
+У всех были пушки. Они окружили его полукругом, неторопливо, будто давно ждали.
+
+Макс рванул к ближайшему, выбил у него ствол, ушёл вверх воздушным импульсом и обрушился сразу на двоих. Он бил, уворачивался, выбивал оружие одно за другим.
+
+А один из них выстрелил ему в спину.
+
+Пуля застряла в эластичной ткани костюма, но удар швырнул Макса вперёд, на колени. Он медленно поднялся и обернулся.
+
+— Это низко, — сказал он.
+
+И ударил средним импульсом. Не самым сильным, но достаточным. Синяя волна прошла по площадке, и все шестеро разлетелись по контейнерам, как кегли.
+
+Через десять минут их всех повязала полиция.
+`},
+{ t: "Экзоскелетник", x: `
+Через неделю Макс взял отгул. Позвонил в школу хриплым голосом, сказал, что заболел, и остался дома.
+
+Весь день он читал новости. В городе появился убийца в экзоскелете: металлический каркас, гидравлические руки, шлем, а внутри человек, который убивал людей просто так. Полиция писала, что он психически нездоров. Ни с суперсолдатами, ни с теми, кто их послал, он связан не был. Просто человек с шизой и машиной, которая давала ему силу десятерых.
+
+К обеду он появился у школы Макса.
+
+Импульс встретил его во дворе. Экзоскелетник был медленным, но каждый его удар выбивал асфальт. Они дрались по всему двору, потом по стене здания, и в какой-то момент Макса швырнуло прямо в окно его класса. Опять. Стёкла посыпались на парты.
+
+Макс проехал спиной по полу до самой доски. Шёл урок. Весь класс и учительница смотрели на него в упор. За ним в разбитое окно уже лез экзоскелетник.
+
+Гидравлическая рука схватила Макса за маску и сорвала её.
+
+Класс ахнул.
+
+— Макс?.. — тихо сказала учительница.
+
+Теперь знали все.
+
+Ответить он не успел. Из запястья экзоскелетника выскочил клинок и вошёл Максу в бок, глубоко, под рёбра. Кто-то закричал.
+
+Макс понял сразу: если клинок вытащат, он истечёт кровью прямо здесь, на полу класса. Он вцепился в руку экзоскелетника обеими руками и держал. Не давал выдернуть лезвие. Гидравлика выла, злодей рвался назад, но Макс держал.
+
+Потом он отпустил одну руку. В ладони вспыхнул свет и вытянулся в одноразовый энергетический меч. Один взмах — и меч прошёл сквозь руку злодея вместе с металлом экзоскелета. Отрубленная рука так и осталась держать клинок у Макса в боку. А Макс ударил мощным импульсом, и экзоскелетник вылетел обратно в окно.
+
+Макс сполз по стене. Последнее, что он помнил, — потолок над носилками, сирены и лицо учительницы, которая держала его за руку.
+
+Его увезли в больницу. Операция прошла хорошо, и через пару дней Макса выписали.
+
+Домой он ехал в такси и смотрел в окно. Его тайну теперь знал весь класс.
+
+Первую неделю после больницы он почти не вставал. Шов на боку тянуло при каждом движении, а сила внутри, будто чувствуя слабость, давила на ингибитор сильнее обычного. Одноклассники писали ему в мессенджер: кто-то спрашивал, правда ли он Импульс, кто-то просил автограф, а кто-то просто желал выздоравливать. Макс читал сообщения и не знал, что отвечать. Впервые за долгое время его кто-то ждал в школе.
+`},
+{ t: "Каникулы", x: `
+На осенних каникулах Макс почти не вылезал из гаража.
+
+Он обновлял костюм. Главное, что он добавил, — генераторы одноразовых предметов прямо в ладонях. Раньше, чтобы создать меч или купол, ему приходилось долго собирать энергию. Теперь достаточно было сжать кулак: щит, лезвие, хлыст — что угодно, на один раз.
+
+Проверить обновление пришлось быстро.
+
+Полиция попросила Импульса о помощи: человек на «Ламборгини» украл секретную флешку и уходил от погони по трассе. Патрульные машины не успевали за ним даже на прямой.
+
+Макс догнал его по воздуху. На обочине валялся маленький шлакоблок. Макс выбросил из ладоней энергетические хлысты: одним подхватил шлакоблок, другим захлестнул машину. Хлыст натянулся и остановил «Ламборгини», а шлакоблок с размаху врезался в неё.
+
+Вор выбрался из машины, шатаясь. В руке у него была флешка.
+
+— Не отдам, — сказал он и распахнул куртку.
+
+На груди у него была закреплена бомба. На маленьком экране горело: «загрузка 99%».
+
+Макс не стал спорить. Он отшвырнул вора на другой конец машины, рывком выхватил флешку и отскочил подальше.
+
+«Ламборгини» взорвалась.
+
+Когда дым рассеялся, Макс подошёл к полицейским и протянул флешку инспектору. Инспектор взял её, посмотрел на Макса, потом развернулся к своим констеблям.
+
+— Семнадцатилетний пацан справился, — сказал он. — А вы — нет.
+
+Констебли молчали.
+
+В последний день каникул город проснулся от новых новостей. Каждое утро находили трупы. У всех жертв были высосаны внутренности, будто их выпили изнутри.
+
+Ночью Макс пошёл на разведку.
+
+Он нашёл её в старом парке, у пересохшего фонтана. Тварь ростом в три метра, похожая на гиену. Шерсть клоками, длинные лапы, пасть до ушей. А когда она раскрыла пасть, оттуда вывалился язык, разделённый на пять частей. Каждая шевелилась отдельно, как щупальце.
+
+Они дрались до рассвета. Тварь была быстрой и живучей: импульсы отбрасывали её, но не валили. В конце концов она отступила в темноту.
+
+Не побеждённая. Просто ушедшая.
+
+Макс стоял посреди парка и понимал, что она не последняя.
+`},
+{ t: "Мы непобедимы", x: `
+Первая неделя после каникул прошла спокойно. Подозрительно спокойно. Одноклассники уже знали, кто сидит с ними в классе, и смотрели на Макса по-разному: кто с восхищением, кто со страхом. Тот самый парень из раздевалки обходил его стороной.
+
+На второй неделе в школу пришли твари.
+
+Их было тринадцать. Они выбили двери главного входа, и по коридорам потянуло мокрой шерстью и кровью. Гиены, вставшие на задние лапы, — такие же, как та, в парке.
+
+Макс выводил людей. Через окна, через запасные выходы, через спортзал. Кричал, толкал, тащил за руки. Когда последний ученик выбежал на улицу, Макс остался в коридоре один.
+
+Тринадцать тварей встали напротив. Самая крупная раскрыла пасть, и голос прозвучал хрипло, по-звериному, но разборчиво:
+
+— Мы непобедимы.
+
+— А я Импульс, — ответил Макс.
+
+Наниты, которые он внедрил в собственное тело, хлынули на кожу. За полсекунды на нём собрался костюм: эластичная чёрно-синяя ткань, белые линзы маски, пушки на запястьях.
+
+Твари бросились все разом.
+
+Это был самый тяжёлый бой в его жизни. Твари рвали костюм когтями, били с трёх сторон сразу, их языки хлестали по маске. Макса швыряло из стены в стену. В какой-то момент он понял, что лежит на полу, сверху наваливаются три твари, а встать он уже не может.
+
+Они почти убили его.
+
+Макс выдохнул сквозь разбитые губы:
+
+— Раз не хотите по-хорошему, будет по-плохому.
+
+И снял ингибитор.
+
+Сила взорвалась внутри. Твари отлетели от него, как от раскалённой плиты. Макс поднялся, и из его рук выросли когти — огромные, энергетические, на полкласса. Одним взмахом он сгрёб пятерых гиен и вышвырнул их из школы прямо сквозь стену.
+
+Остальных он встретил взрывом. Импульсы вырвались из него во все стороны разом, и коридор залило синим светом. Когда свет погас, восемь тварей из тринадцати лежали неподвижно.
+
+Пятеро, выброшенных на улицу, ещё шевелились. Макс вышел к ним через пролом в стене и добил в рукопашную. Одну за другой.
+
+Потом стало тихо.
+
+Макс стоял посреди школьного двора и тяжело дышал. И вдруг почувствовал: что-то не так. Костюм натянулся на плечах. Земля как будто отодвинулась. Он смотрел на свои руки и видел, что они растут.
+
+Он рос.
+
+Макс бросился обратно в пролом, нашёл на полу коридора ингибитор и защёлкнул его на запястье. Рост остановился. Тело медленно вернулось к прежнему размеру.
+
+Он сидел, прислонившись к стене, и не мог унять дрожь.
+`},
+{ t: "Лаборатория Крикова", x: `
+Вечером Макс сидел дома перед ноутбуком и искал всё, что можно найти про тварей. Форумы, слухи, размытые фото, старые новости. Одна ниточка тянула другую, и к полуночи все они сошлись в одной точке.
+
+Лаборатория Крикова.
+
+Она стояла на окраине — не в подземном бункере, как в кино, а прямо на земле: серый корпус за забором с вывеской исследовательского центра. Именно оттуда по ночам выезжали фургоны без номеров.
+
+Макс вызвал такси. Водитель высадил его за квартал до лаборатории. Макс дождался, пока машина уедет, и надел костюм.
+
+Внутри было тихо и пусто. Длинные коридоры, белый свет, запах химии. А в самом большом зале Макс нашёл то, что искал: спавнер тварей. Огромную установку из резервуаров и труб, в которых плавали недоразвитые твари — маленькие, скрюченные, с закрытыми глазами. К установке тянулись толстые кабели от генератора.
+
+Макс поднял обе руки и ударил мощным импульсом. Спавнер взорвался вместе с генератором, резервуары лопнули, и зал утонул в огне и пене.
+
+И тогда в соседней комнате что-то загудело.
+
+Странный скачок энергии: стрелки приборов на стенах ушли в красное. Макс толкнул дверь — и замер.
+
+За дверью была чёрная материя. Не темнота, а что-то плотное, живое, переливающееся. Оно колыхнулось и потянуло. Макса оторвало от пола и засосало внутрь.
+
+Он упал на колени в пустоте. Ни стен, ни пола, только чернота. И из этой черноты вышел человек.
+
+Высокий, величественный, похожий на бога из старых легенд — вроде Тора или Локи. Длинные жёлто-зелёные одежды, спокойное лицо и глаза, которые смотрели насквозь.
+
+Бог Зла.
+
+Он поднял руку, и Макса сковало. Ни пошевелить пальцем, ни вдохнуть полной грудью.
+
+— Ну привет, Макс, — сказал Бог. — Давно не виделись. Но что ты можешь без костюма?
+
+Он сжал пальцы, и костюм начал сходить с Макса. Ткань, линзы, пушки, джетпаки. Биоприсоски отрывались от кожи одна за другой. И вместе с ними — Бог даже не заметил — с запястья соскользнул ингибитор.
+
+Сила внутри Макса проснулась.
+
+Паралич держал его ещё секунду. Две. А потом Макс рванулся, и невидимые путы лопнули. Он встал.
+
+Бог Зла чуть приподнял бровь и махнул рукой. Сверху на Макса рухнул потолок — бетонная плита тонн в пятьдесят.
+
+Макс вскинул руку.
+
+Плита остановилась в двадцати сантиметрах над его головой. Она висела в воздухе, будто её держали невидимые тросы. Макс сам не понимал, как это делает. Новая способность проснулась сама. Телекинез.
+
+Он сжал кулак и швырнул плиту в Бога.
+
+Пятьдесят тонн бетона врезались в Бога Зла. Когда пыль осела, он стоял на том же месте. На щеке у него была царапина. Всего несколько царапин.
+
+— В следующий раз мы вернёмся сильнее, и нас будет больше, — сказал Бог Зла. — Хоть ты в этот раз победил, в следующий мы будем мощнее.
+
+Чернота вздрогнула, и Макса вышвырнуло наружу, как пробку из бутылки. Он упал на пол лаборатории. Дыра за его спиной схлопнулась.
+
+Костюм остался там. У Бога Зла.
+`},
+{ t: "Жертва", x: `
+Домой Макс добрался под утро. Без костюма, в порванной одежде.
+
+Сила внутри росла. Без ингибитора она поднималась, как вода в запертой комнате: каждую минуту чуть выше. Пальцы покалывало синими искрами, а в ушах гудело, будто рядом работала электростанция.
+
+Он сидел на полу своей комнаты и складывал всё по кусочкам. Суперсолдаты с трекером. Бомба, которая летела точно в его школу. Твари, которые пришли за ним. Лаборатория, где их выращивали. И голос в черноте: «Давно не виделись».
+
+За всем этим стоял Бог Зла.
+
+Макс достал из ящика стола второй ингибитор и защёлкнул его на запястье. Гул в ушах притих.
+
+Но он уже знал, что будет дальше. «Нас будет больше». А у Макса не было ни костюма, ни пушек, ни запасного плана.
+
+Оставался один способ остановить то, что придёт: снять ингибитор и отпустить силу целиком. Он знал, чем это закончится. Если превратиться полностью, без ингибитора, человеком уже не стать. Никогда.
+
+Макс долго сидел в темноте. Потом решился.
+
+Эти два дня он прожил как обычный человек.
+
+Утром пошёл в школу. Сидел за своей партой у окна, слушал, как учительница объясняет новую тему, и впервые за весь год записывал всё в тетрадь. На перемене одноклассники обступили его, расспрашивали про тварей, про шов на боку, про то, страшно ли было. Макс отвечал и смеялся вместе с ними. Даже тот самый парень из раздевалки стоял в стороне и слушал.
+
+После уроков Макс долго ходил по городу. Зашёл в столовую, где его когда-то толкали под руку с подносом. Постоял у водоёма, над которым взорвалась бомба. Вода уже успокоилась, и по ней плавали утки.
+
+Вечером второго дня он поднялся на крышу школы и смотрел на огни внизу. Где-то там жили люди, которые даже не знали, что скоро на город придёт армия. Макс подумал, что если всё получится, они так и не узнают, кто их спас. И решил, что это нормально.
+
+Они пришли на рассвете.
+
+Армия накатила на город, как грозовая туча. Больше сотни существ: твари-гиены, суперсолдаты, чудовища, у которых даже не было названий. А над ними, не касаясь земли, плыл Бог Зла в жёлто-зелёных одеждах.
+
+Макс вышел им навстречу. Один, без костюма, в обычной толстовке и джинсах, на пустой площади перед мэрией.
+
+Армия остановилась. Кто-то из тварей засмеялся — хрипло, по-гиеньи.
+
+Макс посмотрел на Бога Зла и снял ингибитор.
+
+Мир вокруг взорвался светом. Сила хлынула из Макса — из кожи, из глаз, изо рта. Из спины, разрывая толстовку, вырвались щупальца, гибкие, сияющие, живые. Они рванулись вперёд быстрее, чем он успел о них подумать, и впились в ближайших тварей. Щупальца пили. Пили энергию и все жидкости, всё, что было внутри, и твари падали пустыми оболочками.
+
+Это была уже не просто сила. Это была божественная сила.
+
+Он прошёл сквозь армию, как сквозь траву. Твари бросались на него и падали. Суперсолдаты стреляли, но пули плавились в воздухе. Через несколько минут от сотни врагов не осталось никого, кто мог бы стоять.
+
+Макс повернулся к Богу Зла. Щупальца обвили его, сжали, натянулись. Ещё секунда — и Макс разорвал бы его пополам.
+
+Тогда задрожала земля.
+
+Из-за домов поднялось нечто огромное. Восемь метров роста, две ноги толщиной с колонны, бронированная грудь, голова без лица. Финальный босс всех тварей. Им, как и остальными, управлял Бог Зла.
+
+Монстр ударил. Щупальца разжались, и Бог выскользнул. Макса впечатало в асфальт.
+
+Они сцепились посреди площади. Монстр был огромным и страшно сильным. В какой-то момент он схватил одно из щупалец обеими лапами и оторвал его. Макс закричал — низким, нечеловеческим голосом. Он уже был не тем Максом, которого знал весь класс.
+
+Он запрыгнул монстру на плечи, обхватил его шею руками и щупальцами — и разорвал.
+
+Монстр рухнул на площадь, и земля вздрогнула под ним в последний раз.
+`},
+{ t: "Отдать всё", x: `
+Бог Зла висел в воздухе над площадью и смотрел на Макса. Впервые на его спокойном лице было что-то похожее на тревогу.
+
+Макс поднял руки.
+
+Он собрал всё: силу, свет, ярость, голод щупалец. Сжал в одну точку в груди — и отпустил. Импульс вышел из него ослепительно синей сферой, огромной, в разы больше самого Бога. Он накрыл Бога Зла целиком, и тот исчез в сиянии, не успев даже закричать.
+
+Когда свет погас, небо над площадью было пустым.
+
+Макс стоял на коленях посреди разрушенной площади. Бога больше не было. Армии тоже. Но превращение не остановилось.
+
+Щупальца втягивались в спину и тут же прорастали снова. Кожа на руках светилась изнутри, сквозь неё уже не было видно вен. Он чувствовал, как его «я» становится всё меньше, а сила — всё больше. Ещё немного, и от Макса останется только монстр с божественной силой, которому всегда мало.
+
+Удержать это было нечем.
+
+Оставался один способ. Макс понял его так ясно, будто кто-то сказал вслух: спастись от монстр-формы можно, только отдав всю силу. Не сдержать и не спрятать, а отдать. До последней искры.
+
+Это значило навсегда перестать быть Импульсом.
+
+— Ладно, — сказал Макс. — Забирай.
+
+Он раскрыл ладони, и сила пошла вверх. Сначала тонкой нитью, потом столбом света, который, говорят, видели даже в соседних городах. Вместе с ней уходили щупальца, свет из-под кожи, гул в ушах и голод.
+
+Когда всё закончилось, на площади сидел обычный парень в порванной толстовке. Замёрзший, голодный и очень уставший. Человек.
+
+Домой он пришёл пешком.
+
+Потом были недели тишины. Макс ходил в школу. Одноклассники сначала смотрели на него как на привидение, потом как на звезду, а потом привыкли. Никто больше не просил его взлететь или поднять машину. Он больше и не мог.
+
+Вечерами Макс сидел на подоконнике и смотрел на город. Иногда сжимал кулак и ждал, что под кожей вспыхнет синий свет.
+
+Свет не вспыхивал. И, честно говоря, Макс был этому рад.
+
+Он наконец жил спокойной жизнью.
+`},
+{ t: "Сцена после титров", post: true, x: `
+Темнота. Ни звёзд, ни звука, ни верха, ни низа.
+
+Внутри той самой чёрной дыры сидел Бог Зла. Сидел не по своей воле: чернота держала его, как клетка, и не выпускала наружу. Жёлто-зелёные одежды потускнели.
+
+Он поднял руку и посмотрел на неё.
+
+Пальцы начали рассыпаться. Сначала кончики, потом ладонь, потом запястье — тихо, как пепел на ветру. Бог Зла смотрел на это спокойно, почти с любопытством.
+
+Через несколько секунд в пустоте не осталось никого.
+
+Только пепел, медленно оседающий в темноте. И одна крошечная пылинка, которая всё ещё светилась жёлто-зелёным.
+`}
+],
+
+imp2: [
+{ t: "Репульсор", x: `
+Начало 2027 года выдалось тихим.
+
+Прошло несколько месяцев с того утра, когда над городом стоял столб синего света. Площадь перед мэрией отстроили заново, а в школе заделали пролом, который оставили твари. Макс ходил в школу, писал контрольные и по вечерам смотрел сериалы. В его жизни больше не было ни тварей, ни ночных крыш.
+
+О том, что Макс был Импульсом, знал весь класс. Знала и учительница: экзоскелетник сорвал с него маску прямо у неё на глазах. Но говорить об этом перестали. Импульса больше не было. Был просто Макс — парень, который иногда слишком долго смотрел в окно.
+
+Во вторник на перемене он заметил что-то в рукаве у Александра Серго.
+
+Серго был старше всех в классе: ему уже исполнилось восемнадцать. Он сидел на последней парте, почти ни с кем не разговаривал и вечно что-то паял на коленке. Сейчас из-под его манжеты торчал край металлической пластины, а от неё к ладони тянулись тонкие провода.
+
+Макс нахмурился, но ничего не сказал.
+
+На следующем уроке Серго поднялся из-за парты, не дожидаясь звонка.
+
+— Анна Сергеевна, — сказал он учительнице, — хотите, покажу, что я сделал?
+
+Он закатал рукав. На его запястье был закреплён переходник, а в нём сидел репульсор — металлический диск размером с ладонь, по краю которого побежало оранжевое свечение. Диск загудел, нагреваясь, и воздух над ним задрожал. Серго поднял руку. Прямо на учительницу.
+
+Макс вскочил раньше, чем успел подумать.
+
+Он перемахнул через парту и ударил Серго по руке за долю секунды до выстрела. Луч ушёл в потолок, и сверху посыпалась штукатурка. Класс закричал.
+
+Серго развернулся и врезал Максу в челюсть. Удар был сильный, но Макс видел и пострашнее. Он перехватил руку Серго, выдернул репульсор из подставки-переходника на запястье, коротко размахнулся и ударил Серго этим же диском по голове.
+
+Серго рухнул между партами.
+
+— Макс, осторожно! — крикнула учительница. — Ты же его убьёшь своей силой!
+
+Макс посмотрел на репульсор в своей руке, потом на неё.
+
+— У меня уже нету силы, — тихо сказал он.
+
+Когда Серго начал приходить в себя, его уже несли к полицейской машине. Репульсор Макс оставил на парте, и полиция забрала его на экспертизу. Выяснилось, что Серго собрал его сам, от первого до последнего винтика.
+`},
+{ t: "Трещина", x: `
+Серго посадили. На суде он молчал и смотрел в одну точку.
+
+Через месяц стену городской тюрьмы проломили изнутри. Ночью, без единого взрыва, будто бетон просто выдавили наружу. Сбежали одиннадцать заключённых. Утром все каналы показывали фотографию организатора побега: восемнадцатилетний Александр Серго.
+
+Макс прочитал это в телефоне, стоя под душем.
+
+Он смотрел на мокрый экран, и внутри поднималась злость. На Серго, на тюрьму, но больше всего на себя. Раньше он бы уже летел над городом и искал беглецов по тепловым следам. А теперь мог только стоять под горячей водой и читать комментарии.
+
+Он ударил кулаком по стене.
+
+Боли не было.
+
+Макс медленно убрал руку. По кафелю от того места, куда пришёлся кулак, расползалась трещина — длинная, ветвистая, до самого потолка. Костяшки пальцев были целы. Даже не покраснели.
+
+Он стоял и смотрел на трещину, пока вода не стала холодной.
+
+Значит, отдал он не всё. Где-то глубоко внутри, под рёбрами, осталась искра. Маленькая, почти незаметная. Но живая.
+
+За следующие недели Макс понял, что она растёт. Сначала он перестал уставать на физкультуре. Потом начал слышать, как гудят провода в стенах. Потом однажды утром погнул ложку, просто размешивая чай. Сила возвращалась медленно, по капле, но с каждым днём её становилось больше. Рано или поздно она должна была вырасти до прежнего уровня.
+
+Макс достал с антресолей коробку с инструментами.
+
+Если сила возвращается, ему нужен костюм.
+`},
+{ t: "Железная маска", x: `
+Старый костюм остался в чёрной дыре. Бог Зла забрал его целиком: ткань, линзы, пушки, джетпаки, биоприсоски. Максу пришлось начинать с нуля.
+
+Он работал по ночам в гараже. Новый костюм получился легче старого и умнее. Биоприсоски теперь питали всё сразу: эластичную ткань, пушки, джетпаки и даже наниты, которые жили у Макса под кожей. Наниты больше не нужно было заряжать отдельно. Они жили на энергии Макса, как клетки живут на крови.
+
+В школу Макс снова стал ходить в рубашке и брюках. Только на запястьях, если присмотреться, иногда пробегала под кожей синяя рябь: наниты ждали команды.
+
+Серго он встретил по дороге из школы.
+
+Фигура стояла посреди пустой улицы, загораживая проход. Человек в железном костюме: грубые пластины, сваренные внахлёст, на запястьях те самые репульсоры, только крупнее. Лицо закрывала маска с двумя круглыми линзами, которые горели оранжевым.
+
+— Привет, одноклассник, — сказал металлический голос.
+
+Макс не стал отвечать. Наниты хлынули на кожу, и через полсекунды перед Серго стоял Импульс.
+
+Это была первая настоящая драка за много месяцев, и тело Макса вспомнило всё. Репульсоры Серго били тяжело, прожигали асфальт, сносили припаркованные машины. Пушки Макса били точнее. Они дрались по всей улице, от остановки до самого моста. Серго разорвал Максу костюм на боку длинной рваной дырой. Макс в ответ смял ему нагрудную пластину так, что та вмялась внутрь.
+
+Серго отступил, хрипя в динамик. Потом с рёвом включил джетпаки на спине и ушёл в небо, оставляя оранжевый след.
+
+Макс стоял на мосту, прижимая ладонь к порванному боку, и смотрел ему вслед.
+
+Он вернулся. Но и у его врага теперь был костюм.
+`},
+{ t: "Сон", x: `
+Той ночью Максу приснился космос.
+
+Он висел в пустоте среди звёзд, без костюма и без опоры. Было тихо, только где-то далеко звучало низкое гудение, знакомое до дрожи.
+
+Из темноты к нему шёл человек. Шёл по пустоте, как по полу, неспешно, будто у него было всё время мира. Жёлто-зелёное одеяние, узоры-вены на ткани, слишком спокойное лицо.
+
+— Ты думал, я полностью умер? — сказал Бог Зла и улыбнулся. — Только частично. И ты это почувствуешь.
+
+Он поднял руку, и пальцы сомкнулись у Макса на горле.
+
+Макс не мог ни вдохнуть, ни крикнуть. Звёзды поплыли перед глазами, стали размытыми, потом чёрными. Хватка сжималась всё сильнее…
+
+Он проснулся на полу у кровати. Воздух рвался в лёгкие с хрипом.
+
+Сон. Просто сон.
+
+Макс поднялся, дошёл до ванной и включил свет. Из зеркала на него смотрело бледное лицо с тёмными кругами под глазами. А на шее, от уха до уха, тянулась полоса синей кожи. Тёмная, будто его и правда только что душили.
+
+Макс коснулся её пальцами. Кожа была холодной.
+
+Он простоял перед зеркалом до самого утра.
+`},
+{ t: "Четыре ингибитора", x: `
+Через несколько дней новый костюм почернел.
+
+Это случилось не сразу. Сначала потускнели синие линии на груди. Потом синие вставки на ткани потеряли цвет и стали графитовыми. А однажды утром Макс достал костюм из шкафа, и тот был полностью чёрным. Ни одной синей искры, как будто кто-то вылил на него ночь.
+
+Диагностика показывала, что всё в порядке. Максу это не нравилось.
+
+К тому времени сила вернулась почти полностью. Он чувствовал её постоянно: тяжёлую, горячую, огромную. Одного ингибитора, как раньше, было мало. Двух тоже. Макс неделю просидел над чертежами и сделал четыре маленьких ингибитора: по одному на каждое запястье и на каждую щиколотку.
+
+Система была простой. Все четыре на месте — пятнадцать процентов силы. Хватает, чтобы драться и не разнести полквартала. Надеты три — двадцать пять процентов. Два — пятьдесят. Один — семьдесят пять.
+
+А без всех четырёх сначала, совсем коротко, были все сто процентов. А потом мощь становилась бесконечной, как тогда, на площади. И с каждой секундой её было всё труднее остановить.
+
+Ингибиторы защищали не только Макса от самого себя. Главное, они защищали мир от Макса.
+
+Он сделал их сам, своими руками, от каждого винтика до каждой микросхемы. Потому что никому другому такое доверить было нельзя.
+`},
+{ t: "Клинок", x: `
+Серго вернулся через неделю. За местью.
+
+Он ждал у школьных ворот после уроков, в том же железном костюме, только залатанном. На смятую нагрудную пластину была приварена новая, а из правого запястья выдвигался длинный клинок.
+
+Макс вышел к нему уже в чёрном костюме.
+
+Драка началась сразу и пошла не так, как обычно. Макс бил, уворачивался, снова бил, но в какой-то момент перестал слышать звуки вокруг. Мир сузился до одной точки — горла Серго. Внутри поднялось что-то тёмное и злое, чего раньше никогда не было.
+
+Макс перехватил Серго, вцепился пальцами в край его брони и оторвал кусок металла голой рукой. Острый, рваный, тяжёлый. Он замахнулся, чтобы вонзить его Серго в грудь…
+
+И остановился в сантиметре.
+
+Металл выпал из пальцев и звякнул об асфальт. Макс рухнул на колени. Руки тряслись. В голове звенело.
+
+Это был не он. Он бы никогда так не сделал.
+
+С ним что-то не так.
+
+Серго ждать не стал. Он занёс над Максом руку с клинком — коротко, прямо в шею. В последний миг Макс поймал лезвие ладонью. Наниты на перчатке взвизгнули, но выдержали. Макс вывернул Серго руку и вырвал клинок вместе с креплением.
+
+Серго отскочил, посмотрел на свою пустую руку и снова ушёл в небо.
+
+Макс остался стоять на коленях посреди школьного двора с чужим клинком в руке. Чёрный костюм на нём поблёскивал в свете фонарей.
+`},
+{ t: "Вторая стадия", x: `
+Он попробовал сменить костюм.
+
+Достал из гаража запасной — старый прототип, ещё синий. Надел. Через минуту по синей ткани поползли чёрные пятна, как плесень по хлебу. Через пять минут прототип был чёрным целиком.
+
+Дело было не в костюме. Дело было в нём самом.
+
+Потом началась вторая стадия, как Макс её потом называл. Галлюцинации приходили посреди урока: доска расплывалась, и вместо неё он видел космос, звёзды и руку, которая тянется к его горлу. Голос из сна шептал прямо в ухо: «Ты это почувствуешь». А однажды на перемене его вырвало в школьном туалете чем-то чёрным и густым, как нефть.
+
+Макс стоял над раковиной и смотрел, как чёрная жидкость медленно уходит в слив.
+
+Внутри него сидела тварь. Или сам Бог Зла.
+
+Он подошёл к учительнице и отпросился домой. Впервые за весь год он не соврал, сказав, что ему плохо.
+
+До дома он успел. В своей комнате Макс сел на кровать, и ингибиторы начали щёлкать. Сами по себе, один за другим. Щёлк — левое запястье. Щёлк — правое. Щёлк, щёлк — щиколотки. Четыре браслета упали на пол.
+
+Он попытался надеть их обратно, но они соскальзывали, будто руки стали другой формы. Руки и правда стали другой формы.
+
+Тело росло. Хрустели кости, натягивалась кожа, футболка трещала по швам. Макс понял: ещё минута, и он разнесёт дом изнутри. Вместе с соседями.
+
+Он разбежался и выпрыгнул в окно.
+`},
+{ t: "Монстр", x: `
+На асфальт приземлился уже не Макс.
+
+Трёхметровое существо выпрямилось посреди улицы, и под его ногами треснул бетон. Глаза стали полностью чёрными, без зрачков и белков. На каждом предплечье зияло по три круглых отверстия, будто кость просверлили насквозь.
+
+Люди закричали и бросились врассыпную.
+
+— ОСТОРОЖНО! — прогремел голос, низкий и рычащий, совсем не похожий на голос Макса. — ДЕРЖИТЕСЬ ПОДАЛЬШЕ ОТ МЕНЯ!
+
+Он пытался идти аккуратно, но каждое движение что-то ломало. Плечом снёс забор. Рукой задел второй, и тот сложился, как картонный. Макс зарычал от бессилия.
+
+И тут с неба спустились семеро.
+
+Серго в своём железном костюме, а рядом с ним шесть таких же: сварные пластины, репульсоры на запястьях, круглые линзы масок. Его банда из сбежавших заключённых.
+
+— Смотрите-ка, — сказал Серго. — Наш герой наконец показал своё настоящее лицо.
+
+Они ударили все разом. Репульсоры обожгли спину, плечи, лицо. И тогда из отверстий на предплечьях Макса вырвались хлысты. Живые, биологические, чёрные, гибкие, как змеи. Они хлестнули по воздуху сами, будто знали, что делать.
+
+Первым хлыстом Макс сбил одного бандита в полёте. Вторым обвил другого за ногу и впечатал в землю. Третьего просто поймал рукой и отбросил в стену так, что тот больше не встал.
+
+Трое лежали без сознания. Четверо, и Серго с ними, переглянулись и разлетелись в разные стороны.
+
+Монстр остался посреди разгромленной улицы, тяжело дыша. А потом медленно, очень медленно начал уменьшаться.
+
+Домой Макс вернулся человеком, через подъезд, в обрывках одежды. Ингибиторы лежали на полу его комнаты. Он поднял один, и тот защёлкнулся на запястье как ни в чём не бывало. Потом второй, третий, четвёртый.
+
+Вечером позвонили из полиции.
+
+— Спасибо за задержание троих беглецов, — сказал усталый голос. — Но заборов вы снесли два. Так что либо чините, либо платите.
+
+Макс посмотрел на свой пустой кошелёк.
+
+— Чиню, — вздохнул он.
+
+Ночью, сидя над чертежами, он понял, что произошло. Монстр — это была не его божественная сила. Это было то, что её перекрывало. Инфекция, которую Бог Зла оставил внутри него. Поэтому Макс и смог вернуться человеком: инфекция не была им самим. Она просто сидела внутри, как паразит.
+
+И она была сильнее ингибиторов. Раз они выпали сами, значит, сильнее.
+`},
+{ t: "Дневник", x: `
+Ответ нашёлся там, где его никто не искал.
+
+В городском архиве хранился дневник человека, которого много лет назад признали шизофреником. Он писал, что в нём живёт чужой — голос из темноты, который приходит во снах и душит. Врачи лечили его таблетками. Таблетки не помогали. Последние страницы дневника были исписаны чертежами.
+
+Макс читал всю ночь, и чем дальше, тем холоднее становилось у него внутри. Этот человек видел того же бога. Того самого, в жёлто-зелёном.
+
+А на последней странице было написано, как от него избавиться.
+
+Нужно сделать энергетический предмет, но не до конца. Недоделанный, нестабильный, одноразовый. Если надеть его на голову, он не выдержит и разрядится прямо в мозг. И на несколько минут откроет дверь в подсознание. Туда, где прячется чужой.
+
+Под чертежом корявым почерком было приписано: «Я так и не решился».
+
+Макс решился.
+
+Он собрал предмет за два дня: обруч из медных колец, кристаллы, провода и слишком много энергии в слишком маленьком объёме. Прибор гудел и грелся даже выключенным. Макс лёг на пол гаража, надел обруч и нажал кнопку.
+`},
+{ t: "Подсознание", x: `
+Он открыл глаза в пустоте.
+
+Это был тот же космос, что и во сне, только теперь Макс стоял на ногах. Под ногами было что-то вроде чёрного стекла, а вокруг вместо звёзд плавали обрывки его воспоминаний: класс, площадь перед мэрией, окно, из которого он прыгнул.
+
+Бог Зла ждал его.
+
+Только теперь он был в чёрном. Не жёлто-зелёное одеяние, а чёрная одежда, будто сшитая из той самой инфекции, которую Макс выплёвывал в школьном туалете.
+
+— Ты пришёл сам, — сказал Бог. — Как мило.
+
+— Это мой дом, — ответил Макс. — Тебя сюда не звали.
+
+Они сошлись в центре пустоты. Здесь у Макса не было костюма, но здесь он ему и не был нужен. Подсознание было его территорией. Он поднял руку, и в ней загорелся синий свет — та самая сила, которую Бог Зла когда-то назвал искрой бога.
+
+Макс ударил Бога его же силой. Божественной, вывернутой против своего хозяина.
+
+Бога отбросило. Макс сжал кулак, и из света родился меч — длинный, сияющий. Он рванулся вперёд и пронзил Бога Зла насквозь.
+
+Бог посмотрел вниз, на клинок в своей груди. Потом медленно вытащил его, и рана затянулась прямо на глазах, будто её и не было.
+
+— Здесь ты меня не убьёшь, — улыбнулся он. — Но спасибо, что открыл дверь.
+
+Он развернулся, вонзил пальцы в воздух и разорвал его, как ткань. За разрывом был виден настоящий город: крыши, дороги, вечернее небо.
+
+Бог Зла шагнул в портал.
+
+Макс очнулся на полу гаража. Обруч рассыпался в пыль. А в окне было видно, как над центром города разгорается жёлто-зелёное зарево.
+`},
+{ t: "Жёлто-зелёная материя", x: `
+Бог Зла шёл по городу, и город ломался вокруг него.
+
+Он больше не прятался в чёрной дыре и не посылал вместо себя солдат. Он был здесь сам. Каждый его шаг выжигал асфальт, а от взмаха руки складывались дома.
+
+Макс нагнал его на крышах в центре. Человеком, в своём чёрном костюме: инфекция ушла из него вместе с Богом, а сила осталась.
+
+Битва прошла через весь город. С крыши на крышу, по проспектам и через мосты. Макс бил импульсами, каких не выдавал никогда. Из его рук вырывались электрические хлысты — уже не чёрные и живые, как у монстра, а синие, трескучие, из чистой энергии. Бог Зла отвечал волнами, от которых лопались стёкла на целых улицах.
+
+В разгар боя на соседнюю крышу опустился Серго.
+
+— Он мой! — закричал Серго, наводя репульсоры на Бога Зла. — Это мой город, и я не дам какому-то…
+
+Бог Зла даже не повернул головы. Он просто махнул рукой, и Серго смело с крыши, как муху. Металлический костюм кувыркнулся в воздухе и исчез внизу, между домами.
+
+Смотреть, жив ли он, было некогда.
+
+Макс рванулся вперёд, поднырнул под удар и вцепился Богу Зла в грудь. И вдруг почувствовал, что в его ладони что-то есть. Плотное, тёплое, жёлто-зелёное. Оно пульсировало, как сердце.
+
+Это была материя Бога Зла. Его сила, его суть, та самая, что окрашивала его одеяние и горела в глазах солдат.
+
+Макс посмотрел Богу в глаза. Впервые за всё время в этих глазах был страх.
+
+Макс сжал кулак.
+
+Материя хрустнула и испарилась у него между пальцами, как дым. Бог Зла пошатнулся. Узоры на нём погасли. Он упал на одно колено и из всемогущего бога вдруг стал просто высоким уставшим существом.
+
+— Ты… — начал он.
+
+Макс не дал ему договорить. Последний импульс ушёл из его рук прямо в грудь Бога Зла. На этот раз рана не затянулась.
+
+Когда всё закончилось, Макса снова вырвало. Только теперь это была последняя капля чёрной жидкости. Последняя частица инфекции. Он вытер рот рукавом и посмотрел на свои руки. На чёрной ткани костюма медленно проступали синие линии.
+`},
+{ t: "Тюремный костюм", x: `
+Серго выжил. Макс нашёл его через три дня.
+
+Банда пряталась в заброшенном цеху на окраине: Серго и трое оставшихся беглецов. Костюм Серго был помят после падения с крыши, но сам он всё ещё был опасен.
+
+Троих Макс вырубил быстро и сдал полиции — связанными, прямо у входа в участок. С Серго он дрался сам. Долго, жёстко, один на один, среди ржавых станков. Когда репульсоры Серго наконец погасли, Макс не повёз его в участок. Обычная тюрьма уже один раз не удержала Серго. Не удержит и во второй.
+
+Он запер Серго в подвале цеха и заварил дверь. А сам ушёл в гараж и три дня оттуда не выходил.
+
+Он сделал тюремный костюм. Оранжево-чёрный, плотный, без единого шва снаружи. Встроенный сканер проверял каждый предмет, оказавшийся рядом с заключённым, и блокировал всё, что можно превратить в оружие. Изнутри костюм не открывался вообще. Снять его можно было только снаружи, нажав кнопку, которая была только у охранника.
+
+Полиция приняла Серго уже в этом костюме. Начальник участка долго ходил вокруг, разглядывая конструкцию.
+
+— Слушай, — сказал он наконец. — А ещё таких сможешь сделать?
+
+— Посмотрим, — ответил Макс. — Сначала заборы дочиню.
+`},
+{ t: "Выпускной", x: `
+Весной Макс закончил школу.
+
+На выпускном одноклассники хлопали ему громче, чем всем остальным. Анна Сергеевна обняла его и сказала, что всегда знала: из него выйдет толк. Пусть даже толк получился довольно своеобразный.
+
+Заборы он дочинил в мае. Оба. Полиция сфотографировала его на фоне свежих досок и выложила снимок в официальный аккаунт с подписью «Импульс возмещает ущерб». Снимок набрал больше лайков, чем все их посты за год.
+
+Летом он поступил в университет, на инженерный. Профессор на собеседовании долго разглядывал его чертежи, потом снял очки и спросил:
+
+— Это вы сами придумали?
+
+— Сам, — ответил Макс. — Мне просто очень было нужно.
+
+По вечерам, после пар, он надевал костюм — снова чёрно-синий, с ровным холодным светом в линиях на груди. Четыре ингибитора сидели на своих местах. Пятнадцать процентов силы. Больше пока не требовалось.
+
+Город внизу шумел, светился и жил своей жизнью. Где-то в нём ещё были грабители, беглецы и люди с самодельными репульсорами. Но теперь у города снова был защитник.
+
+Макс шагнул с крыши. Джетпаки поймали его у самой земли.
+
+Импульс вернулся.
+`}
+],
+
+imp3: [
+{ t: "Портал", x: `
+Прошёл месяц.
+
+Город привык к тому, что по вечерам над крышами мелькает синий след. Макс привык к университету, к лекциям в восемь утра и к тому, что больше ни один бог не душит его во сне. Жизнь, кажется, наконец стала нормальной.
+
+В тот вечер он патрулировал центр. Ничего особенного: пара угонщиков, драка у бара, кот на проводах. Макс стоял на краю высотки и разбегался для обычного прыжка. Таких он сделал уже тысячу: оттолкнуться, пролететь, поймать джетпаками воздух у следующей крыши.
+
+Он прыгнул.
+
+И прямо перед ним в воздухе вспыхнул круг.
+
+Оранжевый, искрящийся, будто кто-то провёл бенгальским огнём по небу. Круг раскрылся в проход, а за проходом была не улица и не крыша, а бесконечная тёмная бездна. Макс не успел ни затормозить, ни свернуть.
+
+Он влетел прямо в портал.
+
+Позже он узнает, что портал открылся случайно. Где-то очень далеко маг, умевший резать пространство, ошибся в одном движении, и одна из его дверей открылась не туда. Прямо перед летящим Импульсом.
+
+Но тогда Макс просто падал.
+`},
+{ t: "Бездна порталов", x: `
+Падение не кончалось.
+
+Вокруг Макса плыли сотни порталов — круглых, рваных, мерцающих. В каждом был свой мир: города, пустыни, океаны, чьи-то лица. Джетпаки кашляли и не находили опоры. Здесь не было ни верха, ни низа.
+
+Первый портал схватил его за плечо, как рука, и выплюнул на крышу.
+
+Нью-Йорк. Только какой-то не такой: машины старше, вывески проще, небо желтоватое, как на старой фотографии. На дворе был 2007 год. Рядом с Максом на краю крыши сидел человек в красно-синем костюме с паутиной на маске. Он медленно повернул голову.
+
+— Э-э, — сказал Макс. — Привет. Классный костюм.
+
+— Спасибо, — растерянно ответил Человек-паук. — Твой тоже… А ты вообще кто?
+
+— Сам не знаю, где я, — честно сказал Макс. — По-моему, я тут ненадолго.
+
+Его рвануло назад, и крыша исчезла.
+
+Снова бездна. Порталы проносились мимо, и в одном из них Макс увидел заснеженный лес. Там насмерть дрались двое: коренастый мужчина со стальными когтями из кулаков и болтливый наёмник в красном трико с двумя катанами за спиной. Наёмник что-то кричал — кажется, шутил, а когтистый рычал в ответ. Мир людей Икс пронёсся мимо, и Макс так и не узнал, кто там победил.
+
+В другом портале мелькнул ещё один Человек-паук — в другом костюме, тоньше и ярче, с большими белыми глазами на маске. Он легко перелетал между небоскрёбами на паутине и даже не заметил, что на него смотрят из соседней вселенной.
+
+А потом бездна сжалась, и Макса швырнуло вниз.
+
+Он врезался в асфальт посреди улицы, оставив в нём вмятину. Встал, отряхнулся. Огляделся.
+
+Нью-Йорк. Настоящий, современный. Весна 2018 года, судя по датам на рекламных экранах.
+
+И прямо на него смотрели люди, которых Макс за всю жизнь видел только в кино.
+`},
+{ t: "Молот", x: `
+— Он из них, — сказал человек в красно-золотой броне, и его ладонь засветилась. — Из Чёрного ордена.
+
+— Я вообще не из… — начал Макс.
+
+Договорить ему не дали.
+
+Первым ударил репульсор Железного человека. Макс принял его скрещёнными руками, и наниты взвизгнули. Следом из-за машины выскочил мужчина в очках, который, судя по лицу, как раз раздумывал, превращаться ему или нет. Сверху ударили оранжевые искры: маг в красном плаще поймал Макса в светящиеся путы, и те затрещали на броне.
+
+Макс отбивался как мог. Он не хотел никого ранить, и в этом была главная проблема: они-то хотели. Через минуту его прижали к земле. Костюм трещал по швам, пушки перегрелись.
+
+Тогда с неба опустился высокий светловолосый мужчина в плаще. Он размахнулся и метнул в Макса боевой молот.
+
+Молот летел, гудя, как самолёт. Все знали, что его невозможно остановить. Что поднять его может только достойный.
+
+Макс его поймал.
+
+Не за рукоять, а прямо за боёк, на лету, одной ладонью. Молот дрогнул в его руке, будто живой и удивлённый. Макс подбросил его, перехватил за рукоять и спокойно опустил к ноге.
+
+На улице стало очень тихо.
+
+— Он что… поднял его? — спросил кто-то.
+
+— Он его поймал, — уточнил Железный человек. — Это разные вещи. Наверное.
+
+— Это одно и то же, — сказал Тор, глядя на свой молот в чужой руке. — Или нет? Я не уверен.
+
+Макс посмотрел на молот, потом на его хозяина. Размахнулся и бросил оружие обратно. Тор поймал его грудью и отступил на шаг.
+
+— Держи, бездарник, — сказал Макс.
+
+Ещё секунду было тихо. Потом Железный человек фыркнул в шлеме.
+
+— Ладно. Он точно не из Чёрного ордена. У тех нет чувства юмора.
+`},
+{ t: "Совет", x: `
+Представился Макс уже в кафе на углу, куда его затащил Старк. Тому не терпелось понять, откуда у подростка в чёрно-синей броне технологии, которых нет даже у него.
+
+— Макс. Импульс, — сказал Макс. — Я, кажется, из другой вселенной. И из будущего. У нас сейчас двадцать седьмой год.
+
+— Двадцать седьмой, — повторил Старк. — И как там? Летающие машины уже есть?
+
+— У нас есть вы, — сказал Макс. — В кино.
+
+Старк открыл рот, чтобы ответить, но не успел. Небо над Манхэттеном потемнело. Над улицей повис огромный корабль в форме кольца, и из него на землю опустился луч. По лучу медленно спустился худой серый пришелец в длинном одеянии. За ним — громадный бугай с кожей, похожей на камень.
+
+Над улицей зазвучал тихий вкрадчивый голос. Пришелец говорил о милости своего господина и о том, что людям следует радоваться.
+
+Макс узнал эту сцену. Он видел её в кинотеатре, с попкорном, раз пять. Сейчас всё происходило точно так же, кадр за кадром. Эбони Мо. Камень Времени на шее у Стрэнджа. Мальчишка в костюме паука, который вот-вот выпрыгнет из школьного автобуса.
+
+Старк уже надевал броню на ходу.
+
+— Тони, — Макс схватил его за наплечник. — Слушай внимательно. Я знаю, чем всё закончится. Скажи Стрэнджу: когда вы будете драться с Таносом, пусть откроет портал прямо у него на шее. Или на руке с перчаткой. И закроет. Просто закроет портал, понимаешь? Не надо с ним драться. Надо отрезать.
+
+Старк смотрел на него секунду, долгую, как минута.
+
+— Откуда ты…
+
+Над их головами вспыхнул оранжевый круг. Тот самый портал. Он потянул Макса вверх, и асфальт ушёл из-под ног.
+
+— Скажи ему! — успел крикнуть Макс.
+
+Через мгновение он стоял на крыше своей высотки. Вечер, 2027 год, синий след джетпаков ещё висел в воздухе. Как будто он и не прыгал.
+`},
+{ t: "Пробуждение", x: `
+Дома Макс первым делом открыл ноутбук.
+
+Он помнил те фильмы наизусть. «Война бесконечности», щелчок, половина вселенной рассыпается в пыль. Потом «Финал», путешествия во времени, большая битва. Он пересматривал их раз десять.
+
+Только теперь в списке фильмов этой серии их не было.
+
+Вместо них был другой фильм: «Мстители: Пробуждение». Дата выхода давно прошла, рейтинг высокий, отзывы восторженные. Как будто этот фильм был всегда.
+
+Макс нажал «Смотреть».
+
+Начало было знакомым: Нью-Йорк, кольцевой корабль, Эбони Мо. А потом, на далёкой планете, всё пошло иначе. В самый разгар драки с Таносом Стрэндж открыл крошечный портал прямо у шеи титана. И закрыл его.
+
+Без перчатки и без щелчка. Танос просто погиб, не успев понять, что произошло.
+
+Макс сидел перед экраном не дыша.
+
+Дальше начиналось то, чего не было ни в одном фильме. Без щелчка вселенная пошла по новой ветке. Через несколько лет под землёй зашевелился Тиамут — древний гигант, который миллионы лет спал внутри планеты. Земля начала трескаться изнутри. Тор отправился в прошлое, спустился к самому ядру планеты, выдержал жар, от которого плавился камень, и убил Тиамута до того, как тот успел проснуться.
+
+А Клинт Бартон, Соколиный глаз, отдал жизнь, чтобы Тор смог вернуться.
+
+Макс смотрел титры и думал, что всё это случилось из-за одной его фразы на улице.
+
+Когда титры закончились, он закрыл ноутбук. Телефон на столе уже минуту вибрировал от уведомлений. Все новости показывали одно: на центральной площади его города открылся портал, и из него вышел человек в зелёном плаще и железной маске.
+
+Макс сломал петлю. И через сломанную петлю в его мир пришёл тот, кто был совсем не на его стороне.
+
+Доктор Дум.
+
+Макс надел костюм и пошёл знакомиться.
+`},
+{ t: "Девять лет спустя", x: `
+Дум не стал разговаривать долго.
+
+Он стоял посреди площади, где когда-то Макс встретил армию Бога Зла, и вокруг него в воздухе висели машины, фонари и куски асфальта. Зелёный плащ шевелился без ветра. Железная маска не выражала ничего.
+
+— Мальчик из сломанной ветки, — сказал Дум. Голос звучал так, будто говорил не один человек, а целый хор. — Ты открыл дверь, которую нельзя было открывать. Теперь я войду в каждый мир, до которого дотянусь.
+
+Он поднял руку, и площадь взорвалась зелёным пламенем.
+
+Макс дрался с ним полчаса, и это были худшие полчаса в его жизни. Дум был одновременно учёным и колдуном. Его броня отражала импульсы, заклинания пробивали наниты насквозь, а порталы открывались именно там, куда Макс собирался увернуться. В какой-то момент портал раскрылся прямо у него за спиной, и Макса затянуло внутрь.
+
+Снова бездна. Снова сотни миров. Теперь Макс уже знал, что делать: не сопротивляться, а ждать, куда вынесет.
+
+Его вынесло на знакомую улицу.
+
+Нью-Йорк. Только небоскрёбы стали выше, машины тише, а на рекламных экранах горел 2027 год. Перед ним стояли те же люди, только старше. В волосах у Старка появилась седина. А Человек-паук держал маску в руке, и под ней оказался взрослый мужчина: Питеру Паркеру было уже двадцать семь.
+
+— О, — сказал Старк и улыбнулся. — Тот самый парень, которого мы видели девять лет назад.
+
+— Ты передал Стрэнджу? — спросил Макс.
+
+— Передал. Сработало. — Старк помолчал. — Выходит, мы тебе должны всю вселенную. Чем обязаны визиту?
+
+Макс открыл рот, чтобы рассказать про Дума.
+
+Ровно через полчаса посреди Манхэттена раскрылся зелёный портал, и Дум шагнул следом.
+`},
+{ t: "Один на один", x: `
+Дум не стал драться со всеми сразу.
+
+Едва Старк поднял руки с репульсорами, как под ногами у Макса раскрылся портал. Он провалился и упал на чёрный камень посреди пустоты. Ни города, ни Мстителей. Только серое небо без солнца, каменная арена и Дум напротив.
+
+— Мстители подождут, — сказал Дум. — Сначала ты. Один на один, без свидетелей.
+
+Он щёлкнул пальцами, и ингибиторы на запястьях и щиколотках Макса раскрылись сами. Все четыре. Браслеты упали на камень и откатились к краю арены.
+
+Макс почувствовал, как сила поднимается приливом. Сто процентов. Потом больше. Потом гораздо больше. Тело начало расти, кости хрустели, костюм перестраивался на ходу. Ещё немного, и он вырастет до пяти метров и дальше, и остановиться уже не сможет. Как тогда, на площади.
+
+Именно этого Дум и хотел. Чтобы Импульс сжёг сам себя.
+
+Макс упал на колени, дотянулся до ближайшего браслета и вбил его себе в запястье. Это был острый — с шипами по краю, самый жёсткий из четырёх. Шипы впились в кожу, и рост остановился.
+
+Три метра. Не пять.
+
+Макс поднялся во весь свой новый рост. Синий свет бежал по его коже, как ток по проводам.
+
+— Ты хотел, чтобы я потерял контроль, — сказал он, и голос гулко раскатился по арене. — Извини. Не сегодня.
+
+Он ударил.
+
+Это был даже не импульс, а просто удар кулаком. Но в нём было семьдесят пять процентов силы, которой хватило бы на целый город. Дума подбросило в воздух, его броня смялась, как жестянка. Он пролетел через всю арену и врезался прямо в свой собственный портал.
+
+Портал выплюнул его на Манхэттен, к ногам Мстителей.
+`},
+{ t: "Можешь крушить", x: `
+Макс вышел из портала следом. Трёхметровый, светящийся, с шипастым браслетом на руке.
+
+Дум уже поднимался. Его броня искрила, но магия вокруг него снова сгущалась зелёным туманом. Ещё минута, и он открыл бы новый портал и ушёл. В другой мир, в третий, в десятый.
+
+Макс не дал ему этой минуты. Он прыгнул и обхватил Дума руками, прижав к асфальту.
+
+— Держу! — крикнул он. — Ну же!
+
+Ванда и Стрэндж поняли без слов. Они встали по обе стороны от Дума и подняли руки. Алая энергия и золотые круги оплели его со всех сторон. Они вытягивали из Дума силу — всю магию, которую он собирал по мирам. Медленно, нить за нитью.
+
+Дум закричал. Его броня раскалилась докрасна, и этот жар пошёл прямо в руки Макса. Ладони жгло так, будто он держал солнце. Кожа на предплечьях почернела и пошла волдырями. Макс стиснул зубы и не отпустил.
+
+— Ещё немного! — крикнул Стрэндж.
+
+Зелёный свет вокруг Дума погас. Последняя нить магии ушла в ладони Ванды. Дум обмяк.
+
+Питер Паркер подошёл и одним движением сорвал с него маску. Под ней было обычное лицо. Изуродованное, злое, но человеческое.
+
+Старк посмотрел на Дума сверху вниз. Потом бросил свой репульсор Брюсу Беннеру, который стоял чуть позади.
+
+— Ладно, Халк, — сказал Старк. — Можешь крушить.
+
+Беннер поймал репульсор и улыбнулся. Его кожа начала зеленеть.
+
+Макс отпустил Дума и отошёл в сторону. Он мог бы закончить всё сам, одним ударом: сил у него сейчас было на десятерых. Но это был их мир и их бой. И они заслужили его закончить.
+
+Халк заслонил собой всё, и через несколько секунд с Доктором Думом было покончено.
+`},
+{ t: "Новый дом", x: `
+Миры так и не разошлись обратно.
+
+Порталы, которые открывал Дум, не закрылись до конца. Они срослись, как сломанная кость, и между вселенной Макса и миром Мстителей появились проходы. Сначала через них ходили учёные. Потом журналисты. Потом туристы с палками для селфи.
+
+А в мире Макса больше не было фильмов про Мстителей. Совсем: ни в стримингах, ни в кинотеатрах. Зачем снимать кино про тех, кто теперь живёт по соседству?
+
+Руки у Макса заживали месяц. Шрамы остались: тонкие светлые полосы от ладоней до локтей. Сводить их он не стал.
+
+Однажды утром позвонил Старк.
+
+— У нас в башне освободилась комната, — сказал он. — С видом на реку. И, слушай, нам не помешает человек, который ловит чужие молоты. Тор до сих пор переживает.
+
+Макс посмотрел в окно своей комнаты. На двор, где когда-то чинил заборы. На город, который защищал с семнадцати лет.
+
+— Я подумаю, — сказал он.
+
+Думал он ровно сутки.
+
+Через неделю Макс переехал в Нью-Йорк. Университет перевёл его на заочное. Четыре ингибитора сидели на своих местах, а на груди чёрно-синего костюма появилась новая нашивка — большая буква «А».
+
+Импульс стал Мстителем.
+`},
+{ t: "Сцена после титров", post: true, x: `
+Где-то за пределами времени, в замке на краю всех реальностей, стоял трон. На троне сидел Локи.
+
+Перед ним в пустоте висело древо — бесконечное, светящееся, из тысяч ветвей-вселенных. Локи держал их все. Это была его работа, его ноша и его наказание.
+
+И вдруг одна из ветвей дрогнула.
+
+Прямо из того места, где мальчик в чёрно-синем костюме когда-то сказал на улице одну фразу, проросла новая ветка. Тонкая, яркая и совершенно незапланированная.
+
+Локи застонал и откинулся на спинку трона.
+
+— Ну кто, — сказал он в пустоту. — Кто опять?..
+
+Ветка росла.
+`}
+]
+};
+
+// ===== ТЕНЬ-9 И БЕЗДНА (главы 1–4) =====
+BOOK_TEXTS["l-shadow-abyss"] = [
+{ t: "Тень", x: `
+Всё началось с ангара на окраине города.
+
+Ржавая крыша, бетонный пол, три стола, один старый генератор и двадцатишестилетний инженер по имени Эдвард Стерлинг. У него не было ни денег, ни связей. Была только идея и привычка говорить очень тихо — так, что все вокруг замолкали, чтобы расслышать.
+
+Первого сотрудника он нанял по объявлению. Второго переманил из университета, где тому платили копейки. Втроём они ночевали в ангаре, ели лапшу из пакетов и спорили до хрипоты над чертежами.
+
+— Как назовём компанию? — спросил однажды второй сотрудник. — Нужно что-то громкое. Чтобы запомнили.
+
+Стерлинг покачал головой.
+
+— Громкое быстро забывают. Всё самое важное делается в тени.
+
+Так у компании появилось имя.
+
+Первый контракт был маленьким: лёгкий сплав для защитных щитов городских спасателей. Сплав выдерживал пулю и весил как пластик. Через год «Тень» делала щиты для половины страны. Через три — броню, батареи, двигатели и лекарства. Через пять ангар снесли, а на его месте выросла башня из чёрного стекла, такая высокая, что в пасмурные дни её верхние этажи прятались в облаках.
+
+Логотип придумал сам Стерлинг: тёмный круг с тонкой светлой кромкой. Как солнце во время затмения.
+
+У «Тени» появились заводы на западной окраине, где в огромных чанах плавили сплавы. Цеха, где собирали оружие, о котором не писали в новостях. Полигоны в пустыне. Контракты с шахтёрами, которые привозили из глубины редкие камни. И закрытые этажи в самой башне, куда не пускали даже уборщиков.
+
+Город любил «Тень». Она давала работу, строила больницы и школы, спонсировала праздники. Стерлинг почти не появлялся на публике. Говорили, что он работает по двадцать часов в сутки и ни разу в жизни не повысил голос.
+
+Однажды поздно ночью к нему в кабинет постучала женщина с планшетом в руках. Её звали Тара Оконкво, и она руководила обсерваторией «Тени» — сетью телескопов, которую компания купила годом раньше.
+
+— Простите, что так поздно, мистер Стерлинг. Вы должны это увидеть.
+
+На экране планшета была россыпь звёзд. Обычная картинка неба. Только в одном месте звёзды выглядели странно: будто кто-то провёл по ним пальцем и размазал в тонкое кольцо.
+
+— Астрономы много лет искали за Нептуном Девятую планету, — сказала Тара. — Что-то там притягивает дальние камни. Что-то тяжёлое. Мы думали, это планета. Но это не планета.
+
+Стерлинг долго смотрел на кольцо из звёзд.
+
+— А что тогда?
+
+— Чёрная дыра. Совсем маленькая — размером с яблоко. Но весит она как несколько Земель. Самая близкая к нам чёрная дыра во Вселенной. Она прямо у нас на пороге.
+
+Стерлинг выключил планшет и вернул его Таре. Лицо у него было спокойное, как всегда. Только пальцы на секунду сжались в кулак.
+
+— Никому об этом не говорите, — сказал он. — Ни одной живой душе.
+
+А утром он собрал совет директоров и произнёс всего одну фразу:
+
+— Нам нужен корабль.
+
+Через три года корабль был готов. Его назвали «Горизонт».
+`},
+{ t: "Экипаж", x: `
+Нилу Хокинсу было тридцать восемь, и он налетал в космосе больше, чем кто-либо в стране. Два полёта на станцию, один выход в открытый космос длиной в девять часов и репутация человека, который шутит, когда другим страшно.
+
+Семьи у него не было. Квартира стояла пустая, цветы на подоконнике засохли ещё в позапрошлом году. Большую часть жизни Нил провёл на базах, в тренажёрах и в тесных кабинах, где до ближайшего человека было ровно полметра.
+
+Когда ему позвонили из «Тени», он сначала решил, что это розыгрыш.
+
+Стерлинг встретил его лично, на последнем этаже чёрной башни. Пожал руку, налил воды и положил на стол папку с одним словом на обложке: «ГОРИЗОНТ».
+
+— Вы будете первым человеком, который увидит чёрную дыру своими глазами, — сказал он. — Командиром миссии. Если согласитесь.
+
+Нил пролистал папку. Схемы корабля, маршрут, расчёты. Полёт в одну сторону — одиннадцать месяцев на новом двигателе «Тени». Месяц на исследования. Одиннадцать месяцев обратно.
+
+— А вернусь? — спросил он.
+
+Стерлинг улыбнулся.
+
+— Мы всё рассчитали.
+
+Нил согласился в тот же вечер. Он всю жизнь хотел улететь дальше всех. Дальше, чем кто-либо до него.
+
+Экипаж собрали из семи человек.
+
+Оскар Мендес, бортинженер. Невысокий, с седыми висками и записной книжкой, в которую он заносил всё подряд: давление, температуру, каждый болт. Оскар не доверял компьютерам и проверял всё руками.
+
+Лили Чен, пилот. Ей было двадцать шесть, и на тренажёре она обогнала Нила в первый же день. Смеялась так громко, что в столовой оборачивались за соседними столиками.
+
+Тара Оконкво, астрофизик. Та самая, которая нашла чёрную дыру. Она добилась, чтобы её взяли в полёт, хотя до этого ни разу не была в космосе.
+
+Бен Уокер, врач. Таскал с собой гитару и знал всего четыре песни, зато пел их так, что подпевал весь экипаж.
+
+Юрий Белов, связист. Молчаливый, с золотыми руками, умел починить рацию хоть из консервной банки.
+
+Сэм Харди, техник. Главный шутник команды. Именно он подсунул Нилу в шлем записку «Не забудь вернуться, командир».
+
+Ина Сато, химик. Самая тихая. Говорила редко, но если говорила — все замолкали.
+
+Полгода они тренировались вместе. Крутились в центрифуге, пока не темнело в глазах. Сидели по неделе в закрытом модуле, учились чинить двигатель в темноте и делить один тюбик пасты на восьмерых. Ругались, мирились, снова ругались. А потом как-то незаметно стали семьёй.
+
+Однажды вечером Лили принесла в модуль маленького плюшевого кита — синего, с вышитой улыбкой.
+
+— Это наш талисман, — сказала она и повесила кита над пультом управления. — Будет за нами присматривать.
+
+— Киты не летают, — заметил Сэм.
+
+— Этот полетит дальше всех китов на свете, — ответила Лили.
+
+Нил посмотрел на кита, потом на свою команду, и впервые за много лет ему показалось, что у него есть дом. Пусть и такой, который весит сто двадцать тонн и умещается в одну металлическую трубу.
+
+Кит так и не полетел. За неделю до старта на последней проверке груза выяснилось, что у Лили перевес личных вещей ровно на сто двадцать граммов. Ровно на одного плюшевого кита.
+
+— Пусть ждёт нас дома, — сказал Нил и забрал кита себе. — Вернёмся — повесим его над пультом в следующем полёте.
+
+Вечером он поставил кита на подоконник своей пустой квартиры, рядом с засохшими цветами. Кит улыбался своей вышитой улыбкой и смотрел на город.
+`},
+{ t: "Старт", x: `
+«Горизонт» стартовал с космодрома «Тени» в пустыне на рассвете.
+
+Земля тряслась так, что у зрителей на трибунах звенели стёкла в очках. Огненный столб поднялся над песком, и через восемь минут корабль уже был на орбите. Ещё через сутки он включил главный двигатель и ушёл туда, куда до него не летал никто.
+
+Первые недели были похожи на праздник. Земля в иллюминаторе становилась всё меньше: сначала мяч, потом монетка, потом просто яркая точка, которую Тара каждое утро находила для всех на экране. Бен пел свои четыре песни. Лили учила Юрия играть в карты и каждый раз проигрывала. Сэм нарисовал на листке кита и приклеил его над пультом: «Раз настоящего не пустили, пусть летает нарисованный».
+
+Потом праздник закончился и начались будни.
+
+Месяц за месяцем одно и то же: проверки, отчёты, тренировки, сон. Связь с Землёй становилась всё медленнее. Сначала ответ приходил через минуты, потом через часы. За Сатурном Нил отправил сообщение утром, а ответ получил только вечером.
+
+На седьмом месяце Оскар пришёл к Нилу с записной книжкой и странным лицом.
+
+— Командир, можно тебя на минуту?
+
+Они пролезли в самый нос корабля — узкий отсек, набитый приборами и датчиками. Оскар постучал костяшками пальцев по стене.
+
+— Слышишь?
+
+Нил прислушался. Звук был глухой, тонкий. Как будто стучишь по жестяной банке.
+
+— Я сравнил с чертежами, — сказал Оскар и открыл свою книжку. — Не с теми, что у нас в компьютере, а с первыми. Я их переписал от руки ещё на Земле, когда корабль только строили. Вот здесь, по носу, должны идти усиливающие рёбра. Восемь штук. А их нет. Ни одного.
+
+— Может, поменяли конструкцию? Нашли материал прочнее?
+
+— Может, — Оскар захлопнул книжку. — Только у чёрной дыры гравитация будет тянуть нос сильнее, чем корму. Это первое, что ломается. Я бы на месте конструкторов, наоборот, добавил рёбер, а не убрал.
+
+Нил отправил на Землю отчёт. Подробный, со всеми цифрами Оскара.
+
+Ответ пришёл через одиннадцать часов.
+
+На Земле, в кабинете на последнем этаже чёрной башни, Эдвард Стерлинг прочитал отчёт до конца. Медленно, строчку за строчкой. Потом закрыл папку и повернулся к помощнику.
+
+— Ответьте, что изменения согласованы. Конструкция рассчитана с запасом. Пусть продолжают миссию.
+
+— А если инженер будет настаивать?
+
+— Ответьте ещё раз то же самое.
+
+На «Горизонте» Оскар прочитал ответ и долго молчал.
+
+— Ну? — спросил Нил.
+
+— «Рассчитана с запасом», — повторил Оскар. — Красиво звучит.
+
+— Слушай, они вложили в нас миллиарды, — сказал Нил. — Зачем им нас терять? Если бы что-то было не так, они бы нас развернули.
+
+Оскар кивнул. Но с того дня он каждое утро пролезал в нос корабля и стучал по стене. И каждое утро звук был таким же тонким.
+`},
+{ t: "Горизонт", x: `
+На одиннадцатом месяце Тара разбудила всех посреди ночи.
+
+— Вставайте. Она здесь.
+
+Восемь человек втиснулись в рубку и уставились на главный экран.
+
+Сначала никто ничего не увидел. Звёзды, чернота, снова звёзды. А потом Тара увеличила картинку, и все ахнули.
+
+Посреди черноты висело кольцо. Тонкое, сияющее, как будто кто-то свернул в колечко кусочек звёздного неба. Звёзды за ним не исчезали — они растягивались и огибали пустое место в центре. А в самом центре не было ничего. Совсем ничего. Чернее, чем сам космос.
+
+— Она такая маленькая, — прошептала Лили.
+
+— И такая тяжёлая, — сказала Тара. Голос у неё дрожал. По щекам текли слёзы, и она даже не пыталась их вытереть. — Я двенадцать лет искала её в телескопы. А теперь она просто… здесь.
+
+Первую неделю они кружили далеко, на безопасной орбите. Снимали, измеряли, запускали зонды. Данные шли таким потоком, что Тара почти не спала. Бен силой отправлял её в каюту, а через час она снова сидела в рубке.
+
+На восьмой день с Земли пришёл новый приказ.
+
+«Для завершения программы сократить расстояние до объекта до трёхсот километров. Провести замеры в течение шести часов. Выполнять».
+
+— Триста? — Оскар побледнел. — Мы и на тысяче чувствуем, как корпус скрипит.
+
+— Это приказ, — тихо сказал Юрий.
+
+Нил перечитал сообщение три раза. Потом посмотрел на свою команду.
+
+— Подходим медленно, — решил он. — Если хоть что-то пойдёт не так — сразу уходим. Плевать на приказ.
+
+Они начали сближение.
+
+На шестистах километрах начала барахлить главная антенна: гравитация тянула её, сбивая настройку. Без антенны не было связи с Землёй и не было данных.
+
+— Я выйду, — сказал Нил. — Подкручу и вернусь. Двадцать минут.
+
+— Я пойду, — вскинулся Сэм.
+
+— Командир выходит первым, — улыбнулся Нил. — Пусть лучше меня унесёт, чем тебя. Кто тогда будет подсовывать мне записки?
+
+Он надел скафандр, проверил трос и вышел в открытый космос.
+
+Снаружи было тихо. Так тихо, что Нил слышал собственное сердце. Кольцо из звёзд висело совсем рядом, огромное, на полнеба. Он закрепился у антенны и начал работать.
+
+— Командир, — раздался в наушниках голос Оскара. — Нос. Датчики нагрузки в красной зоне.
+
+— Уходим, — сказал Нил. — Лили, разворачивай. Я закончу снаружи.
+
+— Разворачиваю…
+
+И тут корабль застонал.
+
+Нил почувствовал это даже через скафандр: длинный, низкий звук, как будто огромный зверь проснулся внутри металла. Он обернулся и увидел, как по носу «Горизонта» бежит трещина. Тонкая серебристая линия. Потом вторая. Потом третья.
+
+— Задраиваю переборки! — закричал Оскар. — Все в корму! Быстро!
+
+— Оскар, уходи оттуда!
+
+— Я же говорил… — голос Оскара сорвался. — Я же говорил про нос…
+
+Нос корабля оторвался беззвучно.
+
+В космосе не бывает звука. Нил видел, как металл раскрывается, будто бумага, как из пролома вылетают обломки, приборы, листки из записной книжки Оскара. Без носа корпус потерял прочность, и трещины побежали дальше — к рубке, к каютам, к корме. Нил видел, как гаснут огни в отсеках, один за другим. Воздух ушёл за несколько секунд. Он кричал в рацию имена — Лили, Тара, Бен, Юрий, Сэм, Ина, Оскар — и никто не отвечал.
+
+Мимо его шлема проплыл листок с нарисованным китом. Тот самый, что Сэм приклеил над пультом.
+
+Нил потянулся к нему. И в этот момент трос лопнул.
+
+Его потянуло вперёд. Мягко, почти ласково, а потом всё сильнее и сильнее. Обломки корабля летели рядом, обгоняли его, исчезали в чёрном центре кольца. Нил смотрел, как кольцо из звёзд становится всё больше, пока не заняло собой всё.
+
+Потом не стало ничего.
+`},
+];
+
+// ===== ТЕНЬ-9 И БЕЗДНА (главы 5–8) =====
+BOOK_TEXTS["l-shadow-abyss"].push(
+{ t: "Бездна", x: `
+Падение не кончалось.
+
+Нил не знал, сколько оно длилось. Секунду. Год. Может, тысячу лет. Время внутри стало тягучим, как смола, и рвалось на куски. Он видел свою руку — и рука то растягивалась на километры, то сжималась в точку.
+
+Потом пришла боль.
+
+Не такая, как от ожога или перелома. Боль была везде сразу, будто его разбирали на части — каждую клетку, каждую мысль, каждое воспоминание — и складывали обратно в другом порядке. Он кричал, но крика не было. Здесь ничего не было. Даже темноты. Темнота — это хоть что-то, а здесь была пустота, в которой исчезает даже слово «пустота».
+
+А потом пустота посмотрела на него.
+
+Нил так и не смог потом объяснить, что это было. Не глаза, не лицо, не голос. Просто ощущение, что на тебя смотрят изнутри. Что пустота тебя заметила. Изучила. И решила не отпускать — а оставить себе.
+
+Она вошла в него. Или он вошёл в неё. Разницы уже не было.
+
+Когда Нил открыл глаза, вокруг снова были звёзды.
+
+Он висел в открытом космосе. Скафандра на нём не было. Ни шлема, ни перчаток, ни ботинок: чёрная дыра забрала всё, что не было им самим. Он должен был умереть за секунды — от холода, от пустоты, от того, что нечем дышать. Но он не умер. Скафандр ему был больше не нужен. Он вообще не дышал. И ему было не холодно.
+
+Нил поднёс к лицу руки и не узнал их.
+
+Кожа стала тёмной, серой, как пепел после костра. По ней бежали тонкие трещины, а из трещин сочился свет — бледный, фиолетовый, как свечение того самого кольца из звёзд. Он провёл пальцами по лицу и нащупал вместо щёк и губ голую кость. Нижняя челюсть торчала наружу, как у черепа.
+
+Он хотел закричать. Изо рта вырвался звук, похожий на гул ветра в пустой трубе.
+
+Чёрная дыра висела позади — далеко, на расстоянии многих тысяч километров. Как он оказался так далеко, Нил не помнил. Будто она проглотила его, пережевала и выплюнула обратно. Только уже другим.
+
+Рядом медленно кружились обломки «Горизонта».
+
+Нил пролетел среди них — он вдруг понял, что может двигаться, просто захотев этого, и пустота сама несла его вперёд. Кусок обшивки с номером корабля. Раскрытый шкафчик. Гитара Бена с порванными струнами. Листки, исписанные мелким почерком Оскара.
+
+Он нашёл их всех. Всех семерых.
+
+Нил долго висел рядом с ними и не мог пошевелиться. Потом собрал их вместе, укрыл тем, что осталось от большого паруса солнечной батареи, и отпустил. Медленно, бережно. Как отпускают в море лодку.
+
+— Простите, — сказал он гулким чужим голосом. — Я должен был вас вернуть.
+
+Потом он увидел обломок с острыми краями, летящий прямо на него, и вскинул руку, чтобы закрыться.
+
+Из ладони вырвался тёмный сгусток — чёрное ядро в фиолетовом ореоле. Он пробил обломок насквозь, как бумагу, и улетел дальше, в черноту.
+
+Нил уставился на свою руку. Потом медленно поднял обе руки и сосредоточился.
+
+Между ладонями затрещало пространство. Искры и тёмные лучи стянулись в одну точку, и вспыхнула маленькая чёрная воронка. Обломки вокруг дрогнули и поползли к ней, всё быстрее и быстрее, закручиваясь по спирали, пока воронка не втянула их и не раздробила в пыль. Потом схлопнулась со вспышкой.
+
+Пустота была теперь внутри него. И она слушалась.
+
+Нил посмотрел туда, где среди миллионов звёзд горела одна, чуть ярче других. Голубоватая точка. Земля.
+
+Он не знал, что его там ждёт. Не знал, кем он стал и примут ли его обратно. Знал только одно: он должен вернуться домой.
+
+И он полетел.
+
+Дорога домой заняла почти год.
+`},
+{ t: "Отряд", x: `
+На Земле экипаж «Горизонта» похоронили через месяц после того, как пропала связь.
+
+Хоронить было некого, поэтому на площади перед чёрной башней поставили восемь пустых гробов, накрытых флагами. Пришло полгорода. Люди несли цветы и свечи, плакали, обнимались. Стерлинг вышел к микрофону — впервые за много лет — и сказал короткую речь о том, что они были героями и что их полёт не был напрасным.
+
+Он говорил очень тихо. Площадь замолчала, чтобы его расслышать.
+
+Причиной аварии назвали метеорит. Один шанс на миллион. Никто не стал задавать вопросов.
+
+Прошло четыре месяца.
+
+Однажды ночью в обсерватории «Тени» сработала тревога. Дежурный астроном протёр глаза, посмотрел на экран и сразу набрал номер, который ему дали на самый крайний случай.
+
+Через двадцать минут Стерлинг уже стоял у него за спиной.
+
+— Что-то движется от чёрной дыры, — сказал астроном. — Прямо к нам. Медленно, но точно к Земле. И это ещё не всё. Послушайте.
+
+Он нажал кнопку. Из динамиков пошёл треск, шипение, а сквозь шипение — обрывки голоса. Гулкого, искажённого, будто человек говорит из глубокого колодца.
+
+«…Горизонт… борт один… возвращаюсь…»
+
+Астроном побледнел.
+
+— Это частота «Горизонта». Это же голос командира. Хокинс… Он жив?
+
+Стерлинг долго слушал шипение. Лицо у него не изменилось.
+
+— Хокинс погиб, — сказал он наконец. — Это не он. Это то, что вылезло из чёрной дыры и носит его голос. Объекту присвоить кодовое имя.
+
+— Какое?
+
+Стерлинг посмотрел на экран, где в черноте мигала крохотная точка.
+
+— «Бездна».
+
+На следующее утро в башне «Тени» запустили новый проект. Он назывался «Тени».
+
+Лукасу Грею было двадцать четыре. Двенадцать из них «Тень» за него платила.
+
+Когда ему было двенадцать, родители погибли в аварии на трассе, и Лукас остался один. Ни бабушек, ни дядей, ни тёть. Только социальный работник с усталыми глазами и детский дом на окраине. А через месяц пришло письмо: «Тень» оплачивает ему учёбу в лучшей школе города. Потом колледж. Потом место в службе безопасности компании.
+
+Лукас никогда не видел Стерлинга вживую. Но был уверен, что обязан «Тени» всем. Поэтому, когда по службе разошлось объявление — «Набираем добровольцев в секретный проект, опасно, подробности после подписания» — он подписал первым.
+
+Точнее, последним. Девятым.
+
+Их собрали в спортзале на минус втором этаже башни. Девять человек в одинаковой серой форме. Каждому дали номер.
+
+Тень-1 — сержант Грант Уэст, командир отряда. Суровый, со шрамом через бровь, никогда не улыбался и знал по имени каждого.
+
+Тень-2 и Тень-3 — братья Коулы, близнецы. Различить их не мог никто, кроме них самих, и они этим бессовестно пользовались.
+
+Тень-4 — Мейсон Рид. Лучший друг Лукаса ещё со школы «Тени». Болтал без остановки, травил анекдоты и спал на любой поверхности за тридцать секунд.
+
+Тень-5 — Дуглас, здоровяк, который на спор поднимал за бампер машину.
+
+Тень-6 — Нора, бывшая пожарная, вытащившая из огня двадцать два человека.
+
+Тень-7 — Ава Сантос, снайпер. Тихая, внимательная, всегда носила в кармане шахматного коня.
+
+Тень-8 — Райли. Говорил так редко, что Мейсон спорил на деньги, сколько слов тот скажет за неделю.
+
+И Тень-9 — Лукас Грей.
+
+Четыре месяца их гоняли так, что к вечеру они не могли поднять руки. Полоса препятствий, стрельба, бег в противогазах, ночные учения. Сержант Уэст орал на них, а потом сам приносил в казарму горячий чай.
+
+По вечерам Ава учила Лукаса играть в шахматы. Он проигрывал ей все партии подряд.
+
+— Ты слишком торопишься, — говорила она, снимая с доски его ферзя. — Конь ходит не прямо. Он прыгает, откуда не ждут. Учись у коня.
+
+Однажды на учениях у Мейсона оборвалась страховка на высоте шести метров. Лукас прыгнул раньше, чем успел подумать. Поймал друга за куртку, ударился плечом о стену, но не отпустил.
+
+— Псих, — сказал Мейсон, когда их стащили вниз. — Ты же мог убиться.
+
+— Мы команда, — ответил Лукас, держась за плечо. — Своих не бросают.
+
+Сержант Уэст тогда впервые на памяти отряда улыбнулся.
+`},
+{ t: "Восемь из девяти", x: `
+Процедуру назначили на понедельник.
+
+В воскресенье вечером отряд сидел в казарме и делал вид, что всё как обычно. Мейсон травил анекдоты, братья Коулы спорили, кто из них старше на семь минут, Дуглас отжимался на кулаках. Ава расставила шахматы, но играть никто не стал.
+
+— Нам ведь объяснили, — сказала Нора. — Сыворотка проверена. Риск минимальный.
+
+— «Минимальный» — это сколько? — спросил Мейсон.
+
+Никто не ответил.
+
+Ночью Лукас не спал. Лежал на койке и смотрел в потолок. В соседнем ряду Райли тоже не спал — и вдруг сказал, глядя в темноту:
+
+— Если что, было честью.
+
+Мейсон потом клялся, что это была самая длинная фраза Райли за все четыре месяца.
+
+Утром их отвели на закрытый этаж. Белые стены, белый свет, запах лекарств. Посреди зала стояли девять капсул — прозрачных, похожих на огромные стеклянные коконы. К каждой тянулись провода и трубки.
+
+Учёный в белом халате объяснил ещё раз: сыворотка изменит то, как тело взаимодействует со светом. В её основе — данные, которые успели передать зонды «Горизонта» перед гибелью. Возле чёрной дыры свет огибает пустоту. Если всё получится, свет будет огибать и их.
+
+— Мы сделаем из вас тени, — сказал учёный. — Настоящие.
+
+Их укладывали по порядку номеров. Сержант Уэст — первым. Перед тем как лечь в капсулу, он обернулся к отряду:
+
+— Увидимся на той стороне, бойцы.
+
+Капсула закрылась. По трубкам потекла тёмная, почти чёрная жидкость.
+
+Лукас стоял в очереди последним и видел всё.
+
+Видел, как на мониторе сержанта прыгает линия пульса — быстро, быстрее, ещё быстрее. Как она вдруг вытягивается в ровную прямую. Как учёные бросаются к капсуле, кто-то кричит «разряд», и ничего не происходит.
+
+Он хотел остановить всё это. Хотел закричать. Но очередь двигалась, капсулы закрывались одна за другой, и учёные говорили: «Продолжаем. Организм первого отреагировал нетипично. Продолжаем».
+
+Тень-2. Ровная линия.
+
+Тень-3. Ровная линия.
+
+Мейсон подмигнул ему, ложась в капсулу. «Не скучай, псих». Через две минуты его линия выпрямилась.
+
+Дуглас. Нора. Райли.
+
+Ава легла в седьмую капсулу и, прежде чем крышка закрылась, вложила Лукасу в ладонь шахматного коня.
+
+— Подержи, — сказала она. — Отдашь потом.
+
+Её линия выпрямилась через три минуты.
+
+Восьмая капсула. Ровная линия.
+
+— Тень-9, — сказал учёный. Голос у него был хриплый. — Ваша очередь.
+
+Лукас мог отказаться. Никто бы его не осудил. Но если он откажется, всё это было зря. Восемь человек погибли зря. Он сжал в кулаке шахматного коня и лёг в капсулу.
+
+Крышка закрылась.
+
+Сыворотка была холодной. Холод пошёл по венам, от рук к сердцу, от сердца к голове. Пальцы перестали чувствоваться, потом руки, потом всё тело. Ему показалось, что он растворяется. Что его больше нет.
+
+— Пульс есть! — закричал кто-то снаружи. — Пульс есть, но… где он? Капсула пустая!
+
+Учёные столпились вокруг. Внутри капсулы никого не было. Только трубки и провода, уходящие в пустоту.
+
+А потом Лукас вдохнул — резко, со всхлипом — и снова появился. Мокрый, дрожащий, белый как мел. В кулаке он сжимал шахматного коня.
+
+Из девяти выжил один.
+
+Его держали в медблоке две недели. Он почти не ел и не говорил. Один раз попросил разрешения прийти на похороны отряда.
+
+— Семьям сообщат, — ответили ему. — Похороны будут закрытыми.
+
+Тела восьмерых увезли не в морг. Лукас видел из окна медблока, как восемь накрытых каталок закатили в грузовой лифт. Лифт пошёл вниз и остановился на минус седьмом уровне — там, куда пропусков не было даже у врачей.
+
+На третий день к нему пришёл сам Стерлинг.
+
+Он сел у кровати, долго молчал, потом сказал своим тихим голосом:
+
+— Мне очень жаль, девятый. Они были лучшими. Но они погибли не зря. Ты — то, ради чего всё это было. Ты последняя Тень.
+
+Лукас смотрел в окно.
+
+— Тень-9, — сказал он. — Пусть так и остаётся. Девятый. Чтобы помнить, что их было восемь до меня.
+`},
+{ t: "Охотник из тени", x: `
+Первые недели невидимость приходила сама. Без спроса.
+
+Лукас пугался, злился, нервничал — и исчезал. Однажды он растворился прямо в столовой с подносом в руках, и повариха с визгом уронила кастрюлю, когда поднос поплыл по воздуху сам по себе. В другой раз он проснулся и не увидел собственных ног под одеялом.
+
+Учёные «Тени» прикрепили к нему десяток датчиков и каждый день гоняли по тестам.
+
+Постепенно он научился. Исчезать, когда хочется, и появляться, когда нужно. Сначала на пять секунд, потом на минуту, потом на десять. Выяснилось, что, пока он невидим, его не видят ни люди, ни камеры, ни тепловизоры. Свет огибал его, как вода огибает камень.
+
+Но в невидимости было ещё кое-что.
+
+На тренировке против боевых роботов Лукас исчез, обошёл одного со спины и ударил. Обычным ударом, каким бил грушу сотни раз. Робот весом в полтонны отлетел к стене и сложился пополам.
+
+Инженеры потом три часа разглядывали записи. Первый удар из невидимости оказался в три раза сильнее обычного. А удары со спины, пока враг не понял, откуда атака, — больнее ещё вдвое.
+
+— Ты прирождённый охотник, — сказал инструктор, глядя на сплющенного робота. — Из тени.
+
+Лукас тренировался по двенадцать часов в день. Ему было нечего больше делать. Казарма, где спал отряд, стояла пустая, и он не мог туда заходить. По ночам он сидел у себя в комнате, расставлял на доске шахматы и играл сам с собой. Чёрным конём всегда ходил первым.
+
+Через три месяца ему дали первое задание.
+
+В порту засели торговцы оружием: двенадцать человек, автоматы, заложник — охранник склада. Полиция стояла у ворот уже шесть часов и не могла подойти.
+
+Лукас вошёл через главные ворота. Никто его не увидел.
+
+Через четыре минуты двенадцать человек лежали на бетоне со связанными руками, а охранник сидел в машине скорой и не понимал, кто его развязал. Камеры склада не записали ничего. Только автоматы, которые один за другим вылетали из рук и падали на пол сами собой.
+
+Потом была банда, грабившая инкассаторов. Потом пожар в многоэтажке, где Лукас вынес из дыма четверых детей, пока пожарные разворачивали лестницу. Потом похищенная дочь судьи.
+
+В городе пошли слухи. В соцсетях появились размытые видео, на которых бандиты падали, хотя рядом никого не было. Кто-то назвал это «призраком». Кто-то — «невидимым охотником». Сам Лукас про себя называл это просто работой.
+
+Он делал то, что умел, и спасал людей. А значит, «Тень» спасала людей. Так он думал. И этого ему было достаточно.
+
+Однажды вечером его вызвали на последний этаж башни.
+
+Стерлинг стоял у огромного окна и смотрел на ночной город. Когда Лукас вошёл, он не обернулся.
+
+— Ты знаешь, что случилось с «Горизонтом»?
+
+— Метеорит, — сказал Лукас. — Об этом говорили по всем каналам.
+
+— Не совсем.
+
+Стерлинг подошёл к столу и включил экран. На нём была фотография — зернистая, снятая через самый мощный телескоп «Тени». Тёмная фигура в черноте космоса. Обычный человеческий силуэт, ростом с человека. Только по всему телу — тонкие трещины фиолетового света.
+
+— Экипаж погиб у чёрной дыры, — сказал Стерлинг. — Все восемь. А через четыре месяца оттуда вылетело это. Оно летит к Земле почти год и говорит голосом нашего командира. Мы назвали его «Бездна».
+
+Лукас смотрел на фигуру на экране, и по спине у него бежал холод.
+
+— Что ему нужно?
+
+— Не знаю. Но то, что вылезает из чёрной дыры, не может быть человеком. Оно будет говорить, что оно Нил Хокинс. Будет рассказывать что угодно, лишь бы ты опустил руки. Не верь ему.
+
+Стерлинг повернулся к Лукасу, и впервые за всё время в его голосе прозвучало что-то похожее на тревогу.
+
+— Твой отряд погиб, чтобы у нас было оружие против этого. Ты понимаешь?
+
+Лукас сжал в кармане шахматного коня.
+
+— Понимаю, — сказал он. — Я его остановлю.
+
+Через две недели телескопы «Тени» зафиксировали, что объект «Бездна» вошёл в атмосферу Земли.
+`}
+);
+
+// ===== ТЕНЬ-9 И БЕЗДНА (главы 9–11) =====
+BOOK_TEXTS["l-shadow-abyss"].push(
+{ t: "Возвращение", x: `
+В ту ночь над городом пролетела падающая звезда.
+
+Её видели тысячи людей. Она прочертила небо фиолетовой полосой — слишком медленно для метеорита, слишком ровно для самолёта — и упала в залив за старым портом. Над водой поднялся столб пара. Утром по новостям сказали, что это обломок спутника, и все забыли.
+
+На рассвете из воды на пустой пляж вышел человек.
+
+Точнее, то, что было похоже на человека. Обычного роста, обычного сложения, только с кожей цвета пепла, по которой бежали трещины фиолетового света. Вместо нижней половины лица — голая кость.
+
+Бегун в наушниках увидел его с другого конца пляжа, остановился, а потом развернулся и побежал так быстро, как не бегал никогда в жизни.
+
+Нил смотрел ему вслед. Потом наклонился над лужей, оставшейся после прилива, и впервые увидел своё лицо целиком.
+
+Он долго стоял над этой лужей.
+
+Днём он прятался в заброшенном складе у старого пирса. Сквозь щели в стенах доносился шум города — машины, голоса, музыка из кафе. Год назад он мечтал услышать всё это снова. Теперь каждый звук резал, как стекло.
+
+Вечером на стене бара напротив засветился экран. Шли новости. Нил подошёл к щели поближе.
+
+На экране была площадь перед чёрной башней. На стене башни — мемориальная доска с восемью именами. Его имя тоже было там. Рядом с Лили, Тарой, Оскаром…
+
+«Год назад экипаж корабля „Горизонт“ погиб из-за столкновения с метеоритом, — говорила ведущая. — Сегодня корпорация „Тень“ открыла в их честь научный центр…»
+
+Метеорит.
+
+Нил вспомнил трещину, бегущую по носу корабля. Тонкий звук, с которым Оскар стучал по стене каждое утро. «Я же говорил про нос…»
+
+Никакого метеорита не было.
+
+Он дождался темноты. Но к башне пошёл не сразу.
+
+Сначала он поднялся к своему дому. Не по лестнице — по стене, до шестого этажа, к окну своей старой квартиры. Квартира стояла тёмная и пустая. Видимо, «Тень» так и не нашла, кому её отдать.
+
+На подоконнике, рядом с засохшими цветами, сидел маленький синий кит с вышитой улыбкой. Ждал. Почти два года.
+
+Нил долго смотрел на него через стекло. Пусть ждёт нас дома, сказал он тогда. Нас.
+
+Он не стал открывать окно. Монстру с пепельной кожей нечего было делать в этой квартире.
+
+— Подожди ещё немного, — сказал он тихо.
+
+И пошёл к башне.
+
+Город ночью был другим. Нил шёл по крышам и переулкам, и пустота несла его над улицами, как ветер несёт пепел. Внизу горели окна, ездили машины, люди смеялись на верандах. Никто не поднимал головы.
+
+Башня «Тени» возвышалась над городом чёрной иглой. Наверху светились окна последнего этажа.
+
+Нил не пошёл к главному входу. Ещё на тренировках перед полётом им показывали схему башни, и он помнил: под ней проходят служебные тоннели, а на минус четвёртом уровне хранится архив всех проектов компании.
+
+Решётку тоннеля он разорвал руками. Стальную дверь архива сдавил маленькой чёрной воронкой, и замок с хрустом сложился внутрь, как пустая банка.
+
+Внутри стояли бесконечные ряды стеллажей с папками. «Тень» не доверяла компьютерам самое важное. Нил шёл вдоль рядов, пока не увидел знакомое слово на корешке.
+
+«ГОРИЗОНТ».
+
+Он вытащил папку дрожащими руками.
+
+Чертежи. Первый вариант корабля — с восемью усиливающими рёбрами по носу. Точно такой, как в записной книжке Оскара. И второй вариант — без них. К нему был приколот лист с коротким приказом.
+
+«Усиление носового отсека исключить. Возвращение экипажа не предусмотрено. Причина: засекречено. Э. Стерлинг».
+
+Нил перечитал эти строчки раз десять. Буквы плыли перед глазами.
+
+Ниже лежал ещё один лист — копия того самого приказа подойти к чёрной дыре на триста километров. С той же подписью.
+
+Их не потеряли. Их убили. Спокойно, заранее, с подписью и печатью. Семь человек, которые верили «Тени». Лили со своим китом. Тара, которая плакала от счастья, увидев кольцо из звёзд. Оскар, который всё понял и которого никто не послушал.
+
+На соседней полке стояла папка потоньше. На корешке было написано: «Объект „Бездна“». Внутри лежала зернистая фотография тёмной фигуры в космосе.
+
+Его фотография.
+
+— Бездна, — сказал Нил гулким голосом и почти засмеялся. — Значит, так вы меня назвали.
+
+Над дверью архива замигала красная лампа. Где-то наверху завыла сирена.
+
+Нил не стал прятаться. Он бросил папку на пол и пошёл к лестнице. Наверх. Туда, где на последнем этаже горел свет.
+
+В это же время в комнате на сорок втором этаже у Лукаса Грея зазвонил телефон.
+
+— Объект «Бездна» в башне, — сказал голос дежурного. — Минус четвёртый уровень, архив. Идёт наверх.
+`},
+{ t: "Схватка", x: `
+Лукас спускался по служебной лестнице бегом, перепрыгивая через пролёты.
+
+На минус втором уровне аварийные лампы заливали коридоры красным светом. Где-то внизу грохотало — глухо, тяжело, будто кто-то пробивал стены кулаком. Навстречу бежали лаборанты в белых халатах.
+
+— Туда! — крикнул один, показывая назад. — Оно идёт сюда!
+
+Лукас прижался к стене, выдохнул и исчез.
+
+Он увидел Бездну в конце коридора. Фигура ростом с обычного человека шла неторопливо, не оглядываясь. Фиолетовые трещины на теле пульсировали в такт шагам. Лукас подкрался со спины.
+
+Странно: вблизи он был похож на человека даже больше, чем на фотографии. Обычный рост, обычные плечи. Только кожа как пепел и свет в трещинах.
+
+Лукас отогнал эту мысль и ударил.
+
+Удар из невидимости, втрое сильнее обычного. Бездна отлетел вперёд, пробил спиной двойные двери и врезался в стену лаборатории. Посыпалась штукатурка. Зазвенело стекло.
+
+Бездна поднялся. Медленно повернул голову — туда, где только что стоял Лукас. Там никого не было.
+
+— Кто здесь? — прогудел он.
+
+Он вскинул руку, и из ладони вырвался тёмный снаряд. Он пробил стену насквозь, потом следующую, потом ещё одну. Лукас прыгнул в сторону, и второй снаряд прошёл в сантиметре от его плеча.
+
+Он обошёл Бездну по дуге и ударил снова — со спины, в позвоночник. Бездна качнулся, но устоял. Третий удар. Четвёртый. Лукас двигался быстро, бесшумно, каждый раз заходя с новой стороны.
+
+Ты слишком торопишься, сказала бы Ава. Но сейчас скорость была всем, что у него было.
+
+А потом Бездна перестал махать руками.
+
+Он медленно поднял ладони, и между ними затрещало пространство. Вспыхнула маленькая чёрная воронка. Пыль, обрывки бумаги, осколки стекла — всё, что было в лаборатории, сорвалось с места и закружилось по спирали.
+
+И в этом облаке пыли Лукас вдруг увидел себя. Точнее, пустоту в форме себя. Человеческий силуэт, который пыль огибала со всех сторон.
+
+Бездна тоже его увидел.
+
+Удар был такой силы, что Лукас пролетел через всю лабораторию, пробил перегородку и рухнул на пол в соседнем зале. Невидимость слетела. В ушах звенело, во рту был вкус крови.
+
+Бездна перешагнул через обломки перегородки.
+
+— Человек, — сказал он, разглядывая Лукаса. — Обычный человек. Они и тебя переделали?
+
+Лукас поднялся на одно колено.
+
+— Ты убийца, — выдохнул он. — Нил Хокинс погиб у чёрной дыры. А ты то, что вылезло оттуда и носит его голос.
+
+Бездна засмеялся. Звук был страшный — будто ветер воет в пустой трубе.
+
+— Это тебе Стерлинг сказал?
+
+Он шагнул ближе.
+
+— Спустись на минус четвёртый, в архив. Найди папку «Горизонт». Там приказ: «Возвращение экипажа не предусмотрено». Его подпись. Они специально не укрепили нос корабля. Специально загнали нас к чёрной дыре. Моих людей убили не метеориты. Их убила «Тень».
+
+Лукас смотрел на него снизу вверх. На мгновение — всего на мгновение — он заколебался.
+
+В этот момент в зал вбежали четверо охранников с оружием.
+
+— Стоять! Руки вверх!
+
+Бездна медленно развернулся к ним. Трещины на его теле вспыхнули ярче. В ладони начал собираться тёмный снаряд — тот, что пробивает стены насквозь.
+
+Лукас не думал. Он просто прыгнул.
+
+Снаряд чиркнул его по плечу, разорвав форму и кожу, и ушёл в потолок. Лукас сбил ближайшего охранника с ног и заорал остальным:
+
+— Назад! Все назад, это не ваша драка!
+
+Охранники отступили к выходу. Лукас поднялся, зажимая плечо, и встал между ними и Бездной.
+
+Своих не бросают.
+
+Он снова исчез.
+
+Они дрались по всему уровню. В коридорах, на лестницах, в пустых лабораториях. Бездна пробивал стены снарядами, Лукас появлялся и исчезал, бил и уходил. Оба были в крови, у Бездны трещины света мерцали всё слабее, у Лукаса перед глазами плыли красные пятна.
+
+Последним залом оказался спортзал на минус втором этаже. Тот самый, где четыре месяца гоняли его отряд. Где Мейсон травил анекдоты, Дуглас поднимал штангу, а сержант Уэст приносил по вечерам горячий чай.
+
+Бездна встал в центре зала и поднял обе руки над головой.
+
+На этот раз воронка была огромной.
+
+Пространство над залом треснуло, как стекло. Вспыхнула сингулярность, вокруг неё закрутился сияющий диск, и всё в зале потянуло к центру. Тренажёры, скамейки, маты, светильники. Пол начал трескаться. В дверях закричали люди: несколько учёных не успели уйти, и теперь их тащило по полу к ревущей чёрной дыре.
+
+Лукас бросился к ним. Схватил ближайшего за халат, вытолкнул в коридор. Вернулся за вторым. За третьим. Его самого уже тащило к воронке, ноги скользили по бетону.
+
+Конь ходит не прямо. Он прыгает, откуда не ждут.
+
+С потолка, сорванная воронкой, падала стальная балка. Лукас прыгнул на неё, оттолкнулся и взлетел над залом — выше, чем Бездна мог ожидать. Исчез в воздухе. И обрушился на него сверху и со спины, вложив в удар всё, что у него оставалось.
+
+Бездна рухнул на колени.
+
+Воронка дрогнула. Сияющий диск сбился, пошёл рябью — и схлопнулся с такой вспышкой, что на секунду стало светло как днём.
+
+А потом пол под ними провалился.
+`},
+{ t: "Каждый за своё", x: `
+Подземные уровни башни «Тени» складывались один на другой, как картонные коробки.
+
+Минус второй рухнул на минус третий, минус третий — на минус четвёртый. Пыль поднялась такая, что не было видно вытянутой руки. Где-то выли сирены, где-то кричали люди, где-то с грохотом лопались трубы.
+
+Сама башня устояла. Её строили из сплавов «Тени», и она только вздрогнула, как от сильного порыва ветра. Окна на верхних этажах звякнули, но не разбились.
+
+Лукас очнулся под обломками. Левая нога была придавлена плитой, плечо горело огнём. Над ним висела перекрученная арматура, а за ней в пыли кто-то двигался.
+
+Бездна выбирался из завала медленно, тяжело. Трещины света на его теле едва тлели, как угли в остывающем костре. Он увидел Лукаса, застрявшего под плитой, и остановился.
+
+Лукас попытался исчезнуть. Не получилось — сил не осталось даже на это.
+
+Бездна шагнул к нему. Поднял руку.
+
+И упёрся ладонью в плиту. Пустота дрогнула, плита скрипнула и сдвинулась в сторону ровно настолько, чтобы Лукас смог вытащить ногу.
+
+— Зачем? — прохрипел Лукас.
+
+Бездна долго смотрел на него.
+
+— Ты прыгнул под мой снаряд ради охранников, которых даже не знаешь, — сказал он. — Мой экипаж тоже был таким. Ты не враг мне, Тень. Ты такой же, как я. Тебя тоже сделали из чужой смерти.
+
+Он выпрямился. Над ними в бетоне зияла трещина, сквозь которую виднелось ночное небо.
+
+— Передай Стерлингу, — сказал Бездна. — Я приду за каждым, кто подписал тот приказ. Не сегодня. Но приду.
+
+— Я тебя найду, — ответил Лукас.
+
+— Знаю.
+
+Пустота подхватила Бездну, и он ушёл вверх, сквозь трещину, в ночь. Через минуту его уже не было.
+
+Лукас лежал на обломках и смотрел в небо. Потом поднялся, держась за стену, и пошёл туда, откуда доносились крики.
+
+До утра он вытаскивал людей из-под завалов. Лаборантов, охранников, ночных уборщиков. Без невидимости, без сил, просто руками. Сорок три человека. Когда спасатели с собаками добрались до подземных уровней, он сидел у входа в тоннель, весь серый от пыли, и не мог разжать пальцы.
+
+Говорили потом, что из всех подземных уровней уцелел только один. Минус седьмой. Его дверь даже не поцарапало.
+
+Утром Стерлинг спустился к развалинам сам.
+
+Он остановился рядом с Лукасом, стряхнул пыль с рукава дорогого пиджака и долго молчал.
+
+— Ты спас сорок три человека, — сказал он наконец. — Твой отряд гордился бы тобой.
+
+Лукас поднял на него глаза.
+
+— Он рассказал мне про приказ. «Возвращение экипажа не предусмотрено». С вашей подписью.
+
+Стерлинг не моргнул.
+
+— Ложь, — сказал он спокойно. — Он сказал тебе то, что хотел. Это его оружие, девятый. Не снаряды и не чёрные дыры. Сомнение. Он хочет, чтобы ты перестал нам верить. Чтобы ты остался один.
+
+Лукас молчал.
+
+Он думал о детском доме на окраине и о письме, которое пришло через месяц. О школе, о колледже, о службе. О спортзале на минус втором этаже, которого больше не было. О восьми людях, которые легли в капсулы, потому что верили, что делают правильное дело.
+
+Если «Тень» лжёт, значит, они погибли зря. А этого не могло быть. Он не мог в это поверить.
+
+— «Тень» вытащила меня, когда я был никем, — сказал он наконец. — Я с вами.
+
+Стерлинг кивнул.
+
+— Он вернётся. Найди его раньше, чем он найдёт нас.
+
+— Найду, — сказал Лукас. — Но не отсюда. Пока я в башне, он всегда знает, где меня искать. Я уйду в город и буду охотиться сам.
+
+В тот же день Тень-9 ушёл из башни «Тени». Никто не видел, как он уходил.
+
+Поздно вечером на крыше старой многоэтажки на другом конце города сидел человек. Плечо у него было перевязано, нога болела, а в ладони лежал маленький чёрный шахматный конь.
+
+Отдашь потом, сказала тогда Ава.
+
+— Отдам, — пообещал Лукас в темноту. — Когда всё закончится.
+
+А на дальнем берегу залива, там, где кончались огни города, у самой воды стоял тёмный силуэт. По его коже бежали тусклые фиолетовые трещины.
+
+Он смотрел на чёрную башню, у подножия которой до сих пор мигали огни спасательных машин.
+
+— Вы назвали меня Бездной, — сказал он тихо. — Теперь смотрите в неё.
+
+Так в городе появились двое.
+
+Один охотился из тени и всё ещё верил тем, кто его создал.
+
+Другой сам стал тьмой и знал о них правду.
+
+Каждый остался за своё. И оба знали, что это только начало.
+`}
+);
+
+// ===== ДОСЬЕ ГЕРОЕВ ЛИГИ УЛИЦ (только сюжет) =====
+BOOK_TEXTS["l-virus"] = [{ t: "Вирус", x: `
+Алекс Мерфи с детства был самым умным в любой комнате. В двенадцать он чинил соседям компьютеры, в пятнадцать писал программы, которые не могли повторить взрослые. Младший брат Джей смотрел на него как на волшебника.
+
+Был у Алекса и лучший друг — Тайлер Брукс. Они вместе гоняли на великах и сидели до утра за играми. Потом жизнь развела их, и они потеряли друг друга.
+
+Однажды ночью Алекс сел писать вирус, чтобы взломать игру. Посреди работы через комп его ударило током. Откуда взялся разряд, он так и не понял. Боль была такой, что Алекс чуть не умер.
+
+Но выжил. И вместе с током в него как будто вошёл тот самый вирус, который он писал.
+
+Алекс сделал себе костюм и назвался Вирусом. Он решил, что раз миром правят вруны, то лучше его захватит он. Корпорация «Тень» не раз пыталась уничтожить его вирусы. Ни разу у неё не получилось.
+`}];
+
+BOOK_TEXTS["l-phantom"] = [{ t: "Фантом", x: `
+Тайлер Брукс был обычным парнем со двора. Его лучшим другом был Алекс Мерфи: вместе на великах, вместе за играми до утра. Потом жизнь развела их, и они потеряли друг друга.
+
+Тайлер оказался в лабораториях корпорации «Тень» и стал подопытным. Эксперименты он не пережил.
+
+Но смерть не стала концом. Уже призраком Тайлер вспомнил одну старую теорию о том, как можно вернуться. Никто в неё не верил. А она оказалась правдой.
+
+Его душа переродилась во что-то большее, чем человек. Так появился Фантом. Теперь он вселяется в людей и уничтожает их изнутри. И «Тени» он ничего не простил.
+`}];
+
+BOOK_TEXTS["l-titan"] = [{ t: "Титан", x: `
+Клэй Брэддок был шахтёром. Его лучшим клиентом много лет была корпорация «Тень»: она скупала редкие камни и платила щедро, даже слишком.
+
+Однажды Клэй полез в шахту, куда тысячи лет никто не спускался. Про неё ходила легенда: там живёт монстр, который питается душами шахтёров и заманивает их драгоценностями. Кто туда ходил, не возвращался.
+
+В глубине Клэй нашёл странные кристаллы и драгоценные камни. И тогда случился обвал.
+
+Он должен был погибнуть под тоннами породы. Вместо этого кристаллы изменили его, и Клэй мутировал в каменного великана — Титана.
+
+«Тень», которая столько лет была его щедрым клиентом, в итоге его и погубила. Этого Титан не забыл.
+`}];
+
+BOOK_TEXTS["l-cobalt"] = [{ t: "Кобальт", x: `
+Марк Ковальски был простым рабочим на заводе сплавов, который принадлежал корпорации «Тень». Смены по двенадцать часов, жара от огромных чанов, гул машин.
+
+Однажды на смене Марк сорвался и упал в чан с расплавленным кобальтовым сплавом.
+
+Выжить там было невозможно. Но Марк выжил. Металл не сжёг его, а слился с ним, и броня стала частью его тела.
+
+Так появился Кобальт — воин в живой броне, который не сдаётся ни перед чем.
+`}];
+
+BOOK_TEXTS["l-storm"] = [{ t: "Шторм-Джей", x: `
+Джей Мерфи был совсем мелким, когда это случилось. Он играл во дворе, и с неба в него ударила молния. Не обычная — голубая.
+
+Все думали, что он погиб. А Джей встал, отряхнулся и засмеялся. С тех пор по его пальцам бегают искры.
+
+Откуда взялась та голубая молния, до сих пор загадка. Даже для самого Джея.
+
+Сейчас ему семнадцать, и он Шторм-Джей. А его старший брат Алекс стал Вирусом.
+`}];
+
+BOOK_TEXTS["l-grav"] = [{ t: "Гравитон", x: `
+Айзек Хейл был изобретателем-одиночкой. Никаких корпораций, никаких спонсоров — только он, гараж и мечта приручить гравитацию.
+
+Годами он собирал гравитационную пушку из деталей со свалок. Однажды ночью пушка заработала. И первым же выстрелом снаряд попал Айзеку прямо в глаз.
+
+Он должен был погибнуть. Вместо этого он получил телекинез и стал Гравитоном.
+`}];
+
+BOOK_TEXTS["l-flame"] = [{ t: "Пламень", x: `
+Дэнни Эшфорд работал в корпорации «Тень» и собирал огнемёты.
+
+Однажды над его рабочим местом разбилась колба с сывороткой, которая временно восстанавливает клетки. Сыворотка пролилась на огнемёт, огнемёт вспыхнул, и Дэнни оказался в огне.
+
+Сыворотка восстанавливала его клетки быстрее, чем огонь успевал их сжечь. Дэнни выжил, а огонь остался в нём навсегда. Так появился Пламень.
+
+Он единственный, кто «Тень» не винит. Для него это был просто несчастный случай.
+`}];
+
+BOOK_TEXTS["l-chronos"] = [{ t: "Хронос", x: `
+Доктор Элиас Уэллс много лет изучал мультивселенную. Однажды он совершил прорыв, и время вокруг начало сбоить: то неслось, то замирало.
+
+Элиаса затянуло в портал, и он очнулся в средневековье.
+
+Там Босс мультивселенных дал ему миссию. Элиас прошёл весь путь до конца и стал достоин времени. Так он стал Хроносом — Хранителем Времени.
+`}];
+
+// ===== ЛИГА УЛИЦ: ПРОТИВОСТОЯНИЕ (главы 1–7) =====
+BOOK_TEXTS["l-versus"] = [
+{ t: "Ночь в башне «Тени»", x: `
+Город спал. Только башня «Тени» не спала никогда.
+
+Чёрная игла из стекла и сплава торчала над крышами, и на её верхних этажах всегда горел свет. Охрана, камеры, датчики, лазерные решётки. Говорили, что в башню «Тени» невозможно попасть без пропуска.
+
+В три часа ночи на сорок первом этаже погасла камера.
+
+Потом вторая. Потом десятая. По экранам охраны побежали зелёные строчки кода, и дежурный долго тёр глаза, пока не понял, что это не сбой.
+
+Вирус шёл по пустому коридору, и двери открывались перед ним сами. Он не выбил ни одной. Не ударил ни одного охранника. Просто касался панелей, и зелёная зараза бежала по проводам быстрее мысли. Лифт сам приехал за ним. Сигнализация сама себя выключила.
+
+А на другом конце здания, на двадцать этажей ниже, стену служебного тоннеля засосало пустотой.
+
+Бетон смяло внутрь, как бумагу, стянуло в маленькую чёрную точку и раздавило. Из пролома вышел человек с пепельной кожей, по которой бежали трещины фиолетового света.
+
+Бездна не прятался. Ему нечего было прятать.
+
+Каждый пришёл своим путём. Каждый ничего не знал о другом.
+
+И оба шли к Директору.
+`},
+{ t: "Офис Директора", x: `
+Двери кабинета Директора открылись одновременно с двух сторон.
+
+Вирус вошёл с лестницы. Бездна — из лифтовой шахты, оставив на месте дверей лифта дыру с рваными краями. Несколько секунд они смотрели друг на друга.
+
+Директор стоял у окна во всю стену и даже не обернулся.
+
+— Двое за одну ночь, — сказал он тихим, ровным голосом. — Как удачно. Я как раз хотел вас кое с кем познакомить.
+
+Он нажал кнопку на столе. В стенах кабинета разъехались панели, и из темноты за ними шагнули восемь фигур.
+
+Восемь бойцов в серой форме, залитые серебристым сплавом с головы до ног. Гладкие металлические маски вместо лиц. На плечах — полустёртые номера.
+
+— Познакомьтесь с нашими лучшими работниками, — сказал Директор.
+
+Позади него бесшумно открылась панель в стене. Тайный лифт. Директор шагнул внутрь, и двери закрылись прежде, чем кто-то успел двинуться.
+
+Металлические пошли вперёд. Все разом. Без звука, без команды.
+
+Вирус ударил первым. Зелёный луч прошил ближайшего бойца, перескочил на второго, и Вирус уже приготовился к «Взлому» — сейчас они развернутся и начнут бить своих.
+
+Ничего не произошло.
+
+— Не работает, — процедил Вирус. — На металлических не работает!
+
+Бездна вскинул руки. Между ладонями затрещало пространство, вспыхнула чёрная дыра, и бойцов потянуло к ней по полу, скребя металлом по паркету. Вирус бил лучом по тем, кого стягивало, не давая им встать.
+
+Они дрались спина к спине, хотя минуту назад даже не знали друг о друге.
+
+— Ты кто вообще? — крикнул Вирус, уворачиваясь от металлического кулака.
+
+— Бездна, — прогудел тот.
+
+— Вирус. — Зелёный луч разнёс стол Директора в щепки. — Будем знакомы, монстр.
+`},
+{ t: "Фантом", x: `
+Восемь металлических не уставали. Не чувствовали боли. Луч Вируса оставлял на них только чёрные полосы, а из чёрной дыры они выбирались, цепляясь за пол.
+
+Вирус как раз прикидывал, где у этой брони слабое место, когда в кабинете стало холодно.
+
+Через стену — прямо через стену, не открывая дверей, — прошёл человек в тёмном плаще с капюшоном. В руке у него звенела цепь.
+
+Он ни слова не сказал. Просто взмахнул цепью, и она обвилась вокруг шеи ближайшего бойца. Рывок. Боец полетел к нему, и незнакомец встретил его ударом сверху, прямо в макушку.
+
+Металл на голове треснул, как скорлупа. Боец рухнул на пол и больше не поднялся.
+
+Вирус замер. Сквозь трещину в металлическом черепе было видно лицо. Человеческое. Молодое.
+
+— Они что, живые были? — выдохнул он.
+
+— Были, — сказал человек в капюшоне. — Как и я.
+
+— Ты кто?
+
+— Фантом. — Цепь снова взвилась в воздух. — Я лежал с ними в одной лаборатории. На соседнем столе.
+
+Теперь их было трое.
+
+Фантом цеплял бойцов цепью и подтаскивал под удар. Бездна стягивал их в чёрную дыру. Вирус бил лучом сверху, по головам, и металл трескался, и бойцы падали один за другим.
+
+Последний, восьмой, пошёл прямо на Вируса. Вирус даже не поднял руки. Он просто посмотрел на потолок, где висела стальная противопожарная заслонка, и та сорвалась с креплений. Тонна металла рухнула бойцу точно на макушку. Голова треснула сверху. Тишина.
+
+— Взлом на них не работает, — сказал Вирус, отряхивая пыль с рукава. — А на башню работает.
+
+Восемь металлических тел лежали на полу разгромленного кабинета.
+
+Фантом присел рядом с одним из них и долго смотрел в треснувшую маску.
+
+— Я их помню, — тихо сказал он. — Не по именам. По голосам. Они смеялись в соседней палате, пока их не увезли.
+`},
+{ t: "Архив", x: `
+За кабинетом Директора была ещё одна дверь. Без ручки, без замка, без панели. Вирус провёл по ней ладонью и почувствовал за металлом провода.
+
+— Там что-то есть, — сказал он. — Что-то, что он очень не хочет показывать.
+
+Дверь сопротивлялась тридцать секунд. Для Вируса это была вечность.
+
+За ней был архив. Бесконечные ряды стеллажей с папками. «Тень» не доверяла компьютерам самое важное.
+
+Вирус шёл вдоль рядов, читая корешки, пока не остановился у одной папки. На ней был адрес. Его адрес. Дом четырнадцать.
+
+Внутри лежал отчёт с полигона «Тени». Пять лет назад. «Испытание искусственной молнии. Цель: антенна на крыше дома № 14. Объект: подросток, хакер, опасен для сетей корпорации. Результат: попадание. Объект выжил. Наблюдать».
+
+Вирус перечитал его три раза.
+
+Он всегда думал, что та ночь была случайностью. Что разряд пришёл из ниоткуда. Что ему просто не повезло. А «Тень» ударила его специально. Целилась. Хотела, чтобы он больше никогда не сел за комп.
+
+— Они меня чуть не убили, — сказал он очень ровным голосом. — Нарочно.
+
+Бездна стоял у соседнего стеллажа с другой папкой в руках. «ГОРИЗОНТ».
+
+— Меня тоже, — прогудел он. — Мой корабль отправили в чёрную дыру нарочно. Нос не укрепили специально. Семь человек погибли, чтобы «Тень» что-то спрятала. А я вернулся вот таким.
+
+Фантом молча стоял в проходе. Ему не нужна была папка. Он и так знал, что в ней.
+
+Трое стояли посреди архива — хакер, космонавт и мертвец — и думали об одном и том же.
+
+— «Тень» сломала каждого из нас, — сказал наконец Вирус. — Каждого.
+
+— Значит, сносим её, — сказал Бездна.
+
+— Вместе, — кивнул Фантом.
+
+Вирус посмотрел на них обоих.
+
+— Вместе, — сказал он. — Но если что, я за себя.
+
+— Если что, — согласился Фантом, — я тоже.
+
+Бездна просто кивнул. Этого было достаточно.
+`},
+{ t: "Новости", x: `
+«СРОЧНО. Неизвестные атаковали башню корпорации „Тень“. Пострадали сотрудники охраны. Полиция называет нападавших суперзлодеями и просит граждан сообщать о любой подозрительной активности».
+
+Кадры крутили по кругу. Зелёный луч. Чёрная воронка. Тень в капюшоне, проходящая сквозь стену. Разбитые окна сорок первого этажа.
+
+Город проснулся испуганным.
+
+Марк Ковальски смотрел новости в забегаловке у завода с остывающим кофе в руке. Металлическая броня на его плечах тихо поскрипывала, когда он двигался. Официантка давно перестала на неё коситься.
+
+— Суперзлодеи, — пробормотал он. — Ну конечно.
+
+Он полез в интернет искать хоть что-то, кроме этих кадров. Кто они? Откуда? Сколько их? Новости повторяли одно и то же. Соцсети пересказывали новости. Пусто.
+
+Пока он не наткнулся на тред на 4чане.
+
+Анонимный пост, опубликованный в ту же ночь, в 3:40. Ещё до новостей.
+
+«Я видел, как это началось. Камеры гасли по этажам снизу вверх, как будто кто-то шёл внутри по лестнице. Потом с южной стороны провалилась стена тоннеля. Там был второй. Его я знаю. Я с ним уже дрался».
+
+Подпись: Тень-9.
+
+Кобальт перечитал пост три раза. Потом открыл профиль. Ни фоток, ни друзей, ни лайков. Только ник и десяток постов про город — каждый про какое-нибудь происшествие, о котором новости писали только на следующий день.
+
+— Ну ты и призрак, — сказал Кобальт экрану.
+
+И написал ему.
+`},
+{ t: "Лига собирается", x: `
+Кобальт звал открыто. Пост в инсте, фотка брони на фоне башни «Тени»:
+
+«Видели новости? Одному их не остановить. Если кто-то ещё в этом городе умеет то, что не умеют другие, — пишите. Кобальт».
+
+Тень-9 звал по-своему. На 4чане появился новый пост — набор цифр и букв, на вид полная ерунда. Только для тех, кто умеет читать между строк. Шифр.
+
+Через три дня на крыше старой парковки на окраине стояли шестеро.
+
+Первым пришёл тот, кого не звали. Воздух рядом с Кобальтом пошёл рябью, и из ряби шагнул человек в длинном тёмном плаще. Седые виски, спокойные глаза, на груди медальон-циферблат со стрелками, идущими в разные стороны.
+
+— Не пугайтесь, — сказал он. — Меня зовут Хронос. Я видел эту команду в будущем.
+
+— И как мы там? — спросил Кобальт.
+
+— Вместе, — ответил Хронос. — Остальное пока размыто.
+
+Вторым пришёл парень лет семнадцати, взъерошенный, в худи, с искрами, бегающими по пальцам. Он долго мялся у лестницы, прежде чем подойти.
+
+— Я Шторм-Джей, — сказал он. И добавил, глядя в пол: — Зелёный в новостях — мой старший брат.
+
+Стало тихо.
+
+— Я хочу его остановить, — сказал Джей. — Пока он не натворил такого, что уже не исправишь.
+
+Третьим пришёл Гравитон. Айзек Хейл не читал инсту и не верил в команды. Он наткнулся на шифр Тени-9 случайно — и не смог пройти мимо.
+
+— Четыре минуты, — сказал он вместо приветствия. — Неплохой шифр. Но четыре минуты.
+
+Тень-9 впервые проявился из невидимости и пожал ему руку.
+
+Последним пришёл Пламень. Дэнни Эшфорд держал термос с какао и неловко улыбался.
+
+— Я сам работал в «Тени», — сказал он. — Огнемёты собирал. Это мои бывшие коллеги лежат в больнице после той ночи. Обычные ребята.
+
+Шестеро стояли на крыше и смотрели на ночной город. Металлическая броня, невидимка, Хранитель Времени, парень с молниями, изобретатель с пушкой и огненный маг с термосом.
+
+Кобальт откашлялся.
+
+— Ну что… Лига Улиц?
+
+Никто не стал спорить.
+`},
+{ t: "Первая битва", x: `
+Лига выслеживала антигероев неделю. Тень-9 следил за городской сетью, Гравитон считал, где Вирус взламывает чаще всего, Хронос смотрел вперёд, насколько мог. Они вышли на них у подножия башни «Тени» — антигерои снова шли туда.
+
+Бой начался сразу. Без разговоров.
+
+Вирус обернулся на вспышку молнии — и замер. В нескольких метрах от него стоял мальчишка в худи с искрами на пальцах.
+
+— Мелкий? — Вирус не поверил своим глазам. — Ты чё тут забыл?
+
+— Тебя останавливаю, — сказал Шторм-Джей.
+
+И ударил молнией.
+
+А потом задрожала земля. Не от удара, не от воронки — глубоко, тяжело, будто вздохнула сама планета. Из-за угла башни, ломая всё на пути, вышел гигант из камня. Он бил кулаками в стены «Тени», и стекло сыпалось с этажей дождём.
+
+Это был Титан. Он пришёл крушить башню сам по себе.
+
+Он увидел дерущихся. Увидел Тень-9, на секунду проявившегося после удара. На плече у того блеснула старая эмблема отряда — тёмный круг с тонкой светлой кромкой. Затмение. Титан видел её тысячу раз на каждом чеке, который ему когда-то выписывала «Тень».
+
+Он прибежал за три шага и шарахнул Тень-9 так, что тот пробил спиной припаркованный фургон.
+
+— Ты из них! — проревел Титан. — «Тень» сломала мне жизнь!
+
+Вирус, Бездна и Фантом переглянулись.
+
+— Мы все такие, — сказали они хором.
+
+Титан медленно повернулся к ним. И встал рядом.
+
+Теперь антигероев было четверо. И Вирус перестал сдерживаться.
+
+Зелёный луч ударил по Кобальту, Тени-9 и Шторм-Джею одновременно. «Взлом». Их глаза подёрнулись зелёным. Они развернулись — и пошли на своих.
+
+Пламень не успел даже поднять руки. Гравитон успел, но против троих сразу — нет. Через минуту оба лежали на асфальте и не двигались.
+
+Хронос увидел это. И стрелки на его медальоне завертелись назад.
+
+Мир дёрнулся. Пламень и Гравитон поднялись с асфальта, звуки побежали задом наперёд, и время откатилось на минуту назад. Вирус снова стоял с поднятыми руками, собирая «Взлом».
+
+На этот раз Хронос был готов. Он швырнул в Вируса снаряд прямо в момент заклинания…
+
+Но цепь Фантома обвилась вокруг его руки и рванула назад. Снаряд ушёл в небо.
+
+Взлом прошёл. Только теперь по-другому. Зелёным подёрнулись глаза Тени-9, Гравитона, Пламеня и Шторм-Джея. Четверо против двоих.
+
+— Лукас! — Кобальт бросился к Тени-9, хватая его за плечи. — Лукас, это я! Не делай этого! Мы же друзья! Слышишь?! Мы друзья!
+
+Тень-9 замер. Зелень в его глазах дрогнула. Мигнула. И погасла.
+
+Он вырвался.
+
+Первое, что он сделал, — бросился на Гравитона, чтобы вырубить его, пока тот не ударил Кобальта. Но Гравитон поднял его в воздух одним движением руки и ударил об асфальт. А потом на упавшего навалились остальные взломанные.
+
+Они затаптывали его, пока он не перестал шевелиться.
+
+Хронос отмотал время во второй раз.
+
+Мир снова дёрнулся. Снова звуки задом наперёд, снова Тень-9 жив. И на этот раз Хронос не стал рисковать.
+
+— Уходим! — крикнул он. — Все! Сейчас!
+
+Лига отступила. Гравитон прикрывал отход обломками, Пламень — стеной огня. Через минуту у башни остались только антигерои.
+
+Фантом стоял чуть в стороне и смотрел им вслед. Время на него не действовало. Он помнил обе концовки.
+
+— Что? — сказал он негромко. — Плохая концовка не понравилась?
+`},
+];
+
+// ===== ЛИГА УЛИЦ: ПРОТИВОСТОЯНИЕ (главы 8–13) =====
+BOOK_TEXTS["l-versus"].push(
+{ t: "Старые друзья", x: `
+Антигерои устроили штаб в заброшенной мастерской у старого порта. Ржавые станки, дыры в крыше, одна лампочка на проводе. Титан еле влез в ворота.
+
+Ночью, когда Бездна ушёл бродить по берегу, а Титан уснул, привалившись к стене, Вирус сидел за столом над ноутбуком и не мог работать.
+
+Он видел брата. Мелкого. Который должен был сидеть дома и проходить игры, а не бить его молниями посреди улицы.
+
+Вирус провёл рукой по голове и зачесал назад упавшие на лоб волосы. Старая привычка. Он делал так всегда, когда нервничал. С двенадцати лет.
+
+Фантом сидел напротив, на ящике, и вдруг перестал крутить в пальцах цепь.
+
+— Повтори, — сказал он.
+
+— Что?
+
+— Волосы. Так делал только один человек, которого я знал.
+
+Вирус медленно поднял голову. Фантом поднял руки и стянул с головы капюшон.
+
+Лицо было бледным, почти прозрачным. Под глазами — тени. Но это было его лицо. Лицо мальчишки, с которым Алекс делил последнюю газировку и спорил, кто первым пройдёт игру.
+
+— Тайлер?
+
+— Алекс.
+
+Секунду было тихо.
+
+— Ты пропал, — сказал Алекс, и голос у него сорвался. — Я неделями тебе писал. Неделями!
+
+— Это ты пропал! — Тайлер вскочил с ящика. — Ты перестал отвечать, я пошёл тебя искать и попал к ним на стол!
+
+Они смотрели друг на друга через стол, оба красные, оба злые. А потом шагнули друг к другу одновременно и обнялись так крепко, что у Алекса хрустнули рёбра.
+
+— Да неужели, — пробормотал Тайлер ему в плечо, — я обнимаю злодея.
+
+— Заткнись! — сказал Алекс.
+
+Но не отпустил.
+
+Титан у стены приоткрыл один глаз, посмотрел на них и снова закрыл. Иногда лучше делать вид, что спишь.
+`},
+{ t: "Укрытие героев", x: `
+Укрытием Лиги стала квартира Тени-9. Пустая, без мебели, с матрасом на полу и шахматной доской на подоконнике. Шестеро набились в неё, как в лифт.
+
+Никто не говорил. Пламень молча разливал какао. Гравитон чинил пушку. Шторм-Джей сидел в углу, уткнувшись лбом в колени.
+
+Хронос долго стоял у окна. Потом повернулся к ним.
+
+— Вы думаете, мы сбежали, — сказал он. — Мы не сбежали. Мы выжили.
+
+— В смысле? — не понял Кобальт.
+
+— Я отматывал время. Дважды. — Хронос говорил медленно, будто каждое слово весило тонну. — Вы этого не помните, потому что для вас этого не было. А я помню. В первый раз Вирус взломал Кобальта, Тень-9 и Джея, и они убили Пламеня и Гравитона.
+
+Пламень замер с термосом в руке. Гравитон уронил отвёртку.
+
+— Во второй раз взломанными были Тень-9, Гравитон, Пламень и Джей. Кобальт вытащил Тень-9 из взлома. И его затоптали насмерть.
+
+Тень-9 медленно поднял глаза на Кобальта. Кобальт отвёл взгляд.
+
+— Ты что, — тихо сказал Лукас, — орал мне, что мы друзья?
+
+— Ну, — Кобальт почесал металлический затылок. — Я не помню. Но, наверное, орал. Это на меня похоже.
+
+Джей вскочил так резко, что ударился головой о полку.
+
+— Он использовал меня! — В его пальцах затрещали молнии. — Мой собственный брат! Взломал, как какой-то комп, и натравил на своих!
+
+— Он взломал тебя, — спокойно сказал Хронос, — чтобы тебя не покалечили.
+
+Джей осёкся.
+
+— Я видел обе битвы, — продолжил Хронос. — Взломанных он не трогал. Ни разу. Ни один удар не прилетел в тебя. Он убирал тебя из боя, Джей. Самым быстрым способом, который знал.
+
+Джей медленно сел обратно в угол. Молнии на его пальцах погасли.
+
+— Всё равно он гад, — сказал он наконец.
+
+— Возможно, — согласился Хронос. — Но гад, который тебя бережёт.
+
+Той ночью никто не спал. Тень-9 сидел на подоконнике и двигал по доске чёрного коня. Кобальт сидел рядом и молчал. Это было хорошее молчание.
+`},
+{ t: "Мультивселенная", x: `
+Хронос знал: в следующий раз двух отмоток может не хватить.
+
+Под утро, когда остальные наконец уснули, он вышел на крышу, закрыл глаза и провёл рукой по воздуху. Пространство разошлось, как занавес. За ним была пустота, полная миров — тысячи миров, висящих в темноте, как мыльные пузыри, и в каждом шло своё время.
+
+Хронос шагнул внутрь.
+
+Он шёл к Боссу мультивселенных. Тому, кто когда-то дал ему миссию в средневековье. Тому, кто сделал его Хранителем Времени. Если кто и мог помочь, то он.
+
+Босс ждал его. Огромный, размером с солнце, если у солнца бывает лицо.
+
+Только Боссов было двое.
+
+Два одинаковых гиганта стояли рядом. Одинаковые лица, одинаковые голоса, одинаково древние глаза. Они повернулись к Хроносу одновременно.
+
+— Хранитель, — сказали оба. — Помоги мне. Он самозванец.
+
+Хронос смотрел на них очень долго. Так долго, что в одном из пузырей-миров вокруг успела смениться эпоха.
+
+Потом он увидел пятно на ухе. Маленькое, почти незаметное. Он помнил его — три часа он стоял тогда на коленях перед Боссом, глядя в землю, и видел только это ухо. И пятно на нём. Зелёное.
+
+У левого гиганта пятно было зелёным.
+
+У правого — фиолетовым.
+
+Хронос поднял руки. Стрелки на медальоне завертелись — но не назад, а вперёд. Только для одного. Для правого. Быстрее. Ещё быстрее. Тысяча лет. Миллион. Миллиард.
+
+Близнец закричал. Его кожа посерела, потрескалась, осыпалась. От гиганта размером с солнце осталась звёздная пыль, которую тут же развеяло между мирами.
+
+Настоящий Босс долго смотрел на то место, где стоял его двойник.
+
+— Ты отличил, — сказал он. — Многие не отличили бы.
+
+Он протянул руку, и в воздухе перед Хроносом появился клинок. Длинный, тонкий, сияющий холодным светом. Края пространства чуть отходили от лезвия, как вода от носа корабля.
+
+— Клинок мультивселенных. Он режет всё. Время, пространство и то, что между ними. Береги его, Хранитель. И будь осторожен с тем, кого им режешь.
+
+Когда Хронос вернулся на крышу, внизу ещё не рассвело. Прошло три секунды.
+`},
+{ t: "Вторая битва", x: `
+Вторая битва случилась через четыре дня, в старом порту, у мастерской антигероев. Лига пришла сама. На этот раз они знали, чего ждать от «Взлома»: Гравитон держал Вируса на расстоянии, швыряя в него контейнеры, а Хронос не спускал с него глаз.
+
+Бой был страшнее первого. Титан крушил причалы, Бездна втягивал в чёрные дыры краны, Пламень поджёг полпорта, Шторм-Джей бил молниями в воду, чтобы током сбить Титана с ног.
+
+Фантом поймал цепью Пламеня, рванул к себе и вселился. Пламень развернулся и швырнул огненный шар в Гравитона. Через четыре секунды Фантом вылетел из его тела обратно в своё, и Пламень рухнул на колени.
+
+— Перезарядка, — усмехнулся Фантом, отступая. — Минутку, ребята.
+
+И тогда Хронос остановил время.
+
+Капли воды повисли в воздухе. Огонь застыл языками. Молния Джея замерла посреди неба ломаной белой линией. Мир стал фотографией.
+
+Двигался только Хронос.
+
+Он шёл по замершему порту с Клинком мультивселенных в руке. Он видел, чем кончится эта битва, если её не остановить. Вирус взломает всех. Бездна втянет их в чёрную дыру. И третьей отмотки может не хватить.
+
+Если убрать двоих, этого не будет.
+
+Хронос подошёл к Вирусу. Тот застыл с поднятыми руками, собирая «Взлом». Хронос посмотрел ему в лицо. Подумал о Джее. Отвёл глаза.
+
+Один удар Клинка. Потом второй — Бездне.
+
+Хронос опустил клинок. Ему было очень плохо. Но он сделал то, что должен был.
+
+Фантом видел всё. Время на него не действовало — он стоял посреди застывшего порта и смотрел, как падает его лучший друг. Но сила ещё перезаряжалась. Он мог только смотреть.
+
+Секунда. Две. Три.
+
+— Перезарядка закончилась, — сказал Фантом.
+
+Хронос даже не успел обернуться. Белая пелена накрыла его глаза, и тело перестало слушаться. Его рука сама разморозила время.
+
+Вода упала. Огонь вспыхнул. Молния ударила в причал. Вирус и Бездна рухнули на мокрые доски и не встали.
+
+Герои обернулись к Хроносу. Хронос улыбался им чужой, кривой улыбкой.
+
+— Мы победили! — сказал он голосом Хроноса.
+
+И взорвался изнутри.
+
+Белая вспышка. Хронос отлетел к стене мастерской и сполз по ней, весь в копоти и крови. Фантом выскользнул из него, как из старой куртки, вернулся в своё тело — и бросился к Вирусу.
+
+— Алекс… Алекс, вставай…
+
+Хронос был жив. Едва. На единицах. Он лежал у стены, видел мёртвых Вируса и Бездну, видел Джея, который бежал к брату, видел Фантома на коленях у тела друга.
+
+Он поднял дрожащую руку. Стрелки на медальоне завертелись назад.
+
+На этот раз — для всех.
+`},
+{ t: "Перемена", x: `
+Они очнулись там же, где стояли за минуту до остановки времени.
+
+Но на этот раз помнили все. Каждый. Вирус помнил холод Клинка. Бездна — как падал на доски. Фантом — как стоял на коленях. Джей — как бежал к брату и не успел.
+
+Битва остановилась сама. Никто больше не нападал.
+
+Титан стоял посреди разгромленного причала и смотрел на свои каменные руки. Кобальт подошёл к нему — медленно, без рывка, без удара. Броня на нём была вся в трещинах.
+
+— Меня они тоже сломали, — сказал Кобальт. — Завод был их. Чан был их. Я в нём горел. — Он помолчал. — Но месть боль не потушит. Ты разнесёшь эту башню до последнего этажа, а внутри всё равно будет пусто. Я знаю.
+
+Титан долго молчал. Потом сел прямо на доски, и причал под ним застонал.
+
+— Я просто хотел, чтобы им было больно, — сказал он. — Как мне.
+
+— Знаю, — сказал Кобальт и сел рядом.
+
+А Хронос стоял у стены мастерской, всё ещё в копоти, и думал.
+
+Он только что убил двоих. Ради чего? Ради «Тени»? Ради башни, которая ударила молнией в подростка? Которая отправила космонавтов на смерть? Которая положила Тайлера Брукса на стол?
+
+Он видел будущее. Он видел все варианты. И ни в одном из них «Тень» не становилась лучше.
+
+— Мы не на той стороне, — сказал он вслух. — «Тень» не такая, как кажется.
+
+Кобальт обернулся. Хронос уже снимал с груди эмблему Лиги, которую ему когда-то нарисовал маркером Джей.
+
+— Прости, — сказал Хронос. — Я ухожу к ним.
+
+Вирус смотрел на него с причала. Без злости. Просто смотрел.
+
+— Ты меня только что убил, — сказал он.
+
+— Знаю, — ответил Хронос. — Поэтому и ухожу.
+
+Он пошёл к антигероям.
+
+А Титан, тяжело поднявшись с досок, пошёл в другую сторону. К Кобальту. И встал рядом.
+
+Команды снова стояли друг напротив друга. Только состав у них был другой.
+`},
+{ t: "Записка", x: `
+Через неделю Вирус и Хронос вернулись в башню «Тени». Вдвоём, тихо, без драки.
+
+Кабинет Директора так и стоял разгромленным с той первой ночи. Обломки стола, выбитое окно, трещины на стенах. Никто ничего не убирал. Будто Директор знал, что они вернутся.
+
+На уцелевшем краю стола лежала записка. Ровный, аккуратный почерк.
+
+«Для подручного».
+
+Под надписью — строчка символов. Цифры, буквы, значки. Шифр.
+
+— Код к тайному лифту, — сказал Хронос. — Он оставил его для кого-то из своих.
+
+— Или для нас, — сказал Вирус. — Хочет, чтобы мы пришли.
+
+Он посмотрел на шифр десять секунд. Ровно десять.
+
+— Готово.
+
+Тайный лифт за стеной открылся с тихим звоном.
+
+Через пару минут в кабинет ворвалась Лига Улиц. Тень-9 засёк, что кто-то снова вошёл в башню, и они примчались все сразу, с Титаном, который застрял в дверном проёме и снёс его целиком.
+
+Гравитон первым увидел записку, схватил её и уставился в шифр.
+
+— Подождите… подождите… — Он загибал пальцы, бормотал, водил по строчке ногтем. — Есть! Минута! Новый рекорд!
+
+— Мы уже открыли, — сказал Вирус и кивнул на распахнутый лифт.
+
+Гравитон медленно опустил записку.
+
+Две команды стояли в разгромленном кабинете друг напротив друга. Никто не нападал.
+
+— Внизу Директор, — сказал Хронос. — Тот, кто сделал всё это с каждым из нас. Можем сначала разобраться с ним. А потом уже друг с другом.
+
+Кобальт посмотрел на своих. Джей смотрел на брата. Тень-9 смотрел на лифт.
+
+— Едем, — сказал Кобальт.
+
+Лифт был рассчитан на четверых. Они спускались в три захода.
+`}
+);
+
+// ===== ЛИГА УЛИЦ: ПРОТИВОСТОЯНИЕ (главы 14–20) =====
+BOOK_TEXTS["l-versus"].push(
+{ t: "Секретная лаборатория", x: `
+Лифт шёл вниз очень долго. Мимо минус второго, минус четвёртого, минус седьмого. Ещё ниже. Туда, куда не доходили даже чертежи башни.
+
+Двери открылись в огромный белый зал. Ряды капсул вдоль стен, трубки, провода, мониторы. А на мониторах — они. Все. Кадры с обеих битв. Молнии Джея. Чёрные дыры Бездны. Огонь Пламеня. Невидимость Тени-9, снятая тепловизорами. Каждый удар, каждый приём, с графиками и цифрами.
+
+Директор стоял в центре зала.
+
+— Наконец-то, — сказал он тихим голосом. — Все вместе. Я ждал этого очень давно.
+
+— Что это? — спросил Кобальт, глядя на мониторы.
+
+— Каждая ваша битва — это мои данные, — сказал Директор. — Вы думали, что деретесь друг с другом. А вы работали на меня. Каждый удар, каждая способность. Я записывал. Изучал. Собирал.
+
+Он поднял руку. На запястье у него была капельница с тёмной, переливающейся жидкостью.
+
+— А потом взял себе.
+
+Его тело начало расти.
+
+Сначала плечи. Потом руки. Костюм лопнул по швам. Кожа пошла металлическими пластинами, как броня Кобальта, потом покрылась камнем, как у Титана. По ней побежали искры молний. Из ладоней вырвался огонь. Вокруг него закружились обломки, поднятые телекинезом. На груди открылась чёрная воронка, точь-в-точь как у Бездны.
+
+Через минуту перед ними стоял гигант. Под самый потолок зала. Он вобрал в себя силы всех героев и Бездны.
+
+— Почти всех, — сказал он, и голос его гремел, как камнепад. — Одно не получилось.
+
+Он посмотрел на Хроноса.
+
+— Время нельзя украсть, — сказал Хронос.
+
+— Пока нельзя, — ответил Директор.
+`},
+{ t: "Сам за себя", x: `
+Гигант не стал нападать сразу. Он смотрел на них сверху, как смотрят на муравьёв.
+
+Потом его взгляд остановился на одном.
+
+— Девятый, — сказал Директор, и голос его стал почти мягким. — Ты всегда был с нами. Мы вырастили тебя. Платили за твою школу, за твой колледж. Дали тебе силу. Ты последний из отряда. Ты — «Тень». Встань рядом со мной.
+
+Все повернулись к Тени-9.
+
+Лукас стоял неподвижно. В кармане он сжимал шахматного коня.
+
+Он думал о детском доме и о письме, которое пришло через месяц. О спортзале на минус втором. О восьми капсулах. О восьми металлических телах на полу кабинета. О бирках, которые нашли антигерои. О том, как Директор пришёл к нему в медблок и сказал: «Мне жаль. Они погибли не зря».
+
+О том, что за все эти годы Директор ни разу не назвал его по имени.
+
+— Вы даже имени моего не знаете, — сказал Лукас.
+
+Директор моргнул. Всего один раз. Но этого было достаточно.
+
+— Я не с вами, — сказал Лукас. Он посмотрел на Кобальта, на Бездну, на всех. — И не с ними. Я ни с кем.
+
+Он развернулся и пошёл к стене.
+
+— Лукас! — крикнул Кобальт.
+
+Тень-9 остановился на секунду. Не оборачиваясь.
+
+— Я сам по себе, Марк. Так честнее.
+
+И исчез. Не ушёл — растворился в воздухе. Только шаги ещё секунду звучали по белому полу. Потом и их не стало.
+
+Кобальт долго смотрел на то место, где он стоял.
+
+— Вернётся, — тихо сказал Пламень.
+
+— Вернётся, — согласился Кобальт. Но не очень уверенно.
+`},
+{ t: "Подкачался", x: `
+Гигант ударил.
+
+Первый же удар раскидал обе команды по залу. Землетрясение, как у Титана, огонь, как у Пламеня, молния, как у Джея, — всё сразу. Капсулы вдоль стен лопались, как мыльные пузыри.
+
+Вирус поднялся из-под обломков, вытирая кровь с губы. Ему не было страшно. Ему было интересно.
+
+Все эти недели, пока остальные спали, он сидел над собой, как над программой. Остальные принимали свои силы как есть. Огонь — значит, огонь. Молния — значит, молния. Он никогда так не умел. Он разбирал свою силу строчка за строчкой. И переписывал.
+
+Раньше, чтобы взломать, ему нужно было сначала заразить врага лучом. Теперь — нет.
+
+Вирус вытянул руку и показал на летящий в Пламеня обломок стены. Обломок развернулся в воздухе и полетел обратно в гиганта.
+
+Показал на кабели под потолком — и они, как змеи, обвились вокруг гигантской руки.
+
+Показал на турели охраны — и турели открыли огонь по своему хозяину.
+
+— Он взламывает того, на кого покажет, — выдохнул Гравитон. — Без луча. Без заражения. Просто… показывает.
+
+Но это было не всё. Зелёная энергия в руках Вируса больше не рассеивалась. Она держала форму. Клинок. Щит. Хлыст. Копьё. Он менял их одним движением пальцев.
+
+Фантом смотрел на него из-за колонны и усмехался.
+
+— Ты всегда был занудой, Алекс.
+
+— Я всегда был самым умным, Тайлер.
+
+Шторм-Джей стоял в нескольких метрах, с молниями на пальцах. Вирус видел его краем глаза. Мог взломать его одним жестом. Мог убрать из боя за секунду, как тогда, у башни.
+
+Не стал.
+
+— Исключение, — сказал он сам себе.
+
+Джей это услышал. И ничего не сказал. Только молнии на его пальцах стали ярче.
+`},
+{ t: "Сбор сил", x: `
+Гигант падал и вставал. Падал и вставал.
+
+Гравитон бросил его об пол — он встал. Бездна пробил в нём дыру тёмным снарядом — дыра затянулась на глазах. Вирус взломал его левую руку, рука ударила его самого в лицо — и через секунду снова слушалась хозяина.
+
+— Он регенерирует, — сказал Кобальт, отступая за колонну. — Мы его не пробьём.
+
+Хронос стоял рядом, прижимаясь спиной к той же колонне. Он смотрел на капельницу, которая всё ещё торчала из запястья гиганта. На тёмную переливающуюся жидкость в ней.
+
+— Пробьём, — сказал он. — Его тело еле держит то, что он в себя залил. Семь чужих сил в одном теле. Ещё одна доза — и оно подавится.
+
+— Какая доза? — не понял Кобальт.
+
+— Наша. Все силы сразу. В один шприц.
+
+На столе у разбитых капсул лежали пустые шприцы — те самые, которыми «Тень» когда-то колола своих подопытных. Фантом принёс один. Посмотрел на него очень долго. Потом передал Хроносу.
+
+Они сдавали силы по очереди, за колонной, пока остальные отвлекали гиганта.
+
+Пламень опустил в шприц палец, и внутри вспыхнул огонь. Гравитон закрыл глаза — и жидкость стала тяжёлой, тянущей вниз. Титан коснулся стекла каменным пальцем, Кобальт — металлическим. Бездна уронил внутрь каплю пустоты. Фантом — что-то холодное, полупрозрачное, похожее на туман.
+
+Вирус добавил зелёный свет. Потом повернулся к брату.
+
+— Мне нужна твоя молния, мелкий, — сказал он. — Но только если сам дашь.
+
+Джей посмотрел на него долгим взглядом. На старшего брата, который взломал его посреди улицы. Который умер у него на глазах. Который сказал «исключение».
+
+— Бери, — сказал Джей.
+
+Голубая молния ударила в шприц, и вся жидкость внутри засветилась так, что стало больно смотреть.
+
+Хронос не стал ничего добавлять.
+
+— Время у меня всё равно не украдёшь, — сказал он. — Оставлю на потом.
+`},
+{ t: "Подарок", x: `
+Оставалось только одно: подобраться к гиганту вплотную.
+
+Это было почти невозможно. Его окружал вихрь обломков, огонь и молнии били во все стороны, а земля под ногами ходила ходуном.
+
+— Отвлекайте, — сказал Вирус. — Мне нужна одна секунда.
+
+Они отвлекали.
+
+Титан вцепился гиганту в ногу, и они вдвоём покатились по залу, круша всё вокруг. Гравитон тянул его руки в стороны телекинезом, белея от напряжения. Пламень бил огнём в глаза. Бездна держал над ними чёрную дыру, втягивая летящие обломки. Кобальт рывком сбил гиганта с ног, когда тот почти поднялся.
+
+Фантом поймал цепью капельницу на гигантском запястье. Рванул на себя. Рука гиганта дёрнулась вниз.
+
+Одна секунда.
+
+Вирус уже бежал. По спине Титана, по плечу, по огромной металлической руке — к запястью, к тому месту, куда входила капельница.
+
+— Эй, здоровяк! — крикнул он. — У меня для тебя подарок!
+
+И вогнал шприц по самый упор.
+
+Гигант замер.
+
+Сначала ничего не происходило. Потом по его коже побежали трещины — фиолетовые, зелёные, голубые, огненные, все сразу. Металлические пластины начали отваливаться. Каменная кожа пошла сколами. Молнии и огонь вырывались из него без всякого порядка, во все стороны.
+
+Семь чужих сил его тело ещё держало. Пятнадцать — нет.
+
+Гигант закричал, и от этого крика лопнули последние уцелевшие мониторы.
+
+Вирус спрыгнул с его руки и откатился к колонне, где стояли остальные.
+
+— Ну, — сказал он, тяжело дыша. — Подарок вручён.
+`},
+{ t: "Удар Хроноса", x: `
+Гигант стоял на коленях посреди разрушенного зала. Его тело трещало и рассыпалось, но он всё ещё был жив. Всё ещё силён. Чужие силы рвали его изнутри, но не отпускали.
+
+Он поднял голову и посмотрел на них.
+
+— Вы… ничего… не понимаете… — Голос был хриплый, рваный. — Всё это… было ради…
+
+Он не договорил.
+
+Все повернулись к Хроносу. Хранитель Времени стоял чуть в стороне, держа руку на рукояти Клинка мультивселенных.
+
+— Давай, Хранитель, — сказал Вирус. — Ты заслужил.
+
+Хронос подошёл к гиганту. Медленно, неторопливо. Остановился прямо перед ним.
+
+— Ты забрал у каждого из нас силу, — сказал он. — Огонь. Молнию. Металл. Пустоту. Но время ты забрать не смог.
+
+Он вытянул руку. Стрелки на медальоне завертелись вперёд.
+
+— Время нельзя украсть.
+
+Он гнал время только для одного. Для Директора. Сначала годы. Потом десятилетия.
+
+Чужие силы уходили из гигантского тела, как вода из песка. Сначала огонь, потом молнии, потом пустота. Металлические пластины осыпались пылью. Каменная кожа рассыпалась в песок. Гигант становился меньше, и меньше, и меньше.
+
+Когда Хронос опустил руку, на полу посреди зала сидел старик.
+
+Худой, сгорбленный, в лохмотьях дорогого костюма. Седые волосы падали на лицо. Глаза затянуло белой пеленой — он больше ничего не видел. В нём не осталось ни одной силы. Ни капли.
+
+Он шарил руками по полу, как будто искал что-то.
+
+— Где… — шептал он. — Где вы все…
+
+Никто ему не ответил.
+`},
+{ t: "Купол", x: `
+— Что с ним делать? — спросил Кобальт.
+
+Никто не знал. Убить слепого старика без сил не мог никто. Даже Бездна, у которого было больше всего причин. Он стоял над Директором очень долго, и трещины на его коже то вспыхивали, то гасли. А потом отвернулся.
+
+— Не я, — сказал он. — Не так.
+
+Вирус шагнул вперёд.
+
+— Я знаю, что с ним делать.
+
+Он развёл руки. Зелёная энергия потекла из его ладоней, но не лучом и не клинком. Она растекалась вокруг старика, загибалась, смыкалась сверху. Купол. Полупрозрачный, светящийся изнутри, будто сделанный из самой материи.
+
+Старик внутри замер, почувствовав стенки.
+
+— Внутри время для него не идёт, — сказал Вирус. — Он не стареет. Не умирает. Просто сидит. И помнит. Каждый день. Каждого из нас.
+
+— Сколько он там продержится? — спросил Шторм-Джей.
+
+Вирус посмотрел на брата.
+
+— Пока я не захочу выпустить. — Он пожал плечами. — То есть всегда.
+
+Они выбирались из-под башни долго. Лифт не работал, лестниц не было, и Титан пробивал им путь наверх прямо через бетон, этаж за этажом.
+
+Когда они вышли на площадь, над городом уже вставало солнце.
+
+Две команды стояли на ступенях башни «Тени». Пыльные, побитые, в копоти. Никто не знал, что сказать.
+
+— Ну и что теперь? — спросил наконец Гравитон. — Мы снова враги?
+
+Вирус посмотрел на Кобальта. Кобальт посмотрел на Вируса.
+
+— Посмотрим, — сказал Вирус.
+
+— Посмотрим, — согласился Кобальт.
+
+Шторм-Джей шагнул к брату и неловко ткнул его кулаком в плечо. Вирус ткнул в ответ. Этого было достаточно.
+
+А на крыше дома напротив, там, куда никто не смотрел, сидел человек, которого никто не видел. В руке он держал маленького чёрного шахматного коня. Он видел, как вышли все. Видел, что они живы.
+
+Потом встал и растворился в утреннем воздухе.
+
+Сам по себе. Как и обещал.
+`}
+);
+
+</script>
+<script>
+(function () {
+"use strict";
+var $ = function (id) { return document.getElementById(id); };
+function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
+function esc(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+var REDUCED = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+// ================= КАТАЛОГ =================
+var CATALOG = [
+  { id: "imp1", shelf: "imp", title: "Импульс", cover: { kind: "imp1", lbl: "Книга I", ttl: "ИМПУЛЬС" }, sub: "Книга первая", next: "imp2", ann: ["Над Максом смеялась вся школа — из-за лишнего веса он был главной мишенью для шуток.", "Но этой осенью над городом появится тот, кого все назовут Импульсом."] },
+  { id: "imp2", shelf: "imp", title: "Импульс 2", cover: { kind: "imp2", lbl: "Книга II", ttl: "ИМПУЛЬС 2" }, sub: "Книга вторая", next: "imp3", ann: ["После той битвы прошло несколько месяцев. Город залечил раны, а у Макса началась обычная жизнь: уроки, контрольные, сериалы по вечерам.", "Кажется, всё наконец закончилось."] },
+  { id: "imp3", shelf: "imp", title: "Импульс 3: Доктор Дум", cover: { kind: "imp3", lbl: "Книга III", ttl: "ИМПУЛЬС 3", small: "ДОКТОР ДУМ" }, sub: "Книга третья", ann: ["Макс учится в университете, а по вечерам патрулирует город. Ничего страшнее угонщиков ему давно не попадалось.", "А потом прямо посреди прыжка перед ним вспыхнул портал."] },
+  { id: "l-virus", shelf: "league", dossier: true, sub: "Досье · Лига Улиц", ann: ["Самый умный в Лиге Улиц. Писал вирус, чтобы взломать игру, а взломал целый мир."], title: "Вирус", cover: { kind: "virus", lbl: "Лига Улиц", ttl: "ВИРУС" } },
+  { id: "l-shadow-abyss", shelf: "league", title: "Тень-9 и Бездна", cover: { kind: "duo", lbl: "Лига Улиц", ttl: "ТЕНЬ-9<br>И&nbsp;БЕЗДНА" }, sub: "Лига Улиц", ann: ["Корпорация «Тень» строит будущее. Самые важные дела она делает там, где никто не видит.", "Восемь человек улетают к краю Солнечной системы, чтобы вблизи посмотреть на чёрную дыру. А на Земле тем временем собирают отряд из девяти бойцов."] },
+  { id: "l-phantom", shelf: "league", dossier: true, sub: "Досье · Лига Улиц", ann: ["Он не пережил опыты «Тени». Но смерть оказалась для него не концом."], title: "Фантом", cover: { kind: "phantom", lbl: "Лига Улиц", ttl: "ФАНТОМ" } },
+  { id: "l-titan", shelf: "league", dossier: true, sub: "Досье · Лига Улиц", ann: ["Шахтёр, который спустился туда, откуда никто не возвращался."], title: "Титан", cover: { kind: "titan", lbl: "Лига Улиц", ttl: "ТИТАН" } },
+  { id: "l-cobalt", shelf: "league", dossier: true, sub: "Досье · Лига Улиц", ann: ["Простой рабочий с завода «Тени», ставший воином в живой броне."], title: "Кобальт", cover: { kind: "cobalt", lbl: "Лига Улиц", ttl: "КОБАЛЬТ" } },
+  { id: "l-storm", shelf: "league", dossier: true, sub: "Досье · Лига Улиц", ann: ["Мальчишка, в которого во дворе ударила голубая молния."], title: "Шторм-Джей", cover: { kind: "storm", lbl: "Лига Улиц", ttl: "ШТОРМ-ДЖЕЙ" } },
+  { id: "l-grav", shelf: "league", dossier: true, sub: "Досье · Лига Улиц", ann: ["Изобретатель-одиночка, которого собственная пушка наградила телекинезом."], title: "Гравитон", cover: { kind: "grav", lbl: "Лига Улиц", ttl: "ГРАВИТОН" } },
+  { id: "l-flame", shelf: "league", dossier: true, sub: "Досье · Лига Улиц", ann: ["Он делал огнемёты для «Тени» — пока огонь не стал частью его самого."], title: "Пламень", cover: { kind: "flame", lbl: "Лига Улиц", ttl: "ПЛАМЕНЬ" } },
+  { id: "l-chronos", shelf: "league", dossier: true, sub: "Досье · Лига Улиц", ann: ["Учёный, который сломал время и стал его хранителем."], title: "Хронос", cover: { kind: "chronos", lbl: "Лига Улиц", ttl: "ХРОНОС" } },
+  { id: "l-versus", shelf: "league", title: "Лига Улиц: Противостояние", cover: { kind: "versus", lbl: "Лига Улиц", ttl: "ПРОТИВО­СТОЯНИЕ" }, sub: "Лига Улиц", ann: ["Однажды ночью двое врываются в башню корпорации «Тень». Каждый своим путём. И оба идут к Директору.", "Утром город узнаёт, что у него есть суперзлодеи. А через три дня — что есть и герои."] },
+  { id: "w-sun", shelf: "wip", soon: true, wip: true, title: "Лига Улиц: Тайна Солнца", cover: { kind: "sun", lbl: "Лига Улиц", ttl: "ТАЙНА СОЛНЦА" } },
+  { id: "w-imp4", shelf: "wip", soon: true, wip: true, title: "Импульс 4", cover: { kind: "imp4", lbl: "Книга IV", ttl: "ИМПУЛЬС 4" } }
+];
+var BYID = {}; CATALOG.forEach(function (b) { BYID[b.id] = b; });
+
+// ================= ОБЛОЖКИ (canvas) =================
+function rng(seed) { var a = seed >>> 0; return function () { a |= 0; a = a + 0x6D2B79F5 | 0; var t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+function bolt(g, r, x, y, len, ang, w, depth) {
+  g.beginPath(); g.moveTo(x, y); var cx = x, cy = y, seg = 7;
+  for (var i = 0; i < seg; i++) { ang += (r() - 0.5) * 0.9; cx += Math.cos(ang) * len / seg; cy += Math.sin(ang) * len / seg; g.lineTo(cx, cy); if (depth > 0 && r() < 0.28) { g.stroke(); bolt(g, r, cx, cy, len * 0.45, ang + (r() - 0.5) * 1.6, w * 0.6, depth - 1); g.beginPath(); g.moveTo(cx, cy); } }
+  g.lineWidth = w; g.stroke();
+}
+function vignette(g, w, h, a) { var v = g.createRadialGradient(w / 2, h * 0.45, w * 0.2, w / 2, h * 0.5, h * 0.75); v.addColorStop(0, "rgba(0,0,0,0)"); v.addColorStop(1, "rgba(0,0,0," + a + ")"); g.fillStyle = v; g.fillRect(0, 0, w, h); }
+function grain(g, w, h, a, r) { for (var i = 0; i < w * h / 40; i++) { g.fillStyle = "rgba(255,255,255," + (r() * a) + ")"; g.fillRect(r() * w, r() * h, 1, 1); } }
+function glowRing(g, x, y, rad, col, lw, blur) { g.save(); g.strokeStyle = col; g.lineWidth = lw; g.shadowColor = col; g.shadowBlur = blur; g.beginPath(); g.arc(x, y, rad, 0, Math.PI * 2); g.stroke(); g.restore(); }
+var ART = {
+  imp1: function (g, w, h, r) {
+    var bg = g.createLinearGradient(0, 0, 0, h); bg.addColorStop(0, "#030713"); bg.addColorStop(0.6, "#06142e"); bg.addColorStop(1, "#02040b"); g.fillStyle = bg; g.fillRect(0, 0, w, h);
+    var cx = w * 0.5, cy = h * 0.6;
+    var glow = g.createRadialGradient(cx, cy, 0, cx, cy, w * 0.75); glow.addColorStop(0, "rgba(120,190,255,.9)"); glow.addColorStop(0.18, "rgba(40,120,255,.55)"); glow.addColorStop(0.5, "rgba(10,40,120,.25)"); glow.addColorStop(1, "rgba(0,0,0,0)"); g.fillStyle = glow; g.fillRect(0, 0, w, h);
+    g.globalCompositeOperation = "lighter";
+    for (var i = 0; i < 4; i++) glowRing(g, cx, cy, w * (0.2 + i * 0.12), "rgba(90,170,255," + (0.75 - i * 0.16) + ")", 3 - i * 0.5, 22);
+    g.strokeStyle = "rgba(170,215,255,.85)"; g.shadowColor = "#4aa3ff"; g.shadowBlur = 14;
+    for (var k = 0; k < 14; k++) { var a = r() * Math.PI * 2; bolt(g, r, cx + Math.cos(a) * w * 0.08, cy + Math.sin(a) * w * 0.08, w * (0.35 + r() * 0.3), a, 1.6, 2); }
+    g.shadowBlur = 0;
+    var core = g.createRadialGradient(cx, cy, 0, cx, cy, w * 0.12); core.addColorStop(0, "rgba(255,255,255,1)"); core.addColorStop(0.4, "rgba(170,220,255,.8)"); core.addColorStop(1, "rgba(60,140,255,0)"); g.fillStyle = core; g.beginPath(); g.arc(cx, cy, w * 0.12, 0, 7); g.fill();
+    for (var p = 0; p < 160; p++) { g.fillStyle = "rgba(150,200,255," + r() * 0.8 + ")"; var d = r() * w * 0.7, an = r() * 7; g.fillRect(cx + Math.cos(an) * d, cy + Math.sin(an) * d * 1.2, 1.5, 1.5); }
+    g.globalCompositeOperation = "source-over"; vignette(g, w, h, 0.75);
+  },
+  imp2: function (g, w, h, r) {
+    var bg = g.createLinearGradient(0, 0, 0, h); bg.addColorStop(0, "#050607"); bg.addColorStop(1, "#0b1006"); g.fillStyle = bg; g.fillRect(0, 0, w, h);
+    var cx = w * 0.5, cy = h * 0.58;
+    glowRing(g, cx, cy, w * 0.3, "rgba(60,120,255,.35)", 3, 18);
+    g.globalCompositeOperation = "lighter";
+    var gl = g.createRadialGradient(cx, h, 0, cx, h, h * 0.8); gl.addColorStop(0, "rgba(170,255,60,.45)"); gl.addColorStop(0.5, "rgba(80,140,20,.15)"); gl.addColorStop(1, "rgba(0,0,0,0)"); g.fillStyle = gl; g.fillRect(0, 0, w, h);
+    g.globalCompositeOperation = "source-over";
+    function vein(x, y, ang, len, lw, d) { g.beginPath(); g.moveTo(x, y); var px = x, py = y; for (var i = 0; i < 9; i++) { ang += (r() - 0.5) * 0.7; px += Math.cos(ang) * len / 9; py += Math.sin(ang) * len / 9; g.lineTo(px, py); if (d > 0 && r() < 0.35) { g.stroke(); vein(px, py, ang + (r() < 0.5 ? -0.8 : 0.8), len * 0.5, lw * 0.6, d - 1); g.beginPath(); g.moveTo(px, py); } } g.lineWidth = lw; g.stroke(); }
+    g.lineCap = "round";
+    for (var k = 0; k < 9; k++) { g.strokeStyle = "rgba(10,14,6,1)"; g.shadowColor = "rgba(190,255,70,.9)"; g.shadowBlur = 12; vein(w * (0.05 + r() * 0.9), h + 10, -Math.PI / 2 + (r() - 0.5) * 0.9, h * (0.45 + r() * 0.35), 5 + r() * 4, 3); }
+    g.shadowBlur = 0; g.strokeStyle = "rgba(200,255,90,.6)"; for (var j = 0; j < 7; j++) { vein(w * (0.1 + r() * 0.8), h + 5, -Math.PI / 2 + (r() - 0.5), h * (0.3 + r() * 0.3), 1.2, 2); }
+    g.fillStyle = "rgba(0,0,0,.85)"; g.beginPath(); g.ellipse(cx, cy, w * 0.05, w * 0.05, 0, 0, 7); g.fill();
+    vignette(g, w, h, 0.8);
+  },
+  imp3: function (g, w, h, r) {
+    var bg = g.createLinearGradient(0, 0, 0, h); bg.addColorStop(0, "#08040f"); bg.addColorStop(1, "#140a20"); g.fillStyle = bg; g.fillRect(0, 0, w, h);
+    for (var s = 0; s < 220; s++) { g.fillStyle = "rgba(255,255,255," + r() * 0.7 + ")"; g.fillRect(r() * w, r() * h, 1, 1); }
+    g.globalCompositeOperation = "lighter";
+    var dg = g.createRadialGradient(w * 0.5, h * 0.3, 0, w * 0.5, h * 0.3, w * 0.6); dg.addColorStop(0, "rgba(60,255,150,.35)"); dg.addColorStop(1, "rgba(0,0,0,0)"); g.fillStyle = dg; g.fillRect(0, 0, w, h);
+    function portal(x, y, rad, a) { for (var i = 0; i < 260; i++) { var t = r() * Math.PI * 2, rr = rad * (0.94 + r() * 0.1); var x1 = x + Math.cos(t) * rr, y1 = y + Math.sin(t) * rr, x2 = x1 + Math.cos(t + 1.6) * (3 + r() * 9), y2 = y1 + Math.sin(t + 1.6) * (3 + r() * 9); g.strokeStyle = "rgba(255," + (120 + r() * 100 | 0) + ",30," + (a * (0.4 + r() * 0.6)) + ")"; g.lineWidth = 1 + r() * 1.4; g.beginPath(); g.moveTo(x1, y1); g.lineTo(x2, y2); g.stroke(); } glowRing(g, x, y, rad, "rgba(255,150,40," + a * 0.5 + ")", 2, 20); }
+    portal(w * 0.5, h * 0.6, w * 0.3, 1); portal(w * 0.18, h * 0.22, w * 0.11, 0.6); portal(w * 0.84, h * 0.34, w * 0.08, 0.5); portal(w * 0.8, h * 0.86, w * 0.12, 0.45);
+    g.globalCompositeOperation = "source-over";
+    var inner = g.createRadialGradient(w * 0.5, h * 0.6, 0, w * 0.5, h * 0.6, w * 0.28); inner.addColorStop(0, "rgba(40,255,150,.35)"); inner.addColorStop(1, "rgba(0,0,0,.5)"); g.fillStyle = inner; g.beginPath(); g.arc(w * 0.5, h * 0.6, w * 0.27, 0, 7); g.fill();
+    vignette(g, w, h, 0.7);
+  },
+  imp4: function (g, w, h, r) { ART.imp1(g, w, h, r); g.fillStyle = "rgba(20,40,10,.35)"; g.fillRect(0, 0, w, h); g.strokeStyle = "rgba(120,255,110,.8)"; g.lineWidth = 6; g.shadowColor = "#6f6"; g.shadowBlur = 16; g.beginPath(); g.arc(w * 0.5, h * 0.42, w * 0.12, Math.PI * 0.1, Math.PI * 1.1); g.lineTo(w * 0.38, h * 0.62); g.stroke(); g.shadowBlur = 0; },
+  league: function (c1, c2, motif) {
+    return function (g, w, h, r) {
+      var bg = g.createLinearGradient(0, 0, w, h); bg.addColorStop(0, c1); bg.addColorStop(1, c2); g.fillStyle = bg; g.fillRect(0, 0, w, h);
+      var cx = w * 0.55, cy = h * 0.55; g.lineCap = "round";
+      if (motif === "grid") { g.fillStyle = "rgba(90,255,120,.75)"; g.font = "bold 14px monospace"; for (var c = 0; c < 26; c++) { var x = r() * w, y0 = r() * h; for (var k = 0; k < 9; k++) { g.globalAlpha = 1 - k / 9; g.fillText(r() < 0.5 ? "1" : "0", x, y0 + k * 16); } } g.globalAlpha = 1; }
+      if (motif === "hole") { for (var i = 0; i < 6; i++) glowRing(g, cx, cy, w * (0.16 + i * 0.05), "rgba(190,110,255," + (0.7 - i * 0.1) + ")", 2, 18); g.fillStyle = "#000"; g.beginPath(); g.arc(cx, cy, w * 0.15, 0, 7); g.fill(); }
+      if (motif === "mist") { for (var m = 0; m < 40; m++) { var gr = g.createRadialGradient(r() * w, r() * h, 0, r() * w, r() * h, 40 + r() * 80); gr.addColorStop(0, "rgba(220,230,255,.18)"); gr.addColorStop(1, "rgba(220,230,255,0)"); g.fillStyle = gr; g.fillRect(0, 0, w, h); } }
+      if (motif === "crystal") { for (var q = 0; q < 14; q++) { var x1 = w * (0.1 + r() * 0.8), y1 = h * (0.55 + r() * 0.45); g.fillStyle = "rgba(" + (180 + r() * 70 | 0) + "," + (120 + r() * 60 | 0) + ",60," + (0.5 + r() * 0.4) + ")"; g.beginPath(); g.moveTo(x1, y1); g.lineTo(x1 + 14 + r() * 20, y1 - 40 - r() * 120); g.lineTo(x1 + 30 + r() * 20, y1); g.closePath(); g.fill(); } }
+      if (motif === "duo") {
+        g.strokeStyle = "rgba(255,255,255,.07)"; g.lineWidth = 14; for (var s2 = -h; s2 < w + h; s2 += 34) { g.beginPath(); g.moveTo(s2, h * 0.45); g.lineTo(s2 - h * 0.55, h); g.stroke(); }
+        g.fillStyle = "rgba(255,255,255,.07)"; g.font = "800 " + (w * 0.8) + "px sans-serif"; g.fillText("9", -w * 0.05, h * 1.02);
+        var hx = w * 0.66, hy = h * 0.3; for (var i2 = 0; i2 < 6; i2++) glowRing(g, hx, hy, w * (0.12 + i2 * 0.045), "rgba(190,110,255," + (0.75 - i2 * 0.11) + ")", 2, 18);
+        g.fillStyle = "#000"; g.beginPath(); g.arc(hx, hy, w * 0.11, 0, 7); g.fill();
+        g.strokeStyle = "rgba(255,255,255,.5)"; g.lineWidth = 2; g.beginPath(); g.moveTo(0, h * 0.62); g.lineTo(w, h * 0.38); g.stroke();
+      }
+      if (motif === "steel") { g.strokeStyle = "rgba(255,255,255,.06)"; g.lineWidth = 14; for (var s = -h; s < w + h; s += 34) { g.beginPath(); g.moveTo(s, 0); g.lineTo(s - h, h); g.stroke(); } g.fillStyle = "rgba(255,255,255,.08)"; g.font = "800 " + (w * 0.9) + "px sans-serif"; g.fillText("9", w * 0.2, h * 0.95); }
+      if (motif === "metal") { for (var b = 0; b < h; b += 2) { g.fillStyle = "rgba(255,255,255," + r() * 0.06 + ")"; g.fillRect(0, b, w, 1); } glowRing(g, cx, cy, w * 0.22, "rgba(120,170,255,.6)", 5, 20); }
+      if (motif === "bolt") { g.strokeStyle = "rgba(170,230,255,.95)"; g.shadowColor = "#7fd4ff"; g.shadowBlur = 18; bolt(g, r, w * 0.6, -10, h * 0.95, Math.PI / 2 + 0.15, 4, 3); g.shadowBlur = 0; }
+      if (motif === "rings") { g.strokeStyle = "rgba(210,170,255,.55)"; for (var o = 0; o < 6; o++) { g.lineWidth = 1.5; g.beginPath(); g.ellipse(cx, cy, w * (0.12 + o * 0.07), w * (0.04 + o * 0.025), -0.4, 0, 7); g.stroke(); } g.fillStyle = "rgba(230,200,255,.9)"; g.beginPath(); g.arc(cx, cy, w * 0.05, 0, 7); g.fill(); }
+      if (motif === "fire") { g.globalCompositeOperation = "lighter"; for (var f = 0; f < 60; f++) { var fx = w * (0.15 + r() * 0.7), fy = h * (0.6 + r() * 0.45), fr = 20 + r() * 50; var fg = g.createRadialGradient(fx, fy, 0, fx, fy - fr, fr * 1.6); fg.addColorStop(0, "rgba(255,200,80,.35)"); fg.addColorStop(0.5, "rgba(255,90,20,.18)"); fg.addColorStop(1, "rgba(0,0,0,0)"); g.fillStyle = fg; g.fillRect(0, 0, w, h); } g.globalCompositeOperation = "source-over"; }
+      if (motif === "clock") { g.strokeStyle = "rgba(255,215,120,.7)"; for (var t = 0; t < 3; t++) { g.lineWidth = 2; g.beginPath(); g.arc(cx, cy, w * (0.16 + t * 0.09), 0, 7); g.stroke(); } for (var n = 0; n < 12; n++) { var a = n / 12 * Math.PI * 2; g.beginPath(); g.moveTo(cx + Math.cos(a) * w * 0.3, cy + Math.sin(a) * w * 0.3); g.lineTo(cx + Math.cos(a) * w * 0.34, cy + Math.sin(a) * w * 0.34); g.stroke(); } g.lineWidth = 4; g.beginPath(); g.moveTo(cx, cy); g.lineTo(cx + w * 0.12, cy - w * 0.1); g.moveTo(cx, cy); g.lineTo(cx - w * 0.03, cy - w * 0.2); g.stroke(); }
+      if (motif === "versus") { g.fillStyle = "rgba(230,40,40,.55)"; g.beginPath(); g.moveTo(0, 0); g.lineTo(w * 0.62, 0); g.lineTo(w * 0.38, h); g.lineTo(0, h); g.fill(); g.fillStyle = "rgba(40,90,230,.55)"; g.beginPath(); g.moveTo(w * 0.62, 0); g.lineTo(w, 0); g.lineTo(w, h); g.lineTo(w * 0.38, h); g.fill(); g.strokeStyle = "rgba(255,255,255,.85)"; g.lineWidth = 3; g.shadowColor = "#fff"; g.shadowBlur = 14; g.beginPath(); g.moveTo(w * 0.62, 0); g.lineTo(w * 0.38, h); g.stroke(); g.shadowBlur = 0; }
+      if (motif === "sun") { var sg = g.createRadialGradient(cx, cy, 0, cx, cy, w * 0.5); sg.addColorStop(0, "rgba(255,250,210,1)"); sg.addColorStop(0.25, "rgba(255,190,60,.9)"); sg.addColorStop(0.6, "rgba(220,90,20,.35)"); sg.addColorStop(1, "rgba(0,0,0,0)"); g.fillStyle = sg; g.fillRect(0, 0, w, h); g.fillStyle = "rgba(60,20,0,.7)"; g.beginPath(); g.arc(w * 0.78, h * 0.3, w * 0.03, 0, 7); g.fill(); }
+      grain(g, w, h, 0.08, r); vignette(g, w, h, 0.6);
+    };
+  }
+};
+ART.virus = ART.league("#03140a", "#0b2a12", "grid"); ART.duo = ART.league("#0c0d12", "#24093c", "duo"); ART.abyss = ART.league("#0a0414", "#22073a", "hole"); ART.phantom = ART.league("#1a1d26", "#3a4152", "mist");
+ART.titan = ART.league("#2a1a10", "#5a3418", "crystal"); ART.shadow = ART.league("#0c0d10", "#2a2d34", "steel"); ART.cobalt = ART.league("#08163a", "#1f4aa8", "metal");
+ART.storm = ART.league("#061226", "#123a6e", "bolt"); ART.grav = ART.league("#140a26", "#3a1f6a", "rings"); ART.flame = ART.league("#1a0602", "#5a1604", "fire");
+ART.chronos = ART.league("#1a1404", "#4a3606", "clock"); ART.versus = ART.league("#120808", "#08081a", "versus"); ART.sun = ART.league("#2a0e02", "#5a2a04", "sun");
+var COVERS = {};
+function coverURL(b) {
+  if (COVERS[b.id]) return COVERS[b.id];
+  var c = document.createElement("canvas"); c.width = 360; c.height = 540; var g = c.getContext("2d");
+  var seed = 0; for (var i = 0; i < b.id.length; i++) seed = seed * 31 + b.id.charCodeAt(i);
+  try { (ART[b.cover.kind] || ART.imp1)(g, c.width, c.height, rng(seed)); } catch (e) { g.fillStyle = "#222"; g.fillRect(0, 0, 360, 540); }
+  return (COVERS[b.id] = c.toDataURL("image/jpeg", 0.88));
+}
+function coverHTML(b) {
+  var league = b.shelf !== "imp" && b.id !== "w-imp4";
+  var cls = "cover " + (league ? "league" : b.cover.kind);
+  var badge = b.soon ? '<span class="badge">' + (b.wip ? "Пишется" : "Скоро") + "</span>" : "";
+  return '<div class="' + cls + '" style="background-image:url(' + coverURL(b) + ')">' + badge +
+    '<div class="ct"><span class="lbl">' + esc(b.cover.lbl) + '</span><span class="ttl">' + b.cover.ttl + (b.cover.small ? "<small>" + esc(b.cover.small) + "</small>" : "") + '</span><span class="au">AOYT</span></div></div>';
+}
+
+// ================= ХРАНИЛИЩЕ (только для удобства этого читателя) =================
+var S = { ver: 3, set: { size: 17, theme: "auto", font: "times", lh: "tight" }, pos: {}, pct: {}, last: null };
+try { var saved = JSON.parse(localStorage.getItem("cxbooks1") || "null"); if (saved && typeof saved === "object") { if (saved.ver === 3 && saved.set) for (var k in saved.set) S.set[k] = saved.set[k]; S.pos = saved.pos || {}; S.pct = saved.pct || {}; S.last = saved.last || null; if (saved.ver !== 3) { delete S.pos.imp1; delete S.pct.imp1; } } } catch (e) {}
+function save() { try { localStorage.setItem("cxbooks1", JSON.stringify(S)); } catch (e) {} }
+
+// ================= БИБЛИОТЕКА =================
+function progLabel(b) { if (b.soon) return (b.wip ? "Пишется" : "Скоро") + (b.dossier ? " (досье)" : ""); var p = S.pct[b.id]; if (p === undefined) return b.dossier ? "Досье" : "Новая"; if (p >= 100) return "Прочитано"; return p + "%"; }
+function renderLibrary() {
+  ["imp", "league", "wip"].forEach(function (sh) {
+    var el = sh === "league" ? null : $("g-" + sh); if (el) el.innerHTML = ""; else { $("g-league-full").innerHTML = ""; $("g-league-dos").innerHTML = ""; }
+    CATALOG.filter(function (b) { return b.shelf === sh; }).forEach(function (b) {
+      var box = el || $(b.dossier ? "g-league-dos" : "g-league-full");
+      var btn = document.createElement("button"); btn.className = "book" + (b.soon ? " soon" : ""); btn.setAttribute("data-id", b.id);
+      btn.innerHTML = coverHTML(b) + '<span class="meta"><span class="bt">' + esc(b.title) + '</span><span class="bp">' + progLabel(b) + "</span></span>";
+      btn.addEventListener("click", function () { if (b.soon) toast("«" + b.title + "» " + (b.wip ? "ещё пишется. Появится, когда автор закончит" : (b.dossier ? "— досье героя — скоро появится в библиотеке" : "скоро появится в библиотеке"))); else openBook(b.id); });
+      box.appendChild(btn);
+    });
+  });
+  var lb = S.last && BYID[S.last] && !BYID[S.last].soon ? BYID[S.last] : null, first = !lb;
+  if (!lb) lb = BYID.imp1;
+  var pct = S.pct[lb.id] || 0;
+  $("cont").innerHTML = coverHTML(lb) + '<div class="cont-txt"><span class="cont-k">' + (first ? "Начни отсюда" : "Продолжить чтение") + '</span><span class="cont-t">' + esc(lb.title) + '</span>' +
+    (first ? '<span class="cont-p">Первая книга трилогии «Импульс» · 16+</span>' : '<div class="cont-bar"><i style="width:' + pct + '%"></i></div><span class="cont-p">Прочитано ' + pct + "%</span>") +
+    '<div class="cont-row"><button class="btn" id="contBtn">' + (first ? "Читать" : "Продолжить") + "</button></div></div>";
+  $("contBtn").onclick = function () { openBook(lb.id); };
+}
+var toastT = 0;
+function toast(t) { var el = $("toast"); el.textContent = t; el.classList.add("on"); clearTimeout(toastT); toastT = setTimeout(function () { el.classList.remove("on"); }, 2600); }
+
+// ================= ЧИТАЛКА =================
+var R = { id: null, pages: 1, page: 0, W: 0, GAP: 64, paraPage: [], chPage: [], anim: null, drag: null, spread: false };
+var reader = $("reader"), stage = $("stage"), leaf = $("leaf");
+function pgObj(id) { var el = $(id); return { el: el, flow: el.querySelector(".flow"), hd: el.querySelector(".hd"), pn: el.querySelector(".pn"), shade: el.querySelector(".shade"), gloss: el.querySelector(".gloss") }; }
+var PG = { uL: pgObj("uL"), uR: pgObj("uR"), lF: pgObj("lF"), lB: pgObj("lB") };
+var FLOWS = [PG.uL.flow, PG.uR.flow, PG.lF.flow, PG.lB.flow];
+
+function bookHTML(id) {
+  var b = BYID[id], chs = BOOK_TEXTS[id], h = [], pi = 0, num = 0;
+  h.push('<section class="tp"><h1>' + esc(b.title) + '</h1><img alt="" src="' + coverURL(b) + '"><div class="ann">' + (b.ann || []).map(function (t) { return "<p>" + esc(t) + "</p>"; }).join("") + '</div><div class="c">' + esc(b.sub || "") + " · 16+<br>Сюжет: AOYT · Claudix Книги</div></section>");
+  chs.forEach(function (c, ci) {
+    if (!c.post) num++;
+    h.push('<h2 data-ch="' + ci + '"' + (c.post ? ' class="post"' : "") + '><span class="gl">' + (b.dossier ? "Досье" : c.post ? "Бонус" : "Глава " + num) + '</span><span class="gt">' + esc(c.t) + "</span></h2>");
+    c.x.trim().split(/\n\s*\n/).forEach(function (p) { h.push('<p data-i="' + (pi++) + '">' + esc(p.trim()) + "</p>"); });
+  });
+  h.push('<section class="end" data-end="1"><b>КОНЕЦ</b><span>' + esc(b.title) + (b.next && BYID[b.next] ? "<br>Дальше: «" + esc(BYID[b.next].title) + "»" : "") + "</span></section>");
+  return h.join("");
+}
+function applySettings() {
+  reader.setAttribute("data-rt", S.set.theme); reader.setAttribute("data-font", S.set.font);
+  reader.style.setProperty("--rsize", S.set.size + "px");
+  reader.style.setProperty("--rlh", S.set.lh === "loose" ? "1.55" : "1.32");
+  Array.prototype.forEach.call(document.querySelectorAll("#themes button"), function (b) { b.classList.toggle("on", b.getAttribute("data-rt") === S.set.theme); });
+  Array.prototype.forEach.call(document.querySelectorAll("#fonts button"), function (b) { b.classList.toggle("on", b.getAttribute("data-f") === S.set.font); });
+  Array.prototype.forEach.call(document.querySelectorAll("#lhSeg button"), function (b) { b.classList.toggle("on", b.getAttribute("data-lh") === S.set.lh); });
+}
+function pageOfEl(el) { return Math.floor((el.offsetLeft + 2) / (R.W + R.GAP)); }
+function layout() {
+  R.spread = reader.clientWidth >= 860 && reader.clientHeight >= 520;
+  reader.classList.toggle("spread", R.spread); reader.classList.toggle("single", !R.spread);
+  var sw = stage.clientWidth;
+  var pw = R.spread ? sw / 2 : sw;
+  var px = R.spread ? Math.round(clamp(pw * 0.05, 22, 44)) : Math.round(clamp(pw * 0.045, 16, 36));
+  stage.style.setProperty("--px", px + "px");
+  var W = PG.uR.el.querySelector(".pb").clientWidth; R.W = W;
+  FLOWS.forEach(function (f) { f.style.width = W + "px"; f.style.columnWidth = W + "px"; f.style.columnGap = R.GAP + "px"; f.style.columnCount = "auto"; });
+  var fl = PG.uR.flow, end = fl.querySelector("[data-end]");
+  R.pages = Math.max(1, pageOfEl(end) + 1);
+  R.paraPage = []; Array.prototype.forEach.call(fl.querySelectorAll("p[data-i]"), function (p) { R.paraPage[+p.getAttribute("data-i")] = pageOfEl(p); });
+  R.chPage = []; Array.prototype.forEach.call(fl.querySelectorAll("h2[data-ch]"), function (hh) { R.chPage[+hh.getAttribute("data-ch")] = pageOfEl(hh); });
+  $("rScrub").max = R.pages - 1; $("rScrub").step = R.spread ? 2 : 1;
+}
+function anchorFor(page) { var best = -1; for (var i = 0; i < R.paraPage.length; i++) { if (R.paraPage[i] === page) return i; if (R.paraPage[i] < page) best = i; } return best; }
+function pageForAnchor(a) { if (a == null || a < 0) return 0; return clamp(R.paraPage[a] !== undefined ? R.paraPage[a] : 0, 0, R.pages - 1); }
+function chapterAt(page) { var c = 0; for (var i = 0; i < R.chPage.length; i++) if (R.chPage[i] <= page) c = i; return c; }
+function normPage(p) { p = clamp(p, 0, R.pages - 1); if (R.spread) p -= p % 2; return p; }
+function step() { return R.spread ? 2 : 1; }
+function headerFor(p) {
+  if (p <= 0 || p >= R.pages - 1 || R.chPage.indexOf(p) >= 0) return "";
+  if (R.spread && p % 2 === 0) return BYID[R.id].title;
+  var c = BOOK_TEXTS[R.id][chapterAt(p)]; return c ? c.t : "";
+}
+function setPage(P, p) {
+  var ok = p >= 0 && p < R.pages;
+  P.flow.style.visibility = ok ? "" : "hidden";
+  if (ok) P.flow.style.transform = "translate3d(" + (-p * (R.W + R.GAP)) + "px,0,0)";
+  P.hd.textContent = ok ? headerFor(p) : "";
+  P.pn.textContent = ok && p > 0 && p < R.pages - 1 ? String(p + 1) : "";
+}
+function setAngle(a) {
+  var k = a / 180, s = Math.sin(Math.PI * k);
+  leaf.style.transform = a ? "rotateY(" + (-a) + "deg)" : "";
+  PG.uR.shade.style.opacity = (0.8 * s * (1 - 0.6 * k)).toFixed(3);
+  PG.uL.shade.style.opacity = R.spread ? (0.7 * s * k).toFixed(3) : "0";
+  PG.lF.gloss.style.opacity = (0.9 * s).toFixed(3); PG.lB.gloss.style.opacity = (0.5 * s).toFixed(3);
+}
+function idle() {
+  leaf.style.visibility = "hidden"; setAngle(0);
+  if (R.spread) { setPage(PG.uL, R.page); setPage(PG.uR, R.page + 1); } else setPage(PG.uR, R.page);
+  updateInfo();
+}
+function canFwd() { return R.page + step() <= R.pages - 1; }
+function canBack() { return R.page > 0; }
+function prepFwd() { var p = R.page; if (R.spread) { setPage(PG.uL, p); setPage(PG.uR, p + 3); setPage(PG.lF, p + 1); setPage(PG.lB, p + 2); } else { setPage(PG.uR, p + 1); setPage(PG.lF, p); } leaf.style.visibility = "visible"; }
+function prepBack() { var p = R.page; if (R.spread) { setPage(PG.uL, p - 2); setPage(PG.uR, p + 1); setPage(PG.lF, p - 1); setPage(PG.lB, p); } else { setPage(PG.uR, p); setPage(PG.lF, p - 1); } leaf.style.visibility = "visible"; }
+function updateInfo() {
+  var b = BYID[R.id], last = !canFwd();
+  var rp = R.spread ? Math.min(R.page + 1, R.pages - 1) : R.page;
+  var ch = chapterAt(rp), nextCh = R.chPage[ch + 1] !== undefined ? R.chPage[ch + 1] : R.pages - 1, left = nextCh - rp - 1;
+  var info = "Стр. " + (R.page + 1) + (R.spread && R.page + 1 < R.pages ? "–" + (R.page + 2) : "") + " из " + R.pages;
+  if (rp > 0 && rp < R.pages - 1) info += left > 0 ? " · осталось " + left + " стр. в главе" : " · конец главы";
+  $("rInfo").textContent = info; $("rScrub").value = R.page;
+  var nb = b.next && BYID[b.next];
+  $("rNext").hidden = !(last && nb); if (nb) $("rNext").textContent = "Дальше: " + nb.title + " →";
+  if (last && nb) reader.classList.add("chrome");
+  S.pos[R.id] = anchorFor(R.page); S.pct[R.id] = R.pages > 1 ? Math.min(100, Math.round((R.page + step() - 1) / (R.pages - 1) * 100)) : 100; S.last = R.id; save();
+  var cur = document.querySelector("#tocList li.cur"); if (cur) cur.classList.remove("cur");
+  var li = document.querySelector('#tocList li[data-ch="' + ch + '"]'); if (li && rp > 0) li.classList.add("cur");
+}
+function openBook(id) {
+  R.id = id; var b = BYID[id];
+  applySettings();
+  var html = bookHTML(id); FLOWS.forEach(function (f) { f.innerHTML = html; });
+  $("rTitle").textContent = b.title; $("tocTitle").textContent = b.title;
+  var tl = $("tocList"); tl.innerHTML = ""; var num = 0;
+  BOOK_TEXTS[id].forEach(function (c, ci) { if (!c.post) num++; var li = document.createElement("li"); li.setAttribute("data-ch", ci); li.innerHTML = '<button><span class="n">' + (c.post ? "★" : num) + '</span><span class="t">' + esc(c.t) + '</span><span class="p"></span></button>'; li.querySelector("button").onclick = function () { closePanels(); go(R.chPage[ci] || 0); }; tl.appendChild(li); });
+  $("lib").setAttribute("aria-hidden", "true"); reader.hidden = false; document.documentElement.style.overflow = "hidden";
+  reader.classList.add("chrome");
+  relayout(S.pos[id]);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { if (R.id === id) relayout(); });
+  setTimeout(function () { if (R.id === id && canFwd()) reader.classList.remove("chrome"); }, 1800);
+}
+function relayout(anchor) {
+  if (!R.id) return;
+  finishAnim();
+  if (anchor === undefined) anchor = anchorFor(R.page);
+  layout(); R.page = normPage(pageForAnchor(anchor));
+  Array.prototype.forEach.call(document.querySelectorAll("#tocList li"), function (li) { var ci = +li.getAttribute("data-ch"); li.querySelector(".p").textContent = (R.chPage[ci] || 0) + 1; });
+  idle();
+}
+function closeBook() {
+  finishAnim(); R.id = null; reader.hidden = true; closePanels(); $("lib").removeAttribute("aria-hidden"); document.documentElement.style.overflow = "";
+  renderLibrary();
+}
+function go(p) { finishAnim(); R.page = normPage(p); idle(); }
+
+// ---- анимация перелистывания ----
+function ease(t) { return 1 - Math.pow(1 - t, 3); }
+function tween(a0, a1, done) {
+  finishAnim();
+  if (REDUCED) { setAngle(a1); done(); return; }
+  var dur = 140 + 420 * Math.abs(a1 - a0) / 180, t0 = performance.now(), anim = { done: done, a1: a1, raf: 0 };
+  R.anim = anim;
+  function stepA(now) { var t = clamp((now - t0) / dur, 0, 1); setAngle(a0 + (a1 - a0) * ease(t)); if (t < 1) anim.raf = requestAnimationFrame(stepA); else { R.anim = null; done(); } }
+  anim.raf = requestAnimationFrame(stepA);
+}
+function finishAnim() { var a = R.anim; if (!a) return; cancelAnimationFrame(a.raf); R.anim = null; setAngle(a.a1); a.done(); }
+function next() { finishAnim(); if (!canFwd()) return; prepFwd(); setAngle(0); tween(0, 180, function () { R.page += step(); idle(); }); }
+function prev() { finishAnim(); if (!canBack()) return; prepBack(); setAngle(180); tween(180, 0, function () { R.page -= step(); idle(); }); }
+
+// ---- жесты: тап по краям, перетаскивание страницы ----
+stage.addEventListener("pointerdown", function (e) {
+  if (e.button !== undefined && e.button !== 0) return;
+  if (!$("aa").hidden || !$("toc").hidden) { closePanels(); return; }
+  finishAnim();
+  R.drag = { x0: e.clientX, y0: e.clientY, dir: null, id: e.pointerId, w: stage.clientWidth, last: e.clientX, lt: performance.now(), v: 0 };
+  try { stage.setPointerCapture(e.pointerId); } catch (er) {}
+});
+function span(d) { return d.w * (R.spread ? 0.75 : 0.85); }
+stage.addEventListener("pointermove", function (e) {
+  var d = R.drag; if (!d || e.pointerId !== d.id) return;
+  var dx = e.clientX - d.x0, now = performance.now();
+  d.v = (e.clientX - d.last) / Math.max(1, now - d.lt); d.last = e.clientX; d.lt = now;
+  if (!d.dir) {
+    if (Math.abs(dx) < 8) return;
+    if (dx < 0 && canFwd()) { d.dir = "f"; prepFwd(); }
+    else if (dx > 0 && canBack()) { d.dir = "b"; prepBack(); }
+    else { d.dir = "none"; return; }
+  }
+  if (d.dir === "f") setAngle(clamp(-dx / span(d), 0, 1) * 180);
+  if (d.dir === "b") setAngle(180 - clamp(dx / span(d), 0, 1) * 180);
+});
+function endDrag(e) {
+  var d = R.drag; if (!d || e.pointerId !== d.id) return; R.drag = null;
+  var dx = e.clientX - d.x0, dy = e.clientY - d.y0;
+  if (!d.dir) {
+    if (Math.abs(dx) < 8 && Math.abs(dy) < 12) {
+      var r = stage.getBoundingClientRect(), x = e.clientX - r.left;
+      if (x < r.width * 0.25) prev(); else if (x > r.width * 0.75) next(); else reader.classList.toggle("chrome");
+    }
+    return;
+  }
+  if (d.dir === "none") return;
+  var prog = d.dir === "f" ? clamp(-dx / span(d), 0, 1) : clamp(dx / span(d), 0, 1);
+  var fling = d.dir === "f" ? d.v < -0.45 : d.v > 0.45;
+  var cur = d.dir === "f" ? prog * 180 : 180 - prog * 180;
+  if (prog > 0.33 || fling) {
+    if (d.dir === "f") tween(cur, 180, function () { R.page += step(); idle(); }); else tween(cur, 0, function () { R.page -= step(); idle(); });
+  } else {
+    if (d.dir === "f") tween(cur, 0, idle); else tween(cur, 180, idle);
+  }
+}
+stage.addEventListener("pointerup", endDrag); stage.addEventListener("pointercancel", endDrag);
+stage.addEventListener("wheel", function (e) { if (Math.abs(e.deltaX) > 30 && Math.abs(e.deltaX) > Math.abs(e.deltaY)) { e.preventDefault(); if (R.anim) return; if (e.deltaX > 0) next(); else prev(); } }, { passive: false });
+addEventListener("keydown", function (e) {
+  if (reader.hidden) return;
+  if (e.key === "ArrowRight" || e.key === " " || e.key === "PageDown") { e.preventDefault(); next(); }
+  else if (e.key === "ArrowLeft" || e.key === "PageUp") { e.preventDefault(); prev(); }
+  else if (e.key === "Escape") { if (!$("aa").hidden || !$("toc").hidden) closePanels(); else closeBook(); }
+});
+
+// ---- панели ----
+function closePanels() { $("aa").hidden = true; $("toc").hidden = true; }
+$("rBack").onclick = closeBook;
+$("rAa").onclick = function (e) { e.stopPropagation(); var h = $("aa").hidden; closePanels(); $("aa").hidden = !h; };
+$("rToc").onclick = function (e) { e.stopPropagation(); var h = $("toc").hidden; closePanels(); $("toc").hidden = !h; var cur = document.querySelector("#tocList li.cur"); if (cur) cur.scrollIntoView({ block: "center" }); };
+$("tocClose").onclick = closePanels;
+$("rScrub").addEventListener("input", function () { go(+this.value); });
+$("rNext").onclick = function () { var b = BYID[R.id]; if (b.next) { closePanels(); openBook(b.next); } };
+var SIZES = [13, 14, 15, 16, 17, 18, 19, 20, 22, 24, 26, 28];
+function bump(d) { var i = SIZES.indexOf(S.set.size); if (i < 0) i = 4; i = clamp(i + d, 0, SIZES.length - 1); S.set.size = SIZES[i]; save(); applySettings(); relayout(); }
+$("fsDown").onclick = function () { bump(-1); };
+$("fsUp").onclick = function () { bump(1); };
+Array.prototype.forEach.call(document.querySelectorAll("#lhSeg button"), function (b) { b.onclick = function () { S.set.lh = b.getAttribute("data-lh"); save(); applySettings(); relayout(); }; });
+Array.prototype.forEach.call(document.querySelectorAll("#themes button"), function (b) { b.onclick = function () { S.set.theme = b.getAttribute("data-rt"); save(); applySettings(); }; });
+Array.prototype.forEach.call(document.querySelectorAll("#fonts button"), function (b) { b.onclick = function () { S.set.font = b.getAttribute("data-f"); save(); applySettings(); relayout(); if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { relayout(); }); }; });
+var rzT = 0; addEventListener("resize", function () { clearTimeout(rzT); rzT = setTimeout(function () { if (R.id) relayout(); }, 120); });
+
+renderLibrary();
+if (window.__TEST__) window.__BK = { R: R, S: S, openBook: openBook, next: next, prev: prev, go: go, closeBook: closeBook, relayout: relayout, bump: bump };
+})();
+</script>
+</body></html>

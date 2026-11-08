@@ -13,17 +13,50 @@
 :root {
   --font-display: "Unbounded", "Arial Black", system-ui, sans-serif;
   --font-body: "Onest", system-ui, -apple-system, "Segoe UI", sans-serif;
-  --bg: #07181d;
-  --surface: #0e272e;
-  --surface-2: #143640;
-  --line: rgba(255, 255, 255, 0.11);
-  --fg: #eef6f7;
-  --muted: #94b0b6;
-  --accent: #ff5a8c;
-  --on-accent: #1d0610;
-  --cool: #58d6ff;
+  /* светлая тема (по умолчанию) */
+  --bg: #f4f8fa;
+  --surface: #ffffff;
+  --surface-2: #e6f1f6;
+  --line: rgba(10, 40, 52, 0.12);
+  --fg: #0b1e24;
+  --muted: #5a7078;
+  --accent: #6fd0ff;
+  --on-accent: #052433;
+  --accent-edge: #2f9fd4;
+  --cool: #1683b8;
+  --tag-line: rgba(22, 131, 184, 0.4);
+  --well: rgba(10, 40, 52, 0.05);
+  --me-bg: rgba(111, 208, 255, 0.22);
+  --me-line: rgba(22, 131, 184, 0.6);
+  --bad: #d12d5f;
+  --ok: #18915a;
+  --silver: #8a979c;
+  --accent-text: #1683b8;
   color-scheme: dark;
 }
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #07181d;
+    --surface: #0e272e;
+    --surface-2: #143640;
+    --line: rgba(255, 255, 255, 0.11);
+    --fg: #eef6f7;
+    --muted: #94b0b6;
+    --accent: #ff5a8c;
+    --on-accent: #1d0610;
+    --accent-edge: var(--accent-edge);
+    --cool: #58d6ff;
+    --tag-line: rgba(88, 214, 255, 0.4);
+    --well: rgba(0, 0, 0, 0.24);
+    --me-bg: rgba(255, 90, 140, 0.16);
+    --me-line: rgba(255, 90, 140, 0.55);
+    --bad: #ff8da8;
+    --ok: #7ff0b4;
+    --silver: #cfd8dc;
+    --accent-text: #ff5a8c;
+  }
+}
+
 * { box-sizing: border-box; }
 body {
   margin: 0;
@@ -52,7 +85,7 @@ header { display: flex; align-items: center; justify-content: space-between; gap
 .wm svg { width: 0.9em; height: 0.9em; margin-left: 0.04em; }
 .alpha {
   font-family: var(--font-display); font-weight: 600; font-size: 0.62rem; letter-spacing: 0.12em;
-  padding: 4px 9px; border-radius: 999px; border: 1px solid var(--accent); color: var(--accent);
+  padding: 4px 9px; border-radius: 999px; border: 1px solid var(--accent-text); color: var(--accent-text);
 }
 .chip { cursor: pointer; font: inherit; color: inherit; display: flex; align-items: center; gap: 10px; padding: 5px 14px 5px 5px; border-radius: 999px; background: var(--surface); border: 1px solid var(--line); max-width: 100%; }
 .avatar {
@@ -75,38 +108,38 @@ h2 { margin: 0; font-family: var(--font-display); font-weight: 600; font-size: 1
 .cover svg { display: block; width: 100%; height: 100%; }
 .gbody { display: flex; flex-direction: column; gap: 10px; padding: 16px; flex: 1; min-width: 0; }
 .tags { display: flex; gap: 6px; flex-wrap: wrap; }
-.tag { font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--cool); border: 1px solid rgba(88, 214, 255, 0.4); border-radius: 6px; padding: 2px 8px; }
+.tag { font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--cool); border: 1px solid var(--tag-line); border-radius: 6px; padding: 2px 8px; }
 .game h3 { margin: 0; font-family: var(--font-display); font-weight: 800; font-size: 1.35rem; letter-spacing: -0.01em; }
 .game p { margin: 0; color: var(--muted); font-size: 0.95rem; }
-.stat { margin-top: auto; padding: 10px 12px; border-radius: 10px; background: rgba(0, 0, 0, 0.25); font-size: 0.85rem; color: var(--fg); font-variant-numeric: tabular-nums; }
+.stat { margin-top: auto; padding: 10px 12px; border-radius: 10px; background: var(--well); font-size: 0.85rem; color: var(--fg); font-variant-numeric: tabular-nums; }
 .stat b { font-weight: 700; }
 .play {
   display: block; text-align: center; text-decoration: none; padding: 13px; border-radius: 12px;
   font-family: var(--font-display); font-weight: 800; font-size: 1rem; letter-spacing: 0.03em;
-  background: var(--accent); color: var(--on-accent); box-shadow: 0 4px 0 #b5305a;
+  background: var(--accent); color: var(--on-accent); box-shadow: 0 4px 0 var(--accent-edge);
 }
-.play:active { transform: translateY(3px); box-shadow: 0 1px 0 #b5305a; }
+.play:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--accent-edge); }
 .soon { border-style: dashed; background: transparent; justify-content: center; align-items: center; text-align: center; min-height: 220px; padding: 24px; gap: 8px; display: flex; flex-direction: column; }
 .soon h3 { font-size: 1.1rem; color: var(--muted); }
 
 /* ---------- Аккаунт ---------- */
-.tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px; border-radius: 12px; background: var(--bg); border: 1px solid var(--line); }
+.tabs { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 4px; padding: 4px; border-radius: 12px; background: var(--bg); border: 1px solid var(--line); }
 .tab { border: 0; border-radius: 9px; padding: 9px; background: transparent; color: var(--muted); font: inherit; font-weight: 700; cursor: pointer; }
 .tab[aria-selected="true"] { background: var(--surface-2); color: var(--fg); }
 .field { display: grid; gap: 6px; }
 .row { display: flex; align-items: center; gap: 10px; font-size: 0.9rem; color: var(--muted); }
 .row input { width: 20px; height: 20px; accent-color: var(--accent); flex: none; }
 .msg { margin: 0; min-height: 1.3em; font-size: 0.88rem; }
-.msg.bad { color: #ff8da8; }
-.msg.ok { color: #7ff0b4; }
+.msg.bad { color: var(--bad); }
+.msg.ok { color: var(--ok); }
 .btn2 { padding: 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface-2); color: var(--fg); font: inherit; font-weight: 700; cursor: pointer; }
-.btn2.danger { color: #ff8da8; }
+.btn2.danger { color: var(--bad); }
 .stack { display: grid; gap: 10px; }
 .chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .uchip { border: 1px solid var(--line); background: var(--bg); color: var(--fg); border-radius: 999px; padding: 4px 12px; font: inherit; font-size: 0.85rem; cursor: pointer; }
 .big-name { font-family: var(--font-display); font-weight: 800; font-size: 1.3rem; overflow-wrap: anywhere; }
-.go2 { padding: 13px; border-radius: 12px; border: 0; cursor: pointer; font-family: var(--font-display); font-weight: 800; font-size: 1rem; background: var(--accent); color: var(--on-accent); box-shadow: 0 4px 0 #b5305a; }
-.go2:active { transform: translateY(3px); box-shadow: 0 1px 0 #b5305a; }
+.go2 { padding: 13px; border-radius: 12px; border: 0; cursor: pointer; font-family: var(--font-display); font-weight: 800; font-size: 1rem; background: var(--accent); color: var(--on-accent); box-shadow: 0 4px 0 var(--accent-edge); }
+.go2:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--accent-edge); }
 .go2:disabled { opacity: 0.6; cursor: default; }
 
 /* ---------- Профиль и планы ---------- */
@@ -129,10 +162,10 @@ input[type="text"], input[type="password"] {
 footer { color: var(--muted); font-size: 0.82rem; }
 
 .board { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; counter-reset: pos; }
-.board li { display: grid; grid-template-columns: 2.2em 1fr auto; gap: 10px; align-items: center; padding: 9px 12px; border-radius: 10px; background: rgba(0, 0, 0, 0.22); font-variant-numeric: tabular-nums; }
-.board li.me { background: rgba(255, 90, 140, 0.16); outline: 1px solid rgba(255, 90, 140, 0.55); }
+.board li { display: grid; grid-template-columns: 2.2em 1fr auto; gap: 10px; align-items: center; padding: 9px 12px; border-radius: 10px; background: var(--well); font-variant-numeric: tabular-nums; }
+.board li.me { background: var(--me-bg); outline: 1px solid var(--me-line); }
 .board .pos { font-family: var(--font-display); font-weight: 800; color: var(--muted); }
-.board li:nth-child(1) .pos { color: #ffd23f; } .board li:nth-child(2) .pos { color: #cfd8dc; } .board li:nth-child(3) .pos { color: #e0a070; }
+.board li:nth-child(1) .pos { color: #ffd23f; } .board li:nth-child(2) .pos { color: var(--silver); } .board li:nth-child(3) .pos { color: #e0a070; }
 .board .nm { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; }
 .board .sc { font-weight: 700; }
 .game { transition: transform 0.15s; }
@@ -141,7 +174,7 @@ footer { color: var(--muted); font-size: 0.82rem; }
 </style>
 
 <style>
-:root { color-scheme: dark; padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+:root { color-scheme: light dark; padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
 body { margin: 0; }
 img { max-width: 100%; }
 [hidden] { display: none !important; }
@@ -173,7 +206,7 @@ html, body { touch-action: manipulation; -webkit-tap-highlight-color: transparen
 <div class="wrap">
   <header>
     <div class="brand">
-      <div class="wm" aria-label="Claudix">Claudi<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4 L20 20 M20 4 L4 20" stroke="#ff5a8c" stroke-width="5" stroke-linecap="round" fill="none"/></svg></div>
+      <div class="wm" aria-label="Claudix">Claudi<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4 L20 20 M20 4 L4 20" style="stroke:var(--accent)" stroke-width="5" stroke-linecap="round" fill="none"/></svg></div>
       <span class="alpha">АЛЬФА 0.4</span>
     </div>
     <div style="display:flex;align-items:center;gap:10px"><span class="cx-lang-slot"></span><button class="chip" id="chip" type="button" aria-label="Аккаунт"><div class="avatar" id="avatar">Г</div><span id="chipName">Гость</span></button></div>
@@ -284,6 +317,48 @@ html, body { touch-action: manipulation; -webkit-tap-highlight-color: transparen
           <p>Кампания из восьми заездов против злеющих соперников. Начинаешь на развалюхе, копишь на тюнинг и новые тачки.</p>
           <div class="stat" id="statViraj">Ты ещё не гонял. Развалюха уже прогрета.</div>
           <a class="play" href="viraj.html">Играть</a>
+        </div>
+      </article>
+
+      <article class="game">
+        <a class="cover" href="books.html" tabindex="-1" aria-hidden="true">
+          <svg viewBox="0 0 320 180" preserveAspectRatio="xMidYMid slice">
+            <defs>
+              <linearGradient id="bkWall" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0f3a4a"/><stop offset="1" stop-color="#0a2430"/></linearGradient>
+              <radialGradient id="bkLamp" cx="50%" cy="0%" r="80%"><stop offset="0" stop-color="#ffe7a3" stop-opacity="0.5"/><stop offset="1" stop-color="#ffe7a3" stop-opacity="0"/></radialGradient>
+            </defs>
+            <rect width="320" height="180" fill="url(#bkWall)"/>
+            <rect width="320" height="180" fill="url(#bkLamp)"/>
+            <!-- полка -->
+            <rect x="24" y="146" width="272" height="10" rx="2" fill="#8a5a33"/>
+            <rect x="24" y="156" width="272" height="5" fill="#5e3b20"/>
+            <!-- корешки -->
+            <rect x="44" y="70" width="26" height="76" rx="3" fill="#1f5fe0"/>
+            <polyline points="60,80 51,100 59,100 50,120" fill="none" stroke="#9fe6ff" stroke-width="3" stroke-linejoin="round"/>
+            <rect x="72" y="80" width="22" height="66" rx="3" fill="#2d7bf0"/>
+            <rect x="77" y="88" width="12" height="3" fill="#cfe9ff"/><rect x="77" y="134" width="12" height="3" fill="#cfe9ff"/>
+            <rect x="96" y="64" width="28" height="82" rx="3" fill="#3a1f6a"/>
+            <circle cx="110" cy="100" r="8" fill="#0a0612" stroke="#b07cff" stroke-width="2.5"/>
+            <rect x="126" y="76" width="16" height="70" rx="3" fill="#d23b4f"/>
+            <rect x="144" y="76" width="16" height="70" rx="3" fill="#2f56d9"/>
+            <rect x="162" y="86" width="20" height="60" rx="3" fill="#1a7a3a"/>
+            <text x="172" y="128" font-family="monospace" font-size="9" fill="#7dffa8" text-anchor="middle">01</text>
+            <rect x="184" y="90" width="18" height="56" rx="3" fill="#e8722a"/>
+            <rect x="204" y="82" width="18" height="64" rx="3" fill="#6b7a86"/>
+            <!-- наклонённая книга -->
+            <g transform="rotate(14 236 146)"><rect x="226" y="74" width="22" height="72" rx="3" fill="#c79a2c"/><circle cx="237" cy="104" r="7" fill="none" stroke="#fff2c4" stroke-width="2"/><path d="M237 99 L237 104 L241 106" stroke="#fff2c4" stroke-width="2" fill="none" stroke-linecap="round"/></g>
+            <!-- блик на корешках -->
+            <g fill="#ffffff" opacity="0.14"><rect x="46" y="70" width="4" height="76"/><rect x="74" y="80" width="3" height="66"/><rect x="98" y="64" width="4" height="82"/><rect x="128" y="76" width="3" height="70"/><rect x="146" y="76" width="3" height="70"/><rect x="164" y="86" width="3" height="60"/><rect x="186" y="90" width="3" height="56"/><rect x="206" y="82" width="3" height="64"/></g>
+            <!-- закладка -->
+            <path d="M101 64 L101 50 L107 55 L113 50 L113 64Z" fill="#ff5a8c"/>
+          </svg>
+        </a>
+        <div class="gbody">
+          <div class="tags"><span class="tag">Книги</span><span class="tag">Киновселенная</span></div>
+          <h3>Claudix Книги</h3>
+          <p>Вся киновселенная AOYT в книгах: трилогия «Импульс», «Тень-9 и Бездна», «Противостояние» и досье героев Лиги Улиц. Листаешь как в настоящей книге.</p>
+          <div class="stat">Импульс 1–3 · Лига Улиц · досье героев</div>
+          <a class="play" href="books.html">Читать</a>
         </div>
       </article>
 
