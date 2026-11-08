@@ -324,20 +324,33 @@ html, body { touch-action: manipulation; -webkit-tap-highlight-color: transparen
         <a class="cover" href="books.html" tabindex="-1" aria-hidden="true">
           <svg viewBox="0 0 320 180" preserveAspectRatio="xMidYMid slice">
             <defs>
-              <linearGradient id="bkBg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#14204a"/><stop offset="1" stop-color="#3a1550"/></linearGradient>
-              <radialGradient id="bkGlow" cx="50%" cy="60%" r="55%"><stop offset="0" stop-color="#ffe9a8" stop-opacity="0.55"/><stop offset="1" stop-color="#ffe9a8" stop-opacity="0"/></radialGradient>
+              <linearGradient id="bkWall" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0f3a4a"/><stop offset="1" stop-color="#0a2430"/></linearGradient>
+              <radialGradient id="bkLamp" cx="50%" cy="0%" r="80%"><stop offset="0" stop-color="#ffe7a3" stop-opacity="0.5"/><stop offset="1" stop-color="#ffe7a3" stop-opacity="0"/></radialGradient>
             </defs>
-            <rect width="320" height="180" fill="url(#bkBg)"/>
-            <circle cx="160" cy="112" r="95" fill="url(#bkGlow)"/>
-            <g fill="#ffffff" opacity="0.7"><circle cx="40" cy="30" r="1.6"/><circle cx="84" cy="54" r="1.2"/><circle cx="268" cy="36" r="1.8"/><circle cx="292" cy="78" r="1.1"/><circle cx="226" cy="22" r="1.1"/><circle cx="58" cy="96" r="1"/></g>
-            <path d="M160 72 C134 60 98 58 70 66 L70 150 C98 142 134 144 160 156 Z" fill="#fdf6e6"/>
-            <path d="M160 72 C186 60 222 58 250 66 L250 150 C222 142 186 144 160 156 Z" fill="#f4ead2"/>
-            <path d="M160 72 L160 156" stroke="#c9b48a" stroke-width="2"/>
-            <g stroke="#c9b48a" stroke-width="2" stroke-linecap="round" opacity="0.8">
-              <path d="M84 84 L146 90 M84 96 L146 102 M84 108 L140 113 M84 120 L146 125"/>
-              <path d="M174 90 L236 84 M174 102 L236 96 M180 113 L236 108 M174 125 L236 120"/>
-            </g>
-            <path d="M232 64 L232 92 L240 85 L248 92 L248 62Z" fill="#ff5a8c"/>
+            <rect width="320" height="180" fill="url(#bkWall)"/>
+            <rect width="320" height="180" fill="url(#bkLamp)"/>
+            <!-- полка -->
+            <rect x="24" y="146" width="272" height="10" rx="2" fill="#8a5a33"/>
+            <rect x="24" y="156" width="272" height="5" fill="#5e3b20"/>
+            <!-- корешки -->
+            <rect x="44" y="70" width="26" height="76" rx="3" fill="#1f5fe0"/>
+            <polyline points="60,80 51,100 59,100 50,120" fill="none" stroke="#9fe6ff" stroke-width="3" stroke-linejoin="round"/>
+            <rect x="72" y="80" width="22" height="66" rx="3" fill="#2d7bf0"/>
+            <rect x="77" y="88" width="12" height="3" fill="#cfe9ff"/><rect x="77" y="134" width="12" height="3" fill="#cfe9ff"/>
+            <rect x="96" y="64" width="28" height="82" rx="3" fill="#3a1f6a"/>
+            <circle cx="110" cy="100" r="8" fill="#0a0612" stroke="#b07cff" stroke-width="2.5"/>
+            <rect x="126" y="76" width="16" height="70" rx="3" fill="#d23b4f"/>
+            <rect x="144" y="76" width="16" height="70" rx="3" fill="#2f56d9"/>
+            <rect x="162" y="86" width="20" height="60" rx="3" fill="#1a7a3a"/>
+            <text x="172" y="128" font-family="monospace" font-size="9" fill="#7dffa8" text-anchor="middle">01</text>
+            <rect x="184" y="90" width="18" height="56" rx="3" fill="#e8722a"/>
+            <rect x="204" y="82" width="18" height="64" rx="3" fill="#6b7a86"/>
+            <!-- наклонённая книга -->
+            <g transform="rotate(14 236 146)"><rect x="226" y="74" width="22" height="72" rx="3" fill="#c79a2c"/><circle cx="237" cy="104" r="7" fill="none" stroke="#fff2c4" stroke-width="2"/><path d="M237 99 L237 104 L241 106" stroke="#fff2c4" stroke-width="2" fill="none" stroke-linecap="round"/></g>
+            <!-- блик на корешках -->
+            <g fill="#ffffff" opacity="0.14"><rect x="46" y="70" width="4" height="76"/><rect x="74" y="80" width="3" height="66"/><rect x="98" y="64" width="4" height="82"/><rect x="128" y="76" width="3" height="70"/><rect x="146" y="76" width="3" height="70"/><rect x="164" y="86" width="3" height="60"/><rect x="186" y="90" width="3" height="56"/><rect x="206" y="82" width="3" height="64"/></g>
+            <!-- закладка -->
+            <path d="M101 64 L101 50 L107 55 L113 50 L113 64Z" fill="#ff5a8c"/>
           </svg>
         </a>
         <div class="gbody">
