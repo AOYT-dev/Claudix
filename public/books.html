@@ -31,6 +31,9 @@ button{font:inherit;color:inherit}
 /* ---------- библиотека ---------- */
 #lib{max-width:1080px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 72px;display:flex;flex-direction:column;gap:38px}
 .lib-head{display:flex;flex-direction:column;gap:6px}
+.lib-top{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+.back{font-family:ui-monospace,"SFMono-Regular",Menlo,monospace;font-weight:700;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);text-decoration:none;white-space:nowrap}
+.back:hover{text-decoration:underline}
 .eyebrow{font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);font-weight:600}
 .lib-head h1{margin:0;font-size:clamp(32px,6vw,44px);font-weight:800;letter-spacing:-.02em;text-wrap:balance}
 .lib-head p{margin:0;color:var(--muted);font-size:16px}
@@ -176,9 +179,9 @@ button{font:inherit;color:inherit}
 
 <div id="lib">
   <header class="lib-head">
-    <div class="eyebrow">Claudix · Книги</div>
+    <div class="lib-top"><a class="back" id="homeLink" href="https://claudix.aoyt.workers.dev/" target="_top">← Claudix</a><span class="eyebrow">Книги</span></div>
     <h1>Библиотека</h1>
-    <p>Вся киновселенная AOYT в книгах. Открой обложку и листай.</p>
+    <p>Вся вселенная AOYT в книгах. Открой обложку и листай.</p>
   </header>
   <section id="cont" class="cont" aria-label="Продолжить чтение"></section>
   <section class="shelf"><div class="shelf-h"><h2>Импульс</h2><span>трилогия · 16+</span></div><div class="grid" id="g-imp"></div></section>
@@ -3235,5 +3238,6 @@ var rzT = 0; addEventListener("resize", function () { clearTimeout(rzT); rzT = s
 renderLibrary();
 if (window.__TEST__) window.__BK = { R: R, S: S, openBook: openBook, next: next, prev: prev, go: go, closeBook: closeBook, relayout: relayout, bump: bump };
 })();
+  try { if (/books\.html$/.test(location.pathname)) { var hl = document.getElementById("homeLink"); hl.href = "/"; hl.removeAttribute("target"); } } catch (e) {}
 </script>
 </body></html>
