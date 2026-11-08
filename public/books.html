@@ -31,6 +31,8 @@ button{font:inherit;color:inherit}
 /* ---------- библиотека ---------- */
 #lib{max-width:1080px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 72px;display:flex;flex-direction:column;gap:38px}
 .lib-head{display:flex;flex-direction:column;gap:6px}
+.home-link{align-self:flex-start;margin-bottom:8px;padding:8px 14px 8px 10px;border-radius:999px;border:1px solid var(--line);color:inherit;text-decoration:none;font-weight:650;font-size:15px}
+.home-link:hover{background:color-mix(in srgb,currentColor 7%,transparent)}
 .eyebrow{font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);font-weight:600}
 .lib-head h1{margin:0;font-size:clamp(32px,6vw,44px);font-weight:800;letter-spacing:-.02em;text-wrap:balance}
 .lib-head p{margin:0;color:var(--muted);font-size:16px}
@@ -176,9 +178,10 @@ button{font:inherit;color:inherit}
 
 <div id="lib">
   <header class="lib-head">
+    <a class="home-link" id="homeLink" href="/" hidden>‹ В Claudix</a>
     <div class="eyebrow">Claudix · Книги</div>
     <h1>Библиотека</h1>
-    <p>Вся киновселенная AOYT в книгах. Открой обложку и листай.</p>
+    <p>Вся вселенная AOYT в книгах. Открой обложку и листай.</p>
   </header>
   <section id="cont" class="cont" aria-label="Продолжить чтение"></section>
   <section class="shelf"><div class="shelf-h"><h2>Импульс</h2><span>трилогия · 16+</span></div><div class="grid" id="g-imp"></div></section>
@@ -3235,5 +3238,6 @@ var rzT = 0; addEventListener("resize", function () { clearTimeout(rzT); rzT = s
 renderLibrary();
 if (window.__TEST__) window.__BK = { R: R, S: S, openBook: openBook, next: next, prev: prev, go: go, closeBook: closeBook, relayout: relayout, bump: bump };
 })();
+  try { if (/books\.html$/.test(location.pathname)) document.getElementById("homeLink").hidden = false; } catch (e) {}
 </script>
 </body></html>
