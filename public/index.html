@@ -13,17 +13,50 @@
 :root {
   --font-display: "Unbounded", "Arial Black", system-ui, sans-serif;
   --font-body: "Onest", system-ui, -apple-system, "Segoe UI", sans-serif;
-  --bg: #07181d;
-  --surface: #0e272e;
-  --surface-2: #143640;
-  --line: rgba(255, 255, 255, 0.11);
-  --fg: #eef6f7;
-  --muted: #94b0b6;
-  --accent: #ff5a8c;
-  --on-accent: #1d0610;
-  --cool: #58d6ff;
+  /* светлая тема (по умолчанию) */
+  --bg: #f4f8fa;
+  --surface: #ffffff;
+  --surface-2: #e6f1f6;
+  --line: rgba(10, 40, 52, 0.12);
+  --fg: #0b1e24;
+  --muted: #5a7078;
+  --accent: #6fd0ff;
+  --on-accent: #052433;
+  --accent-edge: #2f9fd4;
+  --cool: #1683b8;
+  --tag-line: rgba(22, 131, 184, 0.4);
+  --well: rgba(10, 40, 52, 0.05);
+  --me-bg: rgba(111, 208, 255, 0.22);
+  --me-line: rgba(22, 131, 184, 0.6);
+  --bad: #d12d5f;
+  --ok: #18915a;
+  --silver: #8a979c;
+  --accent-text: #1683b8;
   color-scheme: dark;
 }
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #07181d;
+    --surface: #0e272e;
+    --surface-2: #143640;
+    --line: rgba(255, 255, 255, 0.11);
+    --fg: #eef6f7;
+    --muted: #94b0b6;
+    --accent: #ff5a8c;
+    --on-accent: #1d0610;
+    --accent-edge: var(--accent-edge);
+    --cool: #58d6ff;
+    --tag-line: rgba(88, 214, 255, 0.4);
+    --well: rgba(0, 0, 0, 0.24);
+    --me-bg: rgba(255, 90, 140, 0.16);
+    --me-line: rgba(255, 90, 140, 0.55);
+    --bad: #ff8da8;
+    --ok: #7ff0b4;
+    --silver: #cfd8dc;
+    --accent-text: #ff5a8c;
+  }
+}
+
 * { box-sizing: border-box; }
 body {
   margin: 0;
@@ -52,7 +85,7 @@ header { display: flex; align-items: center; justify-content: space-between; gap
 .wm svg { width: 0.9em; height: 0.9em; margin-left: 0.04em; }
 .alpha {
   font-family: var(--font-display); font-weight: 600; font-size: 0.62rem; letter-spacing: 0.12em;
-  padding: 4px 9px; border-radius: 999px; border: 1px solid var(--accent); color: var(--accent);
+  padding: 4px 9px; border-radius: 999px; border: 1px solid var(--accent-text); color: var(--accent-text);
 }
 .chip { cursor: pointer; font: inherit; color: inherit; display: flex; align-items: center; gap: 10px; padding: 5px 14px 5px 5px; border-radius: 999px; background: var(--surface); border: 1px solid var(--line); max-width: 100%; }
 .avatar {
@@ -75,38 +108,38 @@ h2 { margin: 0; font-family: var(--font-display); font-weight: 600; font-size: 1
 .cover svg { display: block; width: 100%; height: 100%; }
 .gbody { display: flex; flex-direction: column; gap: 10px; padding: 16px; flex: 1; min-width: 0; }
 .tags { display: flex; gap: 6px; flex-wrap: wrap; }
-.tag { font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--cool); border: 1px solid rgba(88, 214, 255, 0.4); border-radius: 6px; padding: 2px 8px; }
+.tag { font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--cool); border: 1px solid var(--tag-line); border-radius: 6px; padding: 2px 8px; }
 .game h3 { margin: 0; font-family: var(--font-display); font-weight: 800; font-size: 1.35rem; letter-spacing: -0.01em; }
 .game p { margin: 0; color: var(--muted); font-size: 0.95rem; }
-.stat { margin-top: auto; padding: 10px 12px; border-radius: 10px; background: rgba(0, 0, 0, 0.25); font-size: 0.85rem; color: var(--fg); font-variant-numeric: tabular-nums; }
+.stat { margin-top: auto; padding: 10px 12px; border-radius: 10px; background: var(--well); font-size: 0.85rem; color: var(--fg); font-variant-numeric: tabular-nums; }
 .stat b { font-weight: 700; }
 .play {
   display: block; text-align: center; text-decoration: none; padding: 13px; border-radius: 12px;
   font-family: var(--font-display); font-weight: 800; font-size: 1rem; letter-spacing: 0.03em;
-  background: var(--accent); color: var(--on-accent); box-shadow: 0 4px 0 #b5305a;
+  background: var(--accent); color: var(--on-accent); box-shadow: 0 4px 0 var(--accent-edge);
 }
-.play:active { transform: translateY(3px); box-shadow: 0 1px 0 #b5305a; }
+.play:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--accent-edge); }
 .soon { border-style: dashed; background: transparent; justify-content: center; align-items: center; text-align: center; min-height: 220px; padding: 24px; gap: 8px; display: flex; flex-direction: column; }
 .soon h3 { font-size: 1.1rem; color: var(--muted); }
 
 /* ---------- Аккаунт ---------- */
-.tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px; border-radius: 12px; background: var(--bg); border: 1px solid var(--line); }
+.tabs { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 4px; padding: 4px; border-radius: 12px; background: var(--bg); border: 1px solid var(--line); }
 .tab { border: 0; border-radius: 9px; padding: 9px; background: transparent; color: var(--muted); font: inherit; font-weight: 700; cursor: pointer; }
 .tab[aria-selected="true"] { background: var(--surface-2); color: var(--fg); }
 .field { display: grid; gap: 6px; }
 .row { display: flex; align-items: center; gap: 10px; font-size: 0.9rem; color: var(--muted); }
 .row input { width: 20px; height: 20px; accent-color: var(--accent); flex: none; }
 .msg { margin: 0; min-height: 1.3em; font-size: 0.88rem; }
-.msg.bad { color: #ff8da8; }
-.msg.ok { color: #7ff0b4; }
+.msg.bad { color: var(--bad); }
+.msg.ok { color: var(--ok); }
 .btn2 { padding: 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface-2); color: var(--fg); font: inherit; font-weight: 700; cursor: pointer; }
-.btn2.danger { color: #ff8da8; }
+.btn2.danger { color: var(--bad); }
 .stack { display: grid; gap: 10px; }
 .chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .uchip { border: 1px solid var(--line); background: var(--bg); color: var(--fg); border-radius: 999px; padding: 4px 12px; font: inherit; font-size: 0.85rem; cursor: pointer; }
 .big-name { font-family: var(--font-display); font-weight: 800; font-size: 1.3rem; overflow-wrap: anywhere; }
-.go2 { padding: 13px; border-radius: 12px; border: 0; cursor: pointer; font-family: var(--font-display); font-weight: 800; font-size: 1rem; background: var(--accent); color: var(--on-accent); box-shadow: 0 4px 0 #b5305a; }
-.go2:active { transform: translateY(3px); box-shadow: 0 1px 0 #b5305a; }
+.go2 { padding: 13px; border-radius: 12px; border: 0; cursor: pointer; font-family: var(--font-display); font-weight: 800; font-size: 1rem; background: var(--accent); color: var(--on-accent); box-shadow: 0 4px 0 var(--accent-edge); }
+.go2:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--accent-edge); }
 .go2:disabled { opacity: 0.6; cursor: default; }
 
 /* ---------- Профиль и планы ---------- */
@@ -129,10 +162,10 @@ input[type="text"], input[type="password"] {
 footer { color: var(--muted); font-size: 0.82rem; }
 
 .board { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; counter-reset: pos; }
-.board li { display: grid; grid-template-columns: 2.2em 1fr auto; gap: 10px; align-items: center; padding: 9px 12px; border-radius: 10px; background: rgba(0, 0, 0, 0.22); font-variant-numeric: tabular-nums; }
-.board li.me { background: rgba(255, 90, 140, 0.16); outline: 1px solid rgba(255, 90, 140, 0.55); }
+.board li { display: grid; grid-template-columns: 2.2em 1fr auto; gap: 10px; align-items: center; padding: 9px 12px; border-radius: 10px; background: var(--well); font-variant-numeric: tabular-nums; }
+.board li.me { background: var(--me-bg); outline: 1px solid var(--me-line); }
 .board .pos { font-family: var(--font-display); font-weight: 800; color: var(--muted); }
-.board li:nth-child(1) .pos { color: #ffd23f; } .board li:nth-child(2) .pos { color: #cfd8dc; } .board li:nth-child(3) .pos { color: #e0a070; }
+.board li:nth-child(1) .pos { color: #ffd23f; } .board li:nth-child(2) .pos { color: var(--silver); } .board li:nth-child(3) .pos { color: #e0a070; }
 .board .nm { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; }
 .board .sc { font-weight: 700; }
 .game { transition: transform 0.15s; }
@@ -141,7 +174,7 @@ footer { color: var(--muted); font-size: 0.82rem; }
 </style>
 
 <style>
-:root { color-scheme: dark; padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+:root { color-scheme: light dark; padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
 body { margin: 0; }
 img { max-width: 100%; }
 [hidden] { display: none !important; }
@@ -173,7 +206,7 @@ html, body { touch-action: manipulation; -webkit-tap-highlight-color: transparen
 <div class="wrap">
   <header>
     <div class="brand">
-      <div class="wm" aria-label="Claudix">Claudi<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4 L20 20 M20 4 L4 20" stroke="#ff5a8c" stroke-width="5" stroke-linecap="round" fill="none"/></svg></div>
+      <div class="wm" aria-label="Claudix">Claudi<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4 L20 20 M20 4 L4 20" style="stroke:var(--accent)" stroke-width="5" stroke-linecap="round" fill="none"/></svg></div>
       <span class="alpha">АЛЬФА 0.4</span>
     </div>
     <div style="display:flex;align-items:center;gap:10px"><span class="cx-lang-slot"></span><button class="chip" id="chip" type="button" aria-label="Аккаунт"><div class="avatar" id="avatar">Г</div><span id="chipName">Гость</span></button></div>
