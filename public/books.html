@@ -6823,9 +6823,10 @@ var rzT = 0; addEventListener("resize", function () { clearTimeout(rzT); rzT = s
 
 Array.prototype.forEach.call(document.querySelectorAll("[data-lang]"), function (el) { el.addEventListener("click", function () { setLang(el.getAttribute("data-lang")); }); });
 function bookUrl(id) {
-  var base = "https://claudix.aoyt.workers.dev/books.html";
-  try { if (/books\.html$/.test(location.pathname) && /^https?:$/.test(location.protocol)) base = location.origin + location.pathname; } catch (e) {}
-  return base + "?book=" + encodeURIComponent(id) + (LANG === "en" ? "&lang=en" : "");
+  var base = "https://claudix.aoyt.workers.dev/books";
+  try { if (/\/books(\.html)?\/?$/.test(location.pathname) && /^https?:$/.test(location.protocol)) base = location.origin + "/books"; } catch (e) {}
+  var q = "book=" + encodeURIComponent(id) + (LANG === "en" ? "&lang=en" : "");
+  return base + "?" + q + "#" + q;
 }
 function copyText(t, ok, fail) {
   try { if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(t).then(ok, function () { legacy(); }); return; } } catch (e) {}
@@ -6843,7 +6844,7 @@ renderLibrary();
 (function () {
   try {
     var q = new URLSearchParams(location.search), id = q.get("book"), lg = q.get("lang");
-    if (!id && /^#book=/.test(location.hash)) id = decodeURIComponent(location.hash.slice(6));
+    if (!id && /^#book=/.test(location.hash)) { var hq = new URLSearchParams(location.hash.slice(1)); id = hq.get("book"); lg = lg || hq.get("lang"); }
     if (lg === "en" || lg === "ru") { if (lg !== LANG) setLang(lg); }
     var b = id && BYID[id];
     if (b && !b.soon && !noText(b)) openBook(b.id);
@@ -6851,6 +6852,6 @@ renderLibrary();
 })();
 if (window.__TEST__) window.__BK = { R: R, S: S, openBook: openBook, next: next, prev: prev, go: go, closeBook: closeBook, relayout: relayout, bump: bump, setLang: setLang, lang: function () { return LANG; } };
 })();
-  try { if (/books\.html$/.test(location.pathname)) { var hl = document.getElementById("homeLink"); hl.href = "/"; hl.removeAttribute("target"); } } catch (e) {}
+  try { if (/\/books(\.html)?\/?$/.test(location.pathname)) { var hl = document.getElementById("homeLink"); hl.href = "/"; hl.removeAttribute("target"); } } catch (e) {}
 </script>
 </body></html>
