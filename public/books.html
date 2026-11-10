@@ -102,6 +102,7 @@ button{font:inherit;color:inherit}
 #rBack{font-weight:600;font-size:15px;color:var(--rfg)}
 .r-title{flex:1;min-width:0;text-align:center;font:600 14px/1.2 var(--ui);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #rAa{font-family:Georgia,serif;font-size:19px;font-weight:600}
+#rLang{font-size:12px;font-weight:700;letter-spacing:.06em;border:1.5px solid currentColor;height:26px;min-width:34px;padding:0 6px;border-radius:7px;margin:0 7px;opacity:.85}
 .r-prog{display:flex;align-items:center;gap:10px;padding:0 6px}
 #rScrub{flex:1;accent-color:var(--rfg);height:28px}
 .r-info{font:500 12px/1.3 var(--ui);color:var(--rmuted);text-align:center;font-variant-numeric:tabular-nums;min-height:16px}
@@ -196,6 +197,7 @@ button{font:inherit;color:inherit}
   <div class="r-bar r-top">
     <button class="ib" id="rBack" aria-label="В библиотеку"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg><span data-i18n="lib">Библиотека</span></button>
     <div class="r-title" id="rTitle"></div>
+    <button class="ib" id="rLang" aria-label="Язык книги">EN</button>
     <button class="ib" id="rShare" aria-label="Поделиться"><svg viewBox="0 0 24 24"><path d="M12 15V3M7 8l5-5 5 5M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg></button>
     <button class="ib" id="rToc" aria-label="Оглавление"><svg viewBox="0 0 24 24"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/></svg></button>
     <button class="ib" id="rAa" aria-label="Шрифт и тема">Aa</button>
@@ -6593,7 +6595,12 @@ function setLang(l) {
   if (l === LANG) return; LANG = l; S.set.lang = l; save();
   try { localStorage.setItem("claudix-lang", l); } catch (e) {}
   applyLang();
-  if (R.id) { if (TX(R.id)) { var id = R.id; openBook(id); } else closeBook(); } else renderLibrary();
+  if (R.id) {
+    if (TX(R.id)) {
+      var id = R.id, ch0 = chapterAt(R.page), keep = { ch: ch0, f: (R.page - (R.chPage[ch0] || 0)) / chLen(ch0), len: chLen }; openBook(id);
+      if (keep) { var tp = (R.chPage[keep.ch] || 0) + Math.round(keep.f * keep.len(keep.ch)); relayout(anchorFor(normPage(Math.min(tp, R.pages - 1)))); }
+    } else closeBook();
+  } else renderLibrary();
 }
 
 // ================= БИБЛИОТЕКА =================
@@ -6712,6 +6719,10 @@ function updateInfo() {
   var cur = document.querySelector("#tocList li.cur"); if (cur) cur.classList.remove("cur");
   var li = document.querySelector('#tocList li[data-ch="' + ch + '"]'); if (li && rp > 0) li.classList.add("cur");
 }
+function otherLang() { return LANG === "en" ? "ru" : "en"; }
+function hasLang(id, l) { return l === "en" ? !!(typeof BOOK_TEXTS_EN !== "undefined" && BOOK_TEXTS_EN[id]) : !!BOOK_TEXTS[id]; }
+function chLen(ch) { var a = R.chPage[ch] || 0, b = R.chPage[ch + 1] !== undefined ? R.chPage[ch + 1] : R.pages; return Math.max(1, b - a); }
+function syncLangBtn() { var b = $("rLang"); if (!b || !R.id) return; var o = otherLang(); b.textContent = o.toUpperCase(); b.hidden = !hasLang(R.id, o); }
 function openBook(id) {
   R.id = id; var b = BYID[id];
   applySettings();
@@ -6721,7 +6732,7 @@ function openBook(id) {
   TX(id).forEach(function (c, ci) { if (!c.post) num++; var li = document.createElement("li"); li.setAttribute("data-ch", ci); li.innerHTML = '<button><span class="n">' + (c.post ? "★" : num) + '</span><span class="t">' + esc(c.t) + '</span><span class="p"></span></button>'; li.querySelector("button").onclick = function () { closePanels(); go(R.chPage[ci] || 0); }; tl.appendChild(li); });
   $("lib").setAttribute("aria-hidden", "true"); reader.hidden = false; document.documentElement.style.overflow = "hidden";
   reader.classList.add("chrome");
-  relayout(S.pos[PK(id)]);
+  relayout(S.pos[PK(id)]); syncLangBtn();
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { if (R.id === id) relayout(); });
   setTimeout(function () { if (R.id === id && canFwd()) reader.classList.remove("chrome"); }, 1800);
 }
@@ -6823,15 +6834,19 @@ var rzT = 0; addEventListener("resize", function () { clearTimeout(rzT); rzT = s
 
 Array.prototype.forEach.call(document.querySelectorAll("[data-lang]"), function (el) { el.addEventListener("click", function () { setLang(el.getAttribute("data-lang")); }); });
 function bookUrl(id) {
-  var base = "https://claudix.aoyt.workers.dev/books.html";
-  try { if (/books\.html$/.test(location.pathname) && /^https?:$/.test(location.protocol)) base = location.origin + location.pathname; } catch (e) {}
-  return base + "?book=" + encodeURIComponent(id) + (LANG === "en" ? "&lang=en" : "");
+  var base = "https://claudix.aoyt.workers.dev/books";
+  try { if (/\/books(\.html)?\/?$/.test(location.pathname) && /^https?:$/.test(location.protocol)) base = location.origin + "/books"; } catch (e) {}
+  var q = "book=" + encodeURIComponent(id) + (LANG === "en" ? "&lang=en" : "");
+  return base + "?" + q + "#" + q;
 }
 function copyText(t, ok, fail) {
   try { if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(t).then(ok, function () { legacy(); }); return; } } catch (e) {}
   legacy();
   function legacy() { try { var ta = document.createElement("textarea"); ta.value = t; ta.setAttribute("readonly", ""); ta.style.position = "fixed"; ta.style.opacity = "0"; document.body.appendChild(ta); ta.select(); var r = document.execCommand("copy"); document.body.removeChild(ta); r ? ok() : fail(); } catch (e) { fail(); } }
 }
+$("rLang").onclick = function () {
+  if (R.id) setLang(otherLang());
+};
 $("rShare").onclick = function () {
   var b = BYID[R.id]; if (!b) return; var url = bookUrl(b.id), title = bT(b);
   var copy = function () { copyText(url, function () { toast(L("tCopied", { t: title })); }, function () { toast(L("tCopyFail", { u: url }), 6000); }); };
@@ -6843,7 +6858,7 @@ renderLibrary();
 (function () {
   try {
     var q = new URLSearchParams(location.search), id = q.get("book"), lg = q.get("lang");
-    if (!id && /^#book=/.test(location.hash)) id = decodeURIComponent(location.hash.slice(6));
+    if (!id && /^#book=/.test(location.hash)) { var hq = new URLSearchParams(location.hash.slice(1)); id = hq.get("book"); lg = lg || hq.get("lang"); }
     if (lg === "en" || lg === "ru") { if (lg !== LANG) setLang(lg); }
     var b = id && BYID[id];
     if (b && !b.soon && !noText(b)) openBook(b.id);
@@ -6851,6 +6866,6 @@ renderLibrary();
 })();
 if (window.__TEST__) window.__BK = { R: R, S: S, openBook: openBook, next: next, prev: prev, go: go, closeBook: closeBook, relayout: relayout, bump: bump, setLang: setLang, lang: function () { return LANG; } };
 })();
-  try { if (/books\.html$/.test(location.pathname)) { var hl = document.getElementById("homeLink"); hl.href = "/"; hl.removeAttribute("target"); } } catch (e) {}
+  try { if (/\/books(\.html)?\/?$/.test(location.pathname)) { var hl = document.getElementById("homeLink"); hl.href = "/"; hl.removeAttribute("target"); } } catch (e) {}
 </script>
 </body></html>
