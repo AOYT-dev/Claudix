@@ -34,6 +34,7 @@ button{font:inherit;color:inherit}
 .lib-top{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
 .back{font-family:ui-monospace,"SFMono-Regular",Menlo,monospace;font-weight:700;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);text-decoration:none;white-space:nowrap}
 .back:hover{text-decoration:underline}
+.langsw{margin-left:auto;display:inline-flex;border:1px solid var(--line);border-radius:999px;overflow:hidden}.langsw button{border:0;background:none;color:var(--muted);font:700 12px/1 ui-monospace,Menlo,monospace;letter-spacing:.08em;padding:7px 11px;cursor:pointer}.langsw button.on{background:var(--accent);color:#fff}
 .eyebrow{font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);font-weight:600}
 .lib-head h1{margin:0;font-size:clamp(32px,6vw,44px);font-weight:800;letter-spacing:-.02em;text-wrap:balance}
 .lib-head p{margin:0;color:var(--muted);font-size:16px}
@@ -73,6 +74,7 @@ button{font:inherit;color:inherit}
 .cover.league .ttl{font-family:var(--f-league);font-weight:800;font-size:12.5cqw;letter-spacing:0;text-shadow:0 2cqw 6cqw rgba(0,0,0,.5)}
 .cover.imp2 .ttl{text-shadow:0 0 6cqw rgba(190,255,70,.5)}
 .cover.imp3 .ttl{text-shadow:0 0 6cqw rgba(255,140,40,.55)}
+.cover.imp4 .ttl{text-shadow:0 0 6cqw rgba(120,255,110,.55)}
 .badge{position:absolute;right:6cqw;top:6cqw;background:rgba(0,0,0,.55);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);color:#fff;font:600 5cqw/1 var(--ui);letter-spacing:.06em;padding:2.5cqw 4cqw;border-radius:99px}
 #toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);background:var(--fg);color:var(--bg);padding:12px 18px;border-radius:12px;font-size:14px;opacity:0;pointer-events:none;transition:.25s;z-index:90;max-width:calc(100vw - 32px);text-align:center}
 #toast.on{opacity:1;transform:translate(-50%,0)}
@@ -179,21 +181,22 @@ button{font:inherit;color:inherit}
 
 <div id="lib">
   <header class="lib-head">
-    <div class="lib-top"><a class="back" id="homeLink" href="https://claudix.aoyt.workers.dev/" target="_top">← Claudix</a><span class="eyebrow">Книги</span></div>
-    <h1>Библиотека</h1>
-    <p>Вся вселенная AOYT в книгах. Открой обложку и листай.</p>
+    <div class="lib-top"><a class="back" id="homeLink" href="https://claudix.aoyt.workers.dev/" target="_top">← Claudix</a><span class="eyebrow" data-i18n="eyebrow">Книги</span><span class="langsw" id="langSw" role="group" aria-label="Language"><button data-lang="ru">RU</button><button data-lang="en">EN</button></span></div>
+    <h1 data-i18n="lib">Библиотека</h1>
+    <p data-i18n="libSub">Вся вселенная AOYT в книгах. Открой обложку и листай.</p>
   </header>
   <section id="cont" class="cont" aria-label="Продолжить чтение"></section>
-  <section class="shelf"><div class="shelf-h"><h2>Импульс</h2><span>трилогия · 16+</span></div><div class="grid" id="g-imp"></div></section>
-  <section class="shelf"><div class="shelf-h"><h2>Лига Улиц</h2><span>полные книги и досье героев</span></div><div id="g-league" class="subshelves"><div class="sub"><h3 class="sub-h">Полные книги</h3><div class="grid" id="g-league-full"></div></div><div class="sub"><h3 class="sub-h">Досье</h3><div class="grid" id="g-league-dos"></div></div></div></section>
-  <section class="shelf"><div class="shelf-h"><h2>Пишется</h2><span>появятся, когда будут закончены</span></div><div class="grid" id="g-wip"></div></section>
+  <section class="shelf"><div class="shelf-h"><h2 data-i18n="shImp">Импульс</h2><span data-i18n="shImpS">серия · 16+</span></div><div class="grid" id="g-imp"></div></section>
+  <section class="shelf"><div class="shelf-h"><h2 data-i18n="shLg">Лига Улиц</h2><span data-i18n="shLgS">полные книги и досье героев</span></div><div id="g-league" class="subshelves"><div class="sub"><h3 class="sub-h" data-i18n="full">Полные книги</h3><div class="grid" id="g-league-full"></div></div><div class="sub"><h3 class="sub-h" data-i18n="files">Досье</h3><div class="grid" id="g-league-dos"></div></div></div></section>
+  <section class="shelf"><div class="shelf-h"><h2 data-i18n="shWip">Пишется</h2><span data-i18n="shWipS">появятся, когда будут закончены</span></div><div class="grid" id="g-wip"></div></section>
 </div>
 <div id="toast" role="status" aria-live="polite"></div>
 
 <div id="reader" hidden data-rt="auto" class="single">
   <div class="r-bar r-top">
-    <button class="ib" id="rBack" aria-label="В библиотеку"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>Библиотека</button>
+    <button class="ib" id="rBack" aria-label="В библиотеку"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg><span data-i18n="lib">Библиотека</span></button>
     <div class="r-title" id="rTitle"></div>
+    <button class="ib" id="rShare" aria-label="Поделиться"><svg viewBox="0 0 24 24"><path d="M12 15V3M7 8l5-5 5 5M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg></button>
     <button class="ib" id="rToc" aria-label="Оглавление"><svg viewBox="0 0 24 24"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/></svg></button>
     <button class="ib" id="rAa" aria-label="Шрифт и тема">Aa</button>
   </div>
@@ -213,9 +216,9 @@ button{font:inherit;color:inherit}
   </div>
   <div class="pop" id="aa" hidden>
     <div class="seg"><button id="fsDown" aria-label="Мельче">A</button><button id="fsUp" aria-label="Крупнее">A</button></div>
-    <div class="seg" id="lhSeg"><button data-lh="tight">Плотно</button><button data-lh="loose">Свободно</button></div>
+    <div class="seg" id="lhSeg"><button data-lh="tight" data-i18n="tight">Плотно</button><button data-lh="loose" data-i18n="loose">Свободно</button></div>
     <div class="themes" id="themes">
-      <button data-rt="auto" aria-label="Как в системе">Авто</button>
+      <button data-rt="auto" aria-label="Как в системе" data-i18n="auto">Авто</button>
       <button data-rt="original" aria-label="Белая">Aa</button>
       <button data-rt="paper" aria-label="Бумага">Aa</button>
       <button data-rt="quiet" aria-label="Тихая">Aa</button>
@@ -225,7 +228,9 @@ button{font:inherit;color:inherit}
       <button data-f="times" style="font-family:var(--f-times)">Times New Roman</button>
       <button data-f="literata" style="font-family:var(--f-literata)">Literata</button>
       <button data-f="ptserif" style="font-family:var(--f-ptserif)">PT Serif</button>
-      <button data-f="system" style="font-family:var(--f-system)">Системный</button>
+      <button data-f="system" style="font-family:var(--f-system)" data-i18n="system">Системный</button>
+    </div>
+    <div class="seg" id="langSeg"><button data-lang="ru">Русский</button><button data-lang="en">English</button>
     </div>
   </div>
   <div class="sheet" id="toc" hidden>
@@ -3832,6 +3837,2572 @@ BOOK_TEXTS["w-sun"].push(
 И впервые за двенадцать лет улыбнулся.
 `}
 );
+var BOOK_TEXTS_EN = {};
+
+// ===== IMPULSE (English) =====
+BOOK_TEXTS_EN.imp1 = [
+{ t: "The New Max", x: `
+In the spring of 2026, everyone at school knew Max. Just not as a hero. As a target.
+
+He was overweight and embarrassed about it. He wore hoodies a size too big, changed last before gym, and sat in the cafeteria where nobody could see him from the door. It didn't help. People shoved him in the hallways, hid his backpack, filmed him failing to do a single pull-up. One guy in his class laughed the loudest: tall, cocky, with a permanent smirk. He came up with new nicknames for Max faster than the teachers could grade homework.
+
+That spring Max waited for the last bell like it was a rescue.
+
+Summer went by. September came, and Max didn't show up for the first week of school. Nobody was especially surprised.
+
+That same week, people started noticing a figure around the city.
+
+They filmed it from far away and on the run, so the videos always came out blurry. A man in a tight black-and-blue suit with white lenses on the mask. The suit stretched like rubber and still took hits. On his wrists, energy cannons that fired short blue bursts. On his legs, jetpacks. He didn't fly on fire, but on pushes of air, as if he was kicking off the sky itself. The news called him Impulse.
+
+The next week, Max came back to school.
+
+Nobody recognized him. He'd gotten taller, his shoulders were broader, and his old hoodie fit him like a T-shirt. His face was the same, but he carried himself differently: calm, without the old slouch. The teacher asked for his last name twice when she took attendance.
+
+In the locker room before gym, Max pulled off his shirt, and everyone saw the round suction pads on his back and sides, like medical sensors. Quickly, one after another, he peeled them off and stuffed them into his backpack.
+
+“What's that, fake?” the same guy asked loudly. “Bought yourself some abs online?”
+
+He shoved Max in the chest. Then he hit him, for real, the way he'd hit him all last spring.
+
+Max didn't even sway. He caught the guy's arm, spun him around and slammed him into the locker room wall so hard that sneakers fell off the shelf. The bully slid down to the floor and stopped laughing.
+
+The locker room went very quiet.
+
+Max put his shirt back on, zipped up his backpack and walked out. That evening, the black-and-blue silhouette flashed over the city again.
+
+The next few days were almost calm. During the day Max sat in class and acted like nothing special had happened. People whispered: some said he'd spent the whole summer at sports camp, others that he'd been on some brutal diet. Max himself didn't tell anyone anything.
+
+At night, he trained. He learned to keep the inhibitor on so the power didn't tear its way out. He learned to fly on air impulses without crashing into antennas. He learned to fire his cannons so the blue burst knocked people down without breaking their bones. Impulse got cats off power lines, broke up fights outside bars, and once pulled a driver out of a burning car. The city started getting used to him.
+`},
+{ t: "Super Soldiers", x: `
+A few days later, two of them came to the city.
+
+They walked down the main street in broad daylight, and people stepped aside on their own. Tall, broad-shouldered, in identical dark armor with no markings. They moved too fast for men their size. A traffic camera later showed one of them pushing a police car off the road with one hand.
+
+Super soldiers, like something off a war poster. People said they'd been made by some secret corporation. But that day Max knew only one thing: this was his first real mission.
+
+He met them on the roof of a shopping mall. The first shot from his energy cannon threw one soldier two meters back, and that was it. The soldier got up, brushed himself off and kept walking. The second jumped from a standstill to the height of a third floor.
+
+The fight was brutal. The soldiers hit like trucks and barely got tired. Max kept his distance, bounced away on air impulses, fired in short bursts. He managed to knock one of them off his feet. And that's when the second one got behind him.
+
+Max felt a light tap on his neck, as if someone had thrown a pebble at him. He turned around and saw both soldiers running for the edge of the roof. They jumped, and a second later an engine roared behind the buildings.
+
+Nobody ever saw them again.
+
+That night, Max checked himself in the mirror. No wounds, no bruises, no marks. He checked the suit and scrolled through the footage from the camera in his mask. Nothing.
+
+He decided he'd imagined it.
+
+The city talked about the rooftop fight for another week. The camera footage spread all over the internet, people started painting Impulse on garage walls, and the comments argued about who he was: a military experiment, a rich lunatic, or an alien. Nobody heard anything more about the two soldiers in armor. As if they'd never existed.
+`},
+{ t: "The Bomb", x: `
+A week later, Max found out that a bomb was flying toward the school.
+
+He heard it during a break, on the police frequency he listened to through his earbud: an object weighing several tons, heading straight for their neighborhood. Two minutes to impact.
+
+Two minutes.
+
+Max pulled the fire alarm and screamed like he'd never screamed before. He drove everyone down the stairs: students, teachers, the security guard, the lunch lady. He dragged out of classrooms the people who'd decided it was a drill. He sent them far away, past the stadium, across the road, behind the garages. The school emptied.
+
+Then he ducked into the bathroom, changed, and sprinted up the stairs to the roof.
+
+The bomb was already visible: a black dot growing by the second. Max stood in the middle of the roof, planted his feet and raised his hands.
+
+The multi-ton monster slammed into his palms. Touching the metal, Max hit it with impulses, short and precise, at the wires and mechanisms inside. Some of the systems went dark. But not all of them.
+
+The bomb pressed down. It slowly forced Max to his knees, then lower. The concrete under him cracked, his arms shook. A little more and it would crush him along with the roof.
+
+So Max took off the inhibitor.
+
+The power inside him surged upward like water from a burst pipe. Suddenly the bomb felt light, like an empty box. Max stood up, lifted it over his head and took off.
+
+He flew to the reservoir outside the city. Above the water he stopped, set the bomb down on the surface and covered it with a one-time energy dome: transparent, glowing, solid. So the fish wouldn't die.
+
+The bomb exploded.
+
+The dome swelled and shook, but it held. White fire flared inside, and the water under the dome boiled. Then everything went still, and the dome crumbled into sparks.
+
+Max hovered over the water, breathing hard. The power inside him was still growing. He took out his spare inhibitor and snapped it onto his wrist.
+
+That evening in the bathroom, he scratched behind his ear and felt something hard under the skin. Small, round, the size of a seed.
+
+A tracker.
+
+That's what the super soldier had thrown at him on the roof. All this time, someone had been following him.
+
+Max took a knife, clenched his teeth and cut the tracker out from under his skin. He stared for a long time at the tiny piece of metal on the edge of the sink. Somebody knew where he went. And that somebody had just sent a bomb at his school.
+`},
+{ t: "That's Low", x: `
+On Monday they had history. The classroom window was open a crack, and first everyone heard a buzzing.
+
+Then a drone flew in through the window.
+
+Black, the size of a big plate, with four rotors. A panel opened on its underside, and inside it blades fanned out: throwing knives.
+
+“Get down!” Max shouted.
+
+Half the class dropped under their desks. The drone slowly turned and aimed its knives at one guy, a huge jock from the back row. He didn't get down. He jumped up, grabbed a chair and swung it.
+
+“I'm gonna smash it!”
+
+The chair just scraped a rotor. The drone jerked, hovered right in front of the jock's face, and something clicked inside it. The mechanism was cocked.
+
+Half a second before it fired, Max was there. Something blue flashed in his hand, and the drone fell apart into two neat halves. The knives clattered to the floor.
+
+The jock just stood there holding the chair. Nobody ever figured out what Max had done it with.
+
+The class sat quietly for the rest of the lesson. The teacher called security, security called the police, and the police carried away the two halves of the drone in bags. Nobody ever found out who had sent it or why. And all day Max caught people looking at him: his classmates watched him as if they were starting to figure something out. After school, the jock came up to him, hesitated for a long time, and finally muttered, “Thanks.”
+
+A few days later, Impulse was flying back from patrol through an industrial zone when six men stepped out from behind the shipping containers.
+
+They all had guns. They surrounded him in a half circle, slowly, as if they'd been waiting a long time.
+
+Max lunged at the nearest one, knocked the gun out of his hands, shot upward on an air impulse and came down on two of them at once. He hit, dodged, knocked the weapons away one after another.
+
+And one of them shot him in the back.
+
+The bullet got stuck in the stretchy fabric of the suit, but the impact threw Max forward onto his knees. He slowly got up and turned around.
+
+“That's low,” he said.
+
+And he hit them with a medium impulse. Not his strongest, but enough. A blue wave rolled across the lot, and all six went flying into the containers like bowling pins.
+
+Ten minutes later, the police had them all in cuffs.
+`},
+{ t: "The Exoskeleton Man", x: `
+A week later, Max took a day off. He called the school in a hoarse voice, said he was sick, and stayed home.
+
+He spent the whole day reading the news. A killer in an exoskeleton had appeared in the city: a metal frame, hydraulic arms, a helmet, and inside it a man who killed people for no reason at all. The police said he was mentally ill. He had nothing to do with the super soldiers or whoever had sent them. Just a man with a sick mind and a machine that gave him the strength of ten.
+
+By lunchtime, he showed up at Max's school.
+
+Impulse met him in the schoolyard. The exoskeleton was slow, but every punch it threw broke the asphalt. They fought all over the yard, then up the wall of the building, and at some point Max got thrown straight through the window of his own classroom. Again. Glass rained down on the desks.
+
+Max slid across the floor on his back all the way to the board. A lesson was going on. The whole class and the teacher were staring right at him. Behind him, the exoskeleton was already climbing in through the broken window.
+
+A hydraulic hand grabbed Max by the mask and ripped it off.
+
+The class gasped.
+
+“Max?..” the teacher said quietly.
+
+Now everyone knew.
+
+He didn't have time to answer. A blade shot out of the exoskeleton's wrist and went into Max's side, deep, under the ribs. Someone screamed.
+
+Max understood right away: if the blade came out, he'd bleed to death right there on the classroom floor. He grabbed the exoskeleton's arm with both hands and held on. He wouldn't let it pull the blade out. The hydraulics whined, the killer strained backward, but Max held on.
+
+Then he let go with one hand. Light flared in his palm and stretched into a one-time energy sword. One swing, and the sword went through the villain's arm, metal frame and all. The severed arm stayed where it was, still holding the blade in Max's side. And Max hit with a powerful impulse, and the exoskeleton flew back out the window.
+
+Max slid down the wall. The last thing he remembered was the ceiling above the stretcher, sirens, and the face of his teacher holding his hand.
+
+They took him to the hospital. The surgery went well, and a couple of days later Max was discharged.
+
+He rode home in a taxi, looking out the window. Now the whole class knew his secret.
+
+For the first week after the hospital, he barely got up. The stitches in his side pulled with every move, and the power inside him, as if it could sense his weakness, pushed against the inhibitor harder than usual. His classmates texted him: some asked if he was really Impulse, some asked for an autograph, and some just wished him a quick recovery. Max read the messages and didn't know what to answer. For the first time in a long time, people were waiting for him at school.
+`},
+{ t: "Fall Break", x: `
+Over fall break, Max barely left the garage.
+
+He was upgrading the suit. The main thing he added was one-time object generators right in his palms. Before, to make a sword or a dome, he had to gather energy for a long time. Now all he had to do was make a fist: a shield, a blade, a whip, anything, for one use.
+
+He had to test the upgrade sooner than he expected.
+
+The police asked Impulse for help: a man in a Lamborghini had stolen a secret flash drive and was getting away down the highway. The patrol cars couldn't keep up with him even on a straightaway.
+
+Max caught up with him through the air. A small cinder block was lying by the side of the road. Max threw energy whips out of his palms: with one he scooped up the cinder block, with the other he lassoed the car. The whip pulled tight and stopped the Lamborghini, and the cinder block smashed into it at full swing.
+
+The thief climbed out of the car, staggering. He had the flash drive in his hand.
+
+“I'm not giving it to you,” he said, and threw open his jacket.
+
+There was a bomb strapped to his chest. On a small screen it said: “loading 99%”.
+
+Max didn't argue. He threw the thief to the far side of the car, snatched the flash drive and jumped as far away as he could.
+
+The Lamborghini exploded.
+
+When the smoke cleared, Max walked up to the police and handed the flash drive to the inspector. The inspector took it, looked at Max, then turned to his constables.
+
+“A seventeen-year-old kid handled it,” he said. “And you didn't.”
+
+The constables said nothing.
+
+On the last day of the break, the city woke up to new headlines. Every morning, people were finding bodies. Every victim had had their insides sucked out, as if they'd been drunk from within.
+
+That night, Max went out to look around.
+
+He found it in the old park, by the dried-up fountain. A creature three meters tall that looked like a hyena. Patchy fur, long legs, a mouth that stretched to its ears. And when it opened its mouth, a tongue fell out, split into five parts. Each one moved on its own, like a tentacle.
+
+They fought until dawn. The creature was fast and tough: the impulses threw it back but didn't bring it down. In the end, it retreated into the dark.
+
+Not beaten. Just gone.
+
+Max stood in the middle of the park and knew it wasn't the last one.
+`},
+{ t: "We Are Invincible", x: `
+The first week after the break was calm. Suspiciously calm. His classmates already knew who was sitting with them in class, and they looked at Max in different ways: some with admiration, some with fear. The guy from the locker room stayed out of his way.
+
+In the second week, the creatures came to the school.
+
+There were thirteen of them. They broke down the doors of the main entrance, and the hallways filled with the smell of wet fur and blood. Hyenas standing on their hind legs, just like the one in the park.
+
+Max got people out. Through the windows, through the emergency exits, through the gym. He shouted, pushed, dragged people by the hand. When the last student ran out into the street, Max was left alone in the hallway.
+
+Thirteen creatures stood in front of him. The biggest one opened its mouth, and its voice came out hoarse and animal, but clear:
+
+“We are invincible.”
+
+“And I'm Impulse,” Max answered.
+
+The nanites he had put into his own body flooded out onto his skin. In half a second, the suit assembled itself on him: stretchy black-and-blue fabric, the white lenses of the mask, the cannons on his wrists.
+
+The creatures all charged at once.
+
+It was the hardest fight of his life. The creatures tore at the suit with their claws, hit him from three sides at once, their tongues lashed at his mask. Max got thrown from wall to wall. At some point he realized he was lying on the floor with three creatures piled on top of him, and he couldn't get up anymore.
+
+They almost killed him.
+
+Max breathed out through split lips:
+
+“If you won't do this the easy way, we'll do it the hard way.”
+
+And he took off the inhibitor.
+
+The power exploded inside him. The creatures flew off him like he was a red-hot stove. Max stood up, and claws grew out of his hands: huge, made of energy, half as wide as the classroom. With one swipe he scooped up five of the hyenas and threw them out of the school, straight through the wall.
+
+He met the rest with an explosion. Impulses burst out of him in every direction at once, and the hallway flooded with blue light. When the light faded, eight of the thirteen creatures lay still.
+
+The five that had been thrown out into the street were still moving. Max walked out to them through the hole in the wall and finished them off with his bare hands. One by one.
+
+Then it went quiet.
+
+Max stood in the middle of the schoolyard, breathing hard. And suddenly he felt that something was wrong. The suit was getting tight across his shoulders. The ground seemed to be moving farther away. He looked at his hands and saw that they were growing.
+
+He was growing.
+
+Max ran back through the hole, found the inhibitor on the hallway floor and snapped it onto his wrist. The growth stopped. His body slowly went back to its normal size.
+
+He sat leaning against the wall and couldn't stop shaking.
+`},
+{ t: "Krikov Lab", x: `
+That evening, Max sat at home in front of his laptop, searching for anything he could find about the creatures. Forums, rumors, blurry photos, old news. One thread led to another, and by midnight they all came together in one place.
+
+Krikov Lab.
+
+It stood on the edge of the city: not in an underground bunker like in the movies, but right on the ground, a gray building behind a fence with a research center sign. That was where vans with no license plates drove out of at night.
+
+Max called a taxi. The driver dropped him off a block from the lab. Max waited until the car was gone and put on the suit.
+
+Inside it was quiet and empty. Long hallways, white light, the smell of chemicals. And in the biggest room, Max found what he was looking for: a creature spawner. A huge machine of tanks and pipes, with half-grown creatures floating inside: small, curled up, eyes closed. Thick cables ran to the machine from a generator.
+
+Max raised both hands and hit it with a powerful impulse. The spawner exploded along with the generator, the tanks burst, and the room drowned in fire and foam.
+
+And then something started humming in the next room.
+
+A strange energy spike: the needles of the gauges on the walls swung into the red. Max pushed the door open and froze.
+
+Behind the door was black matter. Not darkness, but something thick, alive, shimmering. It rippled and pulled. Max was lifted off the floor and sucked inside.
+
+He fell to his knees in emptiness. No walls, no floor, only blackness. And out of that blackness stepped a man.
+
+Tall, majestic, like a god from the old legends, someone like Thor or Loki. Long yellow-green robes, a calm face, and eyes that looked right through you.
+
+The God of Evil.
+
+He raised his hand, and Max froze in place. He couldn't move a finger or take a full breath.
+
+“Well, hello, Max,” said the God. “Long time no see. But what can you do without your suit?”
+
+He closed his fingers, and the suit began to come off Max. The fabric, the lenses, the cannons, the jetpacks. The bio-pads tore away from his skin one after another. And together with them, though the God didn't even notice, the inhibitor slipped off his wrist.
+
+The power inside Max woke up.
+
+The paralysis held him for one more second. Two. And then Max lunged, and the invisible chains snapped. He stood up.
+
+The God of Evil raised an eyebrow slightly and waved his hand. The ceiling came crashing down on Max: a concrete slab of about fifty tons.
+
+Max threw up his hand.
+
+The slab stopped twenty centimeters above his head. It hung in the air as if invisible cables were holding it. Max didn't understand how he was doing it. A new ability had woken up on its own. Telekinesis.
+
+He clenched his fist and hurled the slab at the God.
+
+Fifty tons of concrete crashed into the God of Evil. When the dust settled, he was standing in the same spot. He had a scratch on his cheek. Just a few scratches.
+
+“Next time we'll come back stronger, and there will be more of us,” said the God of Evil. “You may have won this time, but next time we'll be more powerful.”
+
+The blackness shuddered, and Max was spat out like a cork from a bottle. He fell onto the lab floor. The hole behind him snapped shut.
+
+The suit stayed there. With the God of Evil.
+`},
+{ t: "Sacrifice", x: `
+Max made it home at dawn. No suit, his clothes torn.
+
+The power inside him was growing. Without the inhibitor it rose like water in a locked room: a little higher every minute. His fingers tingled with blue sparks, and his ears hummed as if a power plant was running next to him.
+
+He sat on the floor of his room and put the pieces together. The super soldiers with the tracker. The bomb that flew straight at his school. The creatures that came for him. The lab where they were grown. And the voice in the blackness: “Long time no see.”
+
+The God of Evil was behind all of it.
+
+Max took the second inhibitor out of his desk drawer and snapped it onto his wrist. The hum in his ears went quieter.
+
+But he already knew what would come next. “There will be more of us.” And Max had no suit, no cannons, no backup plan.
+
+There was only one way left to stop what was coming: take off the inhibitor and let all the power out. He knew how that would end. If he transformed completely, without the inhibitor, he would never be human again. Ever.
+
+Max sat in the dark for a long time. Then he made up his mind.
+
+He lived those two days like an ordinary person.
+
+In the morning he went to school. He sat at his desk by the window, listened to the teacher explain a new topic, and for the first time all year wrote everything down in his notebook. During the break his classmates crowded around him, asking about the creatures, about the stitches in his side, about whether he'd been scared. Max answered and laughed along with them. Even the guy from the locker room stood off to the side and listened.
+
+After school, Max walked around the city for a long time. He went into the cafeteria where people used to bump his tray. He stood by the reservoir where the bomb had exploded. The water had calmed down, and ducks were swimming on it.
+
+On the evening of the second day, he climbed onto the school roof and watched the lights below. Somewhere down there lived people who didn't even know an army would soon come to the city. Max thought that if everything worked out, they would never find out who had saved them. And he decided that was fine.
+
+They came at dawn.
+
+The army rolled over the city like a storm cloud. More than a hundred creatures: hyena monsters, super soldiers, beasts that didn't even have names. And above them, not touching the ground, floated the God of Evil in his yellow-green robes.
+
+Max went out to meet them. Alone, no suit, in an ordinary hoodie and jeans, in the empty square in front of city hall.
+
+The army stopped. One of the creatures laughed, a hoarse hyena laugh.
+
+Max looked at the God of Evil and took off the inhibitor.
+
+The world around him exploded with light. Power poured out of Max: from his skin, from his eyes, from his mouth. Tentacles burst out of his back, tearing his hoodie, flexible, glowing, alive. They lunged forward faster than he could think about them and sank into the nearest creatures. The tentacles drank. They drank energy and every fluid, everything inside, and the creatures fell down as empty shells.
+
+This wasn't just power anymore. This was divine power.
+
+He went through the army like through grass. The creatures threw themselves at him and fell. The super soldiers fired, but the bullets melted in the air. In a few minutes, out of a hundred enemies, there was no one left who could stand.
+
+Max turned to the God of Evil. The tentacles wrapped around him, squeezed, pulled tight. One more second and Max would have torn him in half.
+
+Then the ground shook.
+
+Something huge rose up from behind the buildings. Eight meters tall, two legs as thick as columns, an armored chest, a head with no face. The final boss of all the creatures. Like the rest of them, it was controlled by the God of Evil.
+
+The monster struck. The tentacles let go, and the God slipped free. Max was slammed into the asphalt.
+
+They grappled in the middle of the square. The monster was huge and terribly strong. At one point it grabbed one of the tentacles with both claws and ripped it off. Max screamed in a low, inhuman voice. He was no longer the Max his whole class knew.
+
+He jumped onto the monster's shoulders, wrapped his arms and tentacles around its neck, and tore it apart.
+
+The monster crashed down onto the square, and the ground shook under it one last time.
+`},
+{ t: "Giving It All", x: `
+The God of Evil hung in the air above the square, looking at Max. For the first time, something like worry showed on his calm face.
+
+Max raised his hands.
+
+He gathered everything: the power, the light, the rage, the hunger of the tentacles. He squeezed it into one point in his chest and let it go. The impulse left him as a blinding blue sphere, enormous, many times bigger than the God himself. It swallowed the God of Evil whole, and he vanished in the glow before he could even scream.
+
+When the light faded, the sky over the square was empty.
+
+Max knelt in the middle of the ruined square. The God was gone. So was the army. But the transformation hadn't stopped.
+
+The tentacles pulled back into his back and immediately grew out again. The skin on his arms glowed from inside, and he couldn't see his veins through it anymore. He felt his "I" getting smaller and the power getting bigger. A little more, and all that would be left of Max was a monster with divine power that would never have enough.
+
+There was nothing to hold it back.
+
+There was only one way. Max understood it as clearly as if someone had said it out loud: the only way to escape the monster form was to give away all the power. Not hold it in, not hide it. Give it away. Down to the last spark.
+
+That meant he would stop being Impulse forever.
+
+“Fine,” Max said. “Take it.”
+
+He opened his palms, and the power went upward. First as a thin thread, then as a pillar of light that, people say, could be seen even in the neighboring towns. With it went the tentacles, the light under his skin, the hum in his ears and the hunger.
+
+When it was over, an ordinary guy in a torn hoodie was sitting in the square. Cold, hungry and very tired. Human.
+
+He walked home.
+
+Then came weeks of quiet. Max went to school. At first his classmates looked at him like a ghost, then like a star, and then they got used to it. Nobody asked him to fly or lift a car anymore. He couldn't anyway.
+
+In the evenings, Max sat on the windowsill and looked at the city. Sometimes he clenched his fist and waited for blue light to flare under his skin.
+
+It didn't. And honestly, Max was glad.
+
+He was finally living a quiet life.
+`},
+{ t: "Post-Credits Scene", post: true, x: `
+Darkness. No stars, no sound, no up, no down.
+
+Inside that very black hole sat the God of Evil. Not by choice: the blackness held him like a cage and wouldn't let him out. His yellow-green robes had faded.
+
+He raised his hand and looked at it.
+
+His fingers began to crumble. First the tips, then the palm, then the wrist, quietly, like ash in the wind. The God of Evil watched it calmly, almost with curiosity.
+
+A few seconds later, there was no one left in the emptiness.
+
+Only ash, slowly settling in the dark. And one tiny speck that was still glowing yellow-green.
+`},
+];
+
+// ===== IMPULSE 2 (English) =====
+BOOK_TEXTS_EN.imp2 = [
+{ t: "The Repulsor", x: `
+The beginning of 2027 was quiet.
+
+A few months had passed since the morning a pillar of blue light stood over the city. The square in front of city hall had been rebuilt, and at school they had patched up the hole the creatures left behind. Max went to school, took tests and watched shows in the evening. There were no more creatures and no more nights on rooftops in his life.
+
+The whole class knew that Max had been Impulse. So did the teacher: the exoskeleton had ripped off his mask right in front of her. But people had stopped talking about it. Impulse was gone. There was just Max, a guy who sometimes stared out the window a little too long.
+
+On Tuesday, during a break, he noticed something in Alexander Sergo's sleeve.
+
+Sergo was the oldest in the class: he'd already turned eighteen. He sat at the back desk, barely talked to anyone, and was always soldering something on his knee. Now the edge of a metal plate was sticking out from under his cuff, with thin wires running from it to his palm.
+
+Max frowned but didn't say anything.
+
+In the next lesson, Sergo stood up from his desk without waiting for the bell.
+
+“Anna Sergeyevna,” he said to the teacher, “want me to show you what I made?”
+
+He rolled up his sleeve. An adapter was strapped to his wrist, and in it sat a repulsor: a metal disc the size of a palm, with orange light running around its edge. The disc hummed as it heated up, and the air above it shimmered. Sergo raised his hand. Straight at the teacher.
+
+Max was on his feet before he could think.
+
+He vaulted over his desk and knocked Sergo's arm a split second before the shot. The beam went into the ceiling, and plaster rained down. The class screamed.
+
+Sergo spun around and punched Max in the jaw. It was a hard hit, but Max had seen worse. He caught Sergo's arm, yanked the repulsor out of the adapter on his wrist, took a short swing and hit Sergo over the head with the disc.
+
+Sergo dropped between the desks.
+
+“Max, careful!” the teacher shouted. “You'll kill him with your power!”
+
+Max looked at the repulsor in his hand, then at her.
+
+“I don't have any power anymore,” he said quietly.
+
+By the time Sergo started to come around, they were already carrying him to the police car. Max left the repulsor on the desk, and the police took it for examination. It turned out Sergo had built it himself, down to the last screw.
+`},
+{ t: "The Crack", x: `
+Sergo went to prison. At the trial he stayed silent and stared at one spot.
+
+A month later, the wall of the city prison was broken through from the inside. At night, without a single explosion, as if the concrete had simply been pushed out. Eleven prisoners escaped. In the morning, every channel showed a photo of the man who had organized the escape: eighteen-year-old Alexander Sergo.
+
+Max read it on his phone, standing in the shower.
+
+He stared at the wet screen, and anger rose up inside him. At Sergo, at the prison, but most of all at himself. Before, he'd already be flying over the city, tracking the escapees by their heat signatures. Now all he could do was stand under hot water and read the comments.
+
+He punched the wall.
+
+There was no pain.
+
+Max slowly pulled his hand back. A crack was spreading across the tiles from where his fist had landed: long, branching, all the way up to the ceiling. His knuckles were fine. They weren't even red.
+
+He stood and stared at the crack until the water went cold.
+
+So he hadn't given it all away. Somewhere deep inside, under his ribs, a spark was left. Small, almost invisible. But alive.
+
+Over the next few weeks, Max realized it was growing. First he stopped getting tired in gym. Then he started hearing the wires hum inside the walls. Then one morning he bent a spoon just stirring his tea. The power was coming back slowly, drop by drop, but there was more of it every day. Sooner or later it would grow back to where it had been.
+
+Max got his toolbox down from the top shelf.
+
+If the power was coming back, he needed a suit.
+`},
+{ t: "Iron Mask", x: `
+The old suit had stayed in the black hole. The God of Evil had taken all of it: the fabric, the lenses, the cannons, the jetpacks, the bio-pads. Max had to start from scratch.
+
+He worked at night in the garage. The new suit came out lighter than the old one, and smarter. The bio-pads now powered everything at once: the stretchy fabric, the cannons, the jetpacks and even the nanites that lived under Max's skin. The nanites didn't need to be charged separately anymore. They lived on Max's energy the way cells live on blood.
+
+Max went back to wearing a shirt and pants to school. Only, if you looked closely, a blue ripple sometimes ran under the skin on his wrists: the nanites waiting for a command.
+
+He ran into Sergo on the way home from school.
+
+A figure stood in the middle of the empty street, blocking the way. A man in an iron suit: rough plates welded on top of each other, the same repulsors on his wrists, only bigger. His face was hidden behind a mask with two round lenses that glowed orange.
+
+“Hey there, classmate,” said a metallic voice.
+
+Max didn't answer. The nanites flooded onto his skin, and half a second later Impulse was standing in front of Sergo.
+
+It was his first real fight in months, and Max's body remembered everything. Sergo's repulsors hit hard, burned through the asphalt, knocked parked cars out of the way. Max's cannons were more accurate. They fought all along the street, from the bus stop all the way to the bridge. Sergo tore a long ragged hole in the side of Max's suit. In return, Max crushed his chest plate so hard it caved inward.
+
+Sergo backed off, wheezing into his speaker. Then, with a roar, he fired up the jetpacks on his back and shot into the sky, leaving an orange trail.
+
+Max stood on the bridge, pressing his hand to his torn side, and watched him go.
+
+He was back. But now his enemy had a suit too.
+`},
+{ t: "The Dream", x: `
+That night, Max dreamed of space.
+
+He was hanging in emptiness among the stars, with no suit and nothing to stand on. It was quiet, except for a low hum somewhere far away, familiar enough to make him shiver.
+
+A man walked toward him out of the dark. He walked on the emptiness as if it were a floor, unhurried, as if he had all the time in the world. Yellow-green robes, vein-like patterns on the fabric, a face that was far too calm.
+
+“Did you think I died completely?” said the God of Evil, and smiled. “Only partly. And you're going to feel it.”
+
+He raised his hand, and his fingers closed around Max's throat.
+
+Max couldn't breathe or scream. The stars swam before his eyes, blurred, then went black. The grip kept getting tighter…
+
+He woke up on the floor by his bed. Air tore into his lungs with a rasp.
+
+A dream. Just a dream.
+
+Max got up, went to the bathroom and turned on the light. A pale face with dark circles under its eyes looked back at him from the mirror. And around his neck, from ear to ear, ran a band of blue skin. Dark, as if someone really had just been strangling him.
+
+Max touched it with his fingers. The skin was cold.
+
+He stood in front of the mirror until morning.
+`},
+{ t: "Four Inhibitors", x: `
+A few days later, the new suit turned black.
+
+It didn't happen all at once. First the blue lines on the chest went dim. Then the blue panels on the fabric lost their color and turned graphite gray. And one morning Max took the suit out of the closet, and it was completely black. Not a single blue spark, as if someone had poured the night over it.
+
+The diagnostics said everything was fine. Max didn't like that.
+
+By then, the power had come back almost completely. He could feel it all the time: heavy, hot, enormous. One inhibitor, like before, wasn't enough. Neither were two. Max spent a week over his blueprints and made four small inhibitors: one for each wrist and one for each ankle.
+
+The system was simple. All four on: fifteen percent of his power. Enough to fight without flattening half a block. Three on: twenty-five percent. Two: fifty. One: seventy-five.
+
+And with all four off, at first, very briefly, there was a full hundred percent. After that the power became infinite, like it had been that day in the square. And with every second it got harder to stop.
+
+The inhibitors didn't just protect Max from himself. Most of all, they protected the world from Max.
+
+He made them himself, with his own hands, every screw and every microchip. Because there was no one else he could trust with something like this.
+`},
+{ t: "The Blade", x: `
+Sergo came back a week later. For revenge.
+
+He was waiting at the school gates after classes, in the same iron suit, only patched up. A new plate had been welded over the crushed chest plate, and a long blade slid out of his right wrist.
+
+Max came out to meet him already wearing the black suit.
+
+The fight started right away and went differently than usual. Max hit, dodged, hit again, but at some point he stopped hearing the sounds around him. The world narrowed to a single point: Sergo's throat. Something dark and angry rose up inside him, something that had never been there before.
+
+Max grabbed Sergo, dug his fingers into the edge of his armor and tore off a piece of metal with his bare hand. Sharp, jagged, heavy. He raised it to drive it into Sergo's chest…
+
+And stopped a centimeter away.
+
+The metal slipped out of his fingers and clanged on the asphalt. Max fell to his knees. His hands were shaking. His head was ringing.
+
+That wasn't him. He would never do that.
+
+Something was wrong with him.
+
+Sergo didn't wait. He raised the arm with the blade over Max, short and straight, at his neck. At the last moment Max caught the blade in his palm. The nanites in his glove screeched, but held. Max twisted Sergo's arm and ripped the blade out, mount and all.
+
+Sergo jumped back, looked at his empty arm and shot into the sky again.
+
+Max was left kneeling in the middle of the schoolyard with someone else's blade in his hand. The black suit gleamed under the streetlights.
+`},
+{ t: "Stage Two", x: `
+He tried switching suits.
+
+He took the spare one out of the garage: an old prototype, still blue. He put it on. A minute later, black spots started creeping across the blue fabric, like mold on bread. Five minutes later the prototype was completely black.
+
+It wasn't the suit. It was him.
+
+Then came stage two, as Max later called it. The hallucinations came in the middle of class: the board would blur, and instead of it he'd see space, stars, and a hand reaching for his throat. The voice from the dream whispered right in his ear: “You're going to feel it.” And once, during a break, he threw up in the school bathroom: something black and thick, like oil.
+
+Max stood over the sink and watched the black liquid slowly drain away.
+
+There was a creature sitting inside him. Or the God of Evil himself.
+
+He went to the teacher and asked to go home. For the first time all year, he wasn't lying when he said he felt sick.
+
+He made it home in time. In his room, Max sat down on the bed, and the inhibitors started clicking. On their own, one after another. Click: left wrist. Click: right. Click, click: ankles. Four bracelets dropped to the floor.
+
+He tried to put them back on, but they kept slipping off, as if his hands had changed shape. His hands really had changed shape.
+
+His body was growing. Bones cracked, skin stretched, his T-shirt split at the seams. Max realized: one more minute and he'd tear the building apart from the inside. Along with the neighbors.
+
+He took a running start and jumped out the window.
+`},
+{ t: "The Monster", x: `
+It wasn't Max who landed on the asphalt.
+
+A three-meter creature straightened up in the middle of the street, and the concrete cracked under its feet. Its eyes had gone completely black, no pupils, no whites. On each forearm gaped three round holes, as if someone had drilled straight through the bone.
+
+People screamed and scattered.
+
+“CAREFUL!” a voice thundered, low and growling, nothing like Max's. “STAY AWAY FROM ME!”
+
+He tried to move carefully, but every movement broke something. His shoulder took out a fence. His hand brushed a second one, and it folded like cardboard. Max growled in helpless rage.
+
+And then seven figures came down from the sky.
+
+Sergo in his iron suit, and next to him six more just like it: welded plates, repulsors on their wrists, round mask lenses. His gang of escaped prisoners.
+
+“Well, look at that,” said Sergo. “Our hero finally showed his true face.”
+
+They all fired at once. The repulsors burned his back, his shoulders, his face. And then whips burst out of the holes in Max's forearms. Living, biological, black, flexible as snakes. They lashed through the air on their own, as if they knew exactly what to do.
+
+With the first whip Max knocked one of the gang out of the air. With the second he wrapped another around the leg and slammed him into the ground. The third he just caught with his hand and threw into a wall so hard he didn't get up again.
+
+Three of them lay unconscious. The other four, Sergo among them, exchanged looks and flew off in different directions.
+
+The monster stood in the middle of the wrecked street, breathing hard. And then, slowly, very slowly, it began to shrink.
+
+Max came home human, through the front door of the building, in rags. The inhibitors were lying on the floor of his room. He picked one up, and it snapped onto his wrist as if nothing had happened. Then the second, the third, the fourth.
+
+In the evening, the police called.
+
+“Thank you for catching three of the escapees,” said a tired voice. “But you knocked down two fences. So either fix them or pay for them.”
+
+Max looked at his empty wallet.
+
+“I'll fix them,” he sighed.
+
+That night, sitting over his blueprints, he understood what had happened. The monster wasn't his divine power. It was the thing that was smothering it. An infection the God of Evil had left inside him. That was why Max had been able to turn back into a human: the infection wasn't him. It was just sitting inside him, like a parasite.
+
+And it was stronger than the inhibitors. If they had fallen off on their own, it had to be stronger.
+`},
+{ t: "The Diary", x: `
+The answer turned up where nobody had been looking.
+
+The city archive held the diary of a man who, many years ago, had been diagnosed with schizophrenia. He wrote that a stranger lived inside him: a voice from the dark that came in his dreams and strangled him. The doctors treated him with pills. The pills didn't help. The last pages of the diary were covered with blueprints.
+
+Max read all night, and the further he went, the colder he felt inside. This man had seen the same god. The very same one, in yellow-green.
+
+And on the last page was written how to get rid of him.
+
+You had to make an energy object, but not finish it. Half-made, unstable, single-use. If you put it on your head, it wouldn't hold and would discharge straight into your brain. And for a few minutes, it would open a door into your subconscious. Into the place where the stranger was hiding.
+
+Under the drawing, in crooked handwriting, someone had added: “I never had the nerve.”
+
+Max did.
+
+He built the thing in two days: a headband of copper rings, crystals, wires, and too much energy in too small a space. The device hummed and got hot even when it was switched off. Max lay down on the garage floor, put on the headband and pressed the button.
+`},
+{ t: "The Subconscious", x: `
+He opened his eyes in emptiness.
+
+It was the same space as in the dream, only now Max was standing on his feet. Under him was something like black glass, and instead of stars, scraps of his memories floated around him: the classroom, the square in front of city hall, the window he had jumped out of.
+
+The God of Evil was waiting for him.
+
+Only now he was dressed in black. Not yellow-green robes, but black clothes, as if sewn from the very infection Max had been throwing up in the school bathroom.
+
+“You came on your own,” said the God. “How sweet.”
+
+“This is my home,” Max answered. “Nobody invited you.”
+
+They met in the middle of the emptiness. Max had no suit here, but here he didn't need one. The subconscious was his territory. He raised his hand, and blue light flared in it: the very power the God of Evil had once called the spark of a god.
+
+Max hit the God with his own power. Divine power, turned against its master.
+
+The God was thrown back. Max clenched his fist, and a sword was born from the light: long, shining. He lunged forward and ran the God of Evil through.
+
+The God looked down at the blade in his chest. Then he slowly pulled it out, and the wound closed right before Max's eyes, as if it had never been there.
+
+“You can't kill me here,” he smiled. “But thanks for opening the door.”
+
+He turned, dug his fingers into the air and tore it open like fabric. Through the tear you could see the real city: rooftops, roads, the evening sky.
+
+The God of Evil stepped through the portal.
+
+Max woke up on the garage floor. The headband had crumbled to dust. And through the window he could see a yellow-green glow rising over the center of the city.
+`},
+{ t: "Yellow-Green Matter", x: `
+The God of Evil walked through the city, and the city broke around him.
+
+He wasn't hiding in the black hole anymore or sending soldiers in his place. He was here in person. Every step he took scorched the asphalt, and with a wave of his hand, buildings folded.
+
+Max caught up with him on the rooftops downtown. As a human, in his black suit: the infection had left him along with the God, but the power had stayed.
+
+The battle went across the whole city. Roof to roof, down the avenues and over the bridges. Max hit with impulses stronger than he'd ever thrown. Electric whips burst out of his hands, not black and alive like the monster's anymore, but blue, crackling, made of pure energy. The God of Evil answered with waves that shattered the windows on entire streets.
+
+In the middle of the fight, Sergo landed on the next roof.
+
+“He's mine!” Sergo shouted, aiming his repulsors at the God of Evil. “This is my city, and I won't let some…”
+
+The God of Evil didn't even turn his head. He just waved his hand, and Sergo was swept off the roof like a fly. The metal suit tumbled through the air and disappeared between the buildings below.
+
+There was no time to check whether he was alive.
+
+Max lunged forward, ducked under a blow and grabbed the God of Evil by the chest. And suddenly he felt there was something in his palm. Dense, warm, yellow-green. It pulsed like a heart.
+
+It was the God of Evil's matter. His power, his essence, the very thing that colored his robes and burned in his soldiers' eyes.
+
+Max looked the God in the eyes. For the first time ever, there was fear in them.
+
+Max clenched his fist.
+
+The matter crunched and evaporated between his fingers like smoke. The God of Evil staggered. The patterns on him went dark. He fell to one knee and, from an all-powerful god, suddenly turned into just a tall, tired creature.
+
+“You…” he began.
+
+Max didn't let him finish. One last impulse left his hands straight into the God of Evil's chest. This time the wound didn't close.
+
+When it was all over, Max threw up again. Only this time it was the last drop of black liquid. The last bit of the infection. He wiped his mouth on his sleeve and looked at his hands. Blue lines were slowly showing through the black fabric of the suit.
+`},
+{ t: "The Prison Suit", x: `
+Sergo survived. Max found him three days later.
+
+The gang was hiding in an abandoned factory on the edge of town: Sergo and the three escapees who were left. Sergo's suit was dented from the fall off the roof, but he himself was still dangerous.
+
+Max took out the three quickly and handed them over to the police, tied up, right at the entrance to the station. Sergo he fought himself. For a long time, hard, one on one, among the rusty machines. When Sergo's repulsors finally went dark, Max didn't take him to the station. An ordinary prison hadn't held Sergo once. It wouldn't hold him a second time.
+
+He locked Sergo in the factory basement and welded the door shut. Then he went to the garage and didn't come out for three days.
+
+He made a prison suit. Orange and black, thick, without a single seam on the outside. A built-in scanner checked every object that came near the prisoner and blocked anything that could be turned into a weapon. It couldn't be opened from the inside at all. The only way to take it off was from the outside, by pressing a button that only the guard had.
+
+The police took Sergo already wearing it. The station chief walked around him for a long time, studying the design.
+
+“Listen,” he said at last. “Could you make more of these?”
+
+“We'll see,” Max answered. “First I've got to finish fixing those fences.”
+`},
+{ t: "Graduation", x: `
+In the spring, Max graduated from school.
+
+At graduation his classmates clapped for him louder than for anyone else. Anna Sergeyevna hugged him and said she'd always known he would make something of himself. Even if what he'd made of himself was a little unusual.
+
+He finished fixing the fences in May. Both of them. The police took a picture of him in front of the fresh boards and posted it on their official account with the caption “Impulse pays for the damage.” The photo got more likes than all their posts that year put together.
+
+In the summer he got into university, to study engineering. At the interview, the professor studied his blueprints for a long time, then took off his glasses and asked:
+
+“Did you come up with these yourself?”
+
+“Myself,” Max answered. “I just really needed them.”
+
+In the evenings, after classes, he put on the suit: black and blue again, with steady cold light in the lines on the chest. The four inhibitors were in their places. Fifteen percent of his power. He didn't need any more than that for now.
+
+The city below was noisy, glowing and living its own life. Somewhere in it there were still robbers, escapees and people with homemade repulsors. But now the city had a protector again.
+
+Max stepped off the roof. The jetpacks caught him just above the ground.
+
+Impulse was back.
+`},
+];
+
+// ===== IMPULSE 3: DOCTOR DOOM (English) =====
+BOOK_TEXTS_EN.imp3 = [
+{ t: "The Portal", x: `
+A month went by.
+
+The city got used to a blue streak flashing over the rooftops in the evenings. Max got used to university, to eight a.m. lectures, and to the fact that no god was strangling him in his sleep anymore. Life, it seemed, had finally become normal.
+
+That evening he was patrolling downtown. Nothing special: a couple of car thieves, a fight outside a bar, a cat on the power lines. Max stood on the edge of a high-rise and took a running start for an ordinary jump. He'd done a thousand of them: push off, fly, catch the air with the jetpacks by the next roof.
+
+He jumped.
+
+And right in front of him, a circle flared in the air.
+
+Orange, sparkling, as if someone had drawn a sparkler across the sky. The circle opened into a passage, and beyond it was no street and no roof, but an endless dark abyss. Max had no time to brake or turn.
+
+He flew straight into the portal.
+
+Later he would learn that the portal had opened by accident. Somewhere very far away, a sorcerer who could cut through space made one wrong move, and one of his doors opened in the wrong place. Right in front of a flying Impulse.
+
+But back then, Max was just falling.
+`},
+{ t: "The Abyss of Portals", x: `
+The fall didn't end.
+
+Hundreds of portals drifted around Max: round, ragged, flickering. Each one held its own world: cities, deserts, oceans, someone's faces. The jetpacks coughed and found nothing to push against. There was no up and no down here.
+
+The first portal grabbed him by the shoulder like a hand and spat him out onto a roof.
+
+New York. Only somehow off: the cars older, the signs simpler, the sky yellowish like an old photograph. The year was 2007. On the edge of the roof next to Max sat a man in a red-and-blue suit with a web pattern on the mask. He slowly turned his head.
+
+“Uh,” said Max. “Hi. Cool suit.”
+
+“Thanks,” Spider-Man answered, confused. “Yours too… Who are you, anyway?”
+
+“I don't even know where I am,” Max said honestly. “I don't think I'm staying long.”
+
+He was yanked backward, and the roof disappeared.
+
+The abyss again. Portals rushed past, and in one of them Max saw a snowy forest. Two people were fighting to the death there: a stocky man with steel claws coming out of his fists and a chatty mercenary in a red suit with two katanas on his back. The mercenary was shouting something, joking, it seemed, and the clawed one was growling back. The world of the X-Men rushed by, and Max never found out who won.
+
+In another portal flashed one more Spider-Man, in a different suit, slimmer and brighter, with big white eyes on the mask. He swung easily between skyscrapers on his webs and didn't even notice someone was watching him from the universe next door.
+
+And then the abyss squeezed shut, and Max was thrown down.
+
+He slammed into the asphalt in the middle of a street, leaving a dent in it. He got up and brushed himself off. He looked around.
+
+New York. The real, modern one. Spring of 2018, judging by the dates on the billboard screens.
+
+And staring right at him were people Max had only ever seen in movies.
+`},
+{ t: "The Hammer", x: `
+“He's one of them,” said a man in red-and-gold armor, and his palm began to glow. “The Black Order.”
+
+“I'm not from any…” Max began.
+
+They didn't let him finish.
+
+Iron Man's repulsor hit first. Max took it on crossed arms, and the nanites screeched. Then a man in glasses jumped out from behind a car, a man who, judging by his face, was right in the middle of deciding whether to transform or not. Orange sparks came down from above: a sorcerer in a red cloak caught Max in glowing bonds, and they crackled against his armor.
+
+Max fought back as best he could. He didn't want to hurt anyone, and that was the real problem: they did. A minute later he was pinned to the ground. His suit was coming apart at the seams, the cannons were overheating.
+
+Then a tall blond man in a cape came down from the sky. He wound up and hurled a war hammer at Max.
+
+The hammer flew, humming like a plane. Everyone knew it couldn't be stopped. That only the worthy could lift it.
+
+Max caught it.
+
+Not by the handle, but right by the head, in midair, with one palm. The hammer trembled in his hand, as if it were alive and surprised. Max tossed it up, caught it by the handle and calmly lowered it to his side.
+
+The street went very quiet.
+
+“Did he just… lift it?” someone asked.
+
+“He caught it,” Iron Man clarified. “That's different. Probably.”
+
+“It's the same thing,” said Thor, staring at his hammer in someone else's hand. “Or is it? I'm not sure.”
+
+Max looked at the hammer, then at its owner. He wound up and threw the weapon back. Thor caught it with his chest and stumbled back a step.
+
+“Here you go, unworthy,” said Max.
+
+For another second it was quiet. Then Iron Man snorted inside his helmet.
+
+“Okay. He's definitely not from the Black Order. Those guys have no sense of humor.”
+`},
+{ t: "The Advice", x: `
+Max introduced himself in the café on the corner, where Stark dragged him. Stark couldn't wait to figure out how a teenager in black-and-blue armor had technology that even he didn't have.
+
+“Max. Impulse,” said Max. “I think I'm from another universe. And from the future. Where I'm from, it's '27.”
+
+“'27,” Stark repeated. “So how is it? Flying cars yet?”
+
+“We've got you,” said Max. “In the movies.”
+
+Stark opened his mouth to answer, but didn't get the chance. The sky over Manhattan went dark. A huge ring-shaped ship hung over the street, and a beam came down from it to the ground. Down the beam slowly descended a thin gray alien in long robes. Behind him came a huge brute with skin like stone.
+
+A quiet, oily voice rang out over the street. The alien spoke of his master's mercy and of how people should rejoice.
+
+Max recognized this scene. He'd seen it in a theater, with popcorn, about five times. Now everything was happening exactly the same way, frame by frame. Ebony Maw. The Time Stone around Strange's neck. The kid in the spider suit who was about to jump out of a school bus.
+
+Stark was already putting on his armor on the move.
+
+“Tony.” Max grabbed him by the shoulder plate. “Listen carefully. I know how this all ends. Tell Strange: when you're fighting Thanos, he should open a portal right at his neck. Or at the arm with the gauntlet. And close it. Just close the portal, you understand? Don't fight him. Cut him off.”
+
+Stark looked at him for a second, a second as long as a minute.
+
+“How do you…”
+
+An orange circle flared above their heads. The same portal. It pulled Max upward, and the asphalt dropped away under his feet.
+
+“Tell him!” Max managed to shout.
+
+A moment later he was standing on the roof of his high-rise. Evening, 2027, the blue streak from his jetpacks still hanging in the air. As if he had never jumped at all.
+`},
+{ t: "Awakening", x: `
+At home, the first thing Max did was open his laptop.
+
+He knew those movies by heart. "Infinity War", the snap, half the universe crumbling to dust. Then "Endgame", time travel, the big battle. He'd rewatched them ten times.
+
+Only now they weren't on the list of movies in the series.
+
+Instead there was a different movie: "Avengers: Awakening". Its release date was long past, the rating was high, the reviews were raving. As if the movie had always existed.
+
+Max pressed "Watch".
+
+The beginning was familiar: New York, the ring ship, Ebony Maw. And then, on a distant planet, everything went differently. In the middle of the fight with Thanos, Strange opened a tiny portal right at the titan's neck. And closed it.
+
+No gauntlet and no snap. Thanos just died before he even understood what had happened.
+
+Max sat in front of the screen, not breathing.
+
+What came next wasn't in any movie. Without the snap, the universe went down a new branch. A few years later, Tiamut stirred underground: an ancient giant that had been sleeping inside the planet for millions of years. The Earth began cracking from within. Thor went into the past, descended to the very core of the planet, endured heat that melted stone, and killed Tiamut before he could wake up.
+
+And Clint Barton, Hawkeye, gave his life so that Thor could make it back.
+
+Max watched the credits and thought that all of this had happened because of one sentence he'd said on a street.
+
+When the credits ended, he closed the laptop. The phone on the desk had been buzzing with notifications for a minute already. Every news site showed the same thing: a portal had opened in the central square of his city, and out of it had stepped a man in a green cloak and an iron mask.
+
+Max had broken the loop. And through the broken loop, someone had come into his world who was not on his side at all.
+
+Doctor Doom.
+
+Max put on his suit and went to introduce himself.
+`},
+{ t: "Nine Years Later", x: `
+Doom didn't feel like talking for long.
+
+He stood in the middle of the square where Max had once faced the God of Evil's army, and cars, streetlights and chunks of asphalt hung in the air around him. His green cloak moved without any wind. The iron mask showed nothing at all.
+
+“Boy from the broken branch,” said Doom. His voice sounded as if not one man were speaking, but a whole choir. “You opened a door that should never have been opened. Now I will enter every world I can reach.”
+
+He raised his hand, and the square exploded in green fire.
+
+Max fought him for half an hour, and it was the worst half hour of his life. Doom was a scientist and a sorcerer at the same time. His armor reflected the impulses, his spells punched right through the nanites, and his portals opened exactly where Max was about to dodge. At one point a portal opened right behind him, and Max was pulled inside.
+
+The abyss again. Hundreds of worlds again. This time Max knew what to do: don't fight it, just wait and see where it carries you.
+
+It carried him onto a familiar street.
+
+New York. Only the skyscrapers were taller now, the cars quieter, and the billboard screens said 2027. The same people stood in front of him, only older. Stark had gray in his hair. And Spider-Man was holding his mask in his hand, and under it was a grown man: Peter Parker was already twenty-seven.
+
+“Oh,” said Stark, and smiled. “The kid we saw nine years ago.”
+
+“Did you tell Strange?” Max asked.
+
+“I did. It worked.” Stark paused. “So I guess we owe you a whole universe. What brings you here?”
+
+Max opened his mouth to tell them about Doom.
+
+Exactly half an hour later, a green portal opened in the middle of Manhattan, and Doom stepped through after him.
+`},
+{ t: "One on One", x: `
+Doom didn't fight all of them at once.
+
+The moment Stark raised his repulsors, a portal opened under Max's feet. He fell through and landed on black stone in the middle of nowhere. No city, no Avengers. Just a gray sky with no sun, a stone arena, and Doom across from him.
+
+“The Avengers can wait,” said Doom. “You first. One on one, no witnesses.”
+
+He snapped his fingers, and the inhibitors on Max's wrists and ankles opened on their own. All four. The bracelets fell onto the stone and rolled to the edge of the arena.
+
+Max felt the power rising like a tide. A hundred percent. Then more. Then much more. His body began to grow, bones cracking, the suit rebuilding itself on the fly. A little more and he'd grow to five meters and beyond, and he wouldn't be able to stop. Like that time in the square.
+
+That was exactly what Doom wanted. For Impulse to burn himself out.
+
+Max fell to his knees, reached the nearest bracelet and slammed it onto his wrist. It was the sharp one, with spikes around the edge, the harshest of the four. The spikes dug into his skin, and the growth stopped.
+
+Three meters. Not five.
+
+Max rose to his full new height. Blue light ran across his skin like current through wires.
+
+“You wanted me to lose control,” he said, and his voice boomed across the arena. “Sorry. Not today.”
+
+He struck.
+
+It wasn't even an impulse, just a punch. But there was seventy-five percent of his power in it, enough for a whole city. Doom was thrown into the air, his armor crumpling like a tin can. He flew across the whole arena and crashed straight into his own portal.
+
+The portal spat him out onto Manhattan, at the Avengers' feet.
+`},
+{ t: "You Can Smash", x: `
+Max stepped out of the portal after him. Three meters tall, glowing, with a spiked bracelet on his arm.
+
+Doom was already getting up. His armor was sparking, but the magic around him was thickening into green mist again. One more minute and he would open a new portal and leave. To another world, a third, a tenth.
+
+Max didn't give him that minute. He jumped and wrapped his arms around Doom, pinning him to the asphalt.
+
+“I've got him!” he shouted. “Come on!”
+
+Wanda and Strange understood without a word. They stood on either side of Doom and raised their hands. Scarlet energy and golden circles wove around him from every side. They were drawing the power out of Doom: all the magic he had gathered from world after world. Slowly, thread by thread.
+
+Doom screamed. His armor glowed red-hot, and the heat went straight into Max's hands. His palms burned as if he were holding the sun. The skin on his forearms turned black and blistered. Max clenched his teeth and didn't let go.
+
+“Just a little more!” Strange shouted.
+
+The green light around Doom went out. The last thread of magic flowed into Wanda's hands. Doom went limp.
+
+Peter Parker walked over and tore off his mask in one motion. Underneath was an ordinary face. Scarred, angry, but human.
+
+Stark looked down at Doom. Then he tossed his repulsor to Bruce Banner, who was standing a little way back.
+
+“Alright, Hulk,” said Stark. “You can smash.”
+
+Banner caught the repulsor and smiled. His skin started turning green.
+
+Max let go of Doom and stepped aside. He could have ended it all himself, with one blow: right now he had the strength of ten. But this was their world and their fight. And they had earned the right to finish it.
+
+The Hulk blotted out everything, and a few seconds later Doctor Doom was done.
+`},
+{ t: "A New Home", x: `
+The worlds never separated again.
+
+The portals Doom had opened never fully closed. They grew together like a broken bone, and passages appeared between Max's universe and the Avengers' world. At first scientists used them. Then journalists. Then tourists with selfie sticks.
+
+And in Max's world there were no more Avengers movies. None at all: not on streaming, not in theaters. Why make movies about people who now live next door?
+
+Max's hands took a month to heal. Scars were left: thin pale lines from his palms to his elbows. He chose not to have them removed.
+
+One morning, Stark called.
+
+“A room opened up in our tower,” he said. “With a view of the river. And, listen, we could use a guy who catches other people's hammers. Thor still isn't over it.”
+
+Max looked out the window of his room. At the yard where he had once fixed fences. At the city he had been protecting since he was seventeen.
+
+“I'll think about it,” he said.
+
+He thought about it for exactly one day.
+
+A week later, Max moved to New York. The university switched him to remote classes. The four inhibitors were in their places, and on the chest of the black-and-blue suit there was a new patch: a big letter "A".
+
+Impulse had become an Avenger.
+`},
+{ t: "Post-Credits Scene", post: true, x: `
+Somewhere beyond time, in a castle at the edge of all realities, stood a throne. On the throne sat Loki.
+
+In front of him, in the emptiness, hung a tree: endless, glowing, made of thousands of branches that were universes. Loki held them all. It was his job, his burden, and his punishment.
+
+And suddenly one of the branches trembled.
+
+Right out of the spot where a boy in a black-and-blue suit had once said one sentence on a street, a new branch grew. Thin, bright, and completely unplanned.
+
+Loki groaned and leaned back on his throne.
+
+“Who,” he said to the emptiness. “Who did it again?..”
+
+The branch kept growing.
+`},
+];
+
+// ===== SHADE-9 AND THE ABYSS (English, ch. 1–4) =====
+BOOK_TEXTS_EN["l-shadow-abyss"] = [
+{ t: "Shade", x: `
+It all started with a hangar on the edge of the city.
+
+A rusty roof, a concrete floor, three desks, one old generator, and a twenty-six-year-old engineer named Edward Sterling. He had no money and no connections. All he had was an idea and a habit of speaking very quietly, so quietly that everyone around him went silent to hear.
+
+He hired his first employee through an ad. He lured the second away from a university that paid him peanuts. The three of them slept in the hangar, ate instant noodles and argued over blueprints until they were hoarse.
+
+“What do we call the company?” the second employee asked one day. “It needs to be something loud. Something people remember.”
+
+Sterling shook his head.
+
+“People forget loud things fast. The most important things are done in the shade.”
+
+That's how the company got its name.
+
+The first contract was small: a light alloy for the protective shields of the city's rescue workers. The alloy stopped bullets and weighed as much as plastic. A year later, Shade was making shields for half the country. Three years later: armor, batteries, engines and medicine. Five years later, the hangar was torn down, and in its place rose a tower of black glass, so tall that on cloudy days its top floors disappeared into the clouds.
+
+Sterling designed the logo himself: a dark circle with a thin bright rim. Like the sun during an eclipse.
+
+Shade built plants on the west side, where alloys were melted in giant vats. Workshops that assembled weapons nobody wrote about in the news. Testing grounds in the desert. Contracts with miners who brought rare stones up from the deep. And closed floors in the tower itself, where not even the cleaners were allowed.
+
+The city loved Shade. It gave people jobs, built hospitals and schools, sponsored holidays. Sterling almost never appeared in public. People said he worked twenty hours a day and had never once in his life raised his voice.
+
+One night, very late, a woman with a tablet knocked on his office door. Her name was Tara Okonkwo, and she ran Shade's observatory: a network of telescopes the company had bought a year earlier.
+
+“I'm sorry it's so late, Mr. Sterling. You need to see this.”
+
+On the tablet screen was a scatter of stars. An ordinary picture of the sky. Only in one place the stars looked strange, as if someone had run a finger across them and smeared them into a thin ring.
+
+“For years astronomers have been looking for a Ninth Planet beyond Neptune,” said Tara. “Something out there is pulling on the distant rocks. Something heavy. We thought it was a planet. But it isn't a planet.”
+
+Sterling looked at the ring of stars for a long time.
+
+“Then what is it?”
+
+“A black hole. A tiny one, the size of an apple. But it weighs as much as several Earths. The closest black hole to us in the universe. It's right on our doorstep.”
+
+Sterling switched off the tablet and handed it back to Tara. His face was calm, as always. Only his fingers clenched into a fist for a second.
+
+“Don't tell anyone about this,” he said. “Not a single living soul.”
+
+And in the morning he called a board meeting and said just one sentence:
+
+“We need a ship.”
+
+Three years later, the ship was ready. They named it the Horizon.
+`},
+{ t: "The Crew", x: `
+Neil Hawkins was thirty-eight, and he had logged more time in space than anyone else in the country. Two flights to the station, one nine-hour spacewalk, and a reputation as the man who cracks jokes when everyone else is scared.
+
+He had no family. His apartment stood empty, and the flowers on the windowsill had dried out two years ago. He had spent most of his life on bases, in simulators and in cramped cockpits where the nearest person was exactly half a meter away.
+
+When Shade called him, at first he thought it was a prank.
+
+Sterling met him personally, on the top floor of the black tower. He shook his hand, poured him some water and put a folder on the desk with one word on the cover: HORIZON.
+
+“You'll be the first human being to see a black hole with his own eyes,” he said. “As mission commander. If you agree.”
+
+Neil flipped through the folder. Ship diagrams, the route, calculations. Eleven months one way on Shade's new engine. A month of research. Eleven months back.
+
+“And will I come back?” he asked.
+
+Sterling smiled.
+
+“We've calculated everything.”
+
+Neil agreed that same evening. All his life he had wanted to fly farther than anyone. Farther than anyone before him.
+
+The crew was put together from seven people.
+
+Oscar Mendez, flight engineer. Short, gray at the temples, with a notebook where he wrote down everything: pressure, temperature, every bolt. Oscar didn't trust computers and checked everything by hand.
+
+Lily Chen, pilot. She was twenty-six, and on the simulator she beat Neil on the very first day. She laughed so loudly that people at the next tables in the cafeteria turned around.
+
+Tara Okonkwo, astrophysicist. The one who had found the black hole. She fought to get herself on the flight, even though she had never been to space before.
+
+Ben Walker, doctor. He dragged his guitar everywhere and knew only four songs, but he sang them so well that the whole crew sang along.
+
+Yuri Belov, comms officer. Quiet, golden hands, could fix a radio out of a tin can.
+
+Sam Hardy, technician. The crew's main joker. He was the one who slipped a note into Neil's helmet: "Don't forget to come back, Commander."
+
+Ina Sato, chemist. The quietest one. She rarely spoke, but when she did, everyone went silent.
+
+For six months they trained together. They spun in the centrifuge until their vision went dark. They spent weeks at a time in a sealed module, learning to fix the engine in the dark and to split one tube of toothpaste eight ways. They argued, made up, argued again. And then, without anyone noticing, they became a family.
+
+One evening Lily brought a little stuffed whale into the module: blue, with an embroidered smile.
+
+“This is our mascot,” she said, and hung the whale over the control panel. “It'll keep an eye on us.”
+
+“Whales don't fly,” Sam pointed out.
+
+“This one will fly farther than any whale in the world,” Lily answered.
+
+Neil looked at the whale, then at his crew, and for the first time in many years he felt like he had a home. Even if it was a home that weighed a hundred and twenty tons and fit inside one metal tube.
+
+The whale never flew. A week before launch, at the last cargo check, it turned out Lily's personal items were over the limit by exactly a hundred and twenty grams. Exactly one stuffed whale.
+
+“Let it wait for us at home,” Neil said, and took the whale. “When we get back, we'll hang it over the panel on the next flight.”
+
+That evening he put the whale on the windowsill of his empty apartment, next to the dried-up flowers. The whale smiled its embroidered smile and looked out at the city.
+`},
+{ t: "Launch", x: `
+The Horizon launched from Shade's spaceport in the desert at dawn.
+
+The ground shook so hard that the lenses rattled in the spectators' glasses. A pillar of fire rose over the sand, and eight minutes later the ship was in orbit. A day after that, it fired its main engine and left for a place no one had ever flown before.
+
+The first weeks felt like a party. Earth got smaller and smaller in the porthole: first a ball, then a coin, then just a bright dot that Tara found for everyone on the screen every morning. Ben sang his four songs. Lily taught Yuri to play cards and lost every time. Sam drew a whale on a sheet of paper and stuck it over the control panel: “If they wouldn't let the real one come, the drawn one gets to fly.”
+
+Then the party ended and the routine began.
+
+Month after month, the same thing: checks, reports, workouts, sleep. Contact with Earth got slower and slower. First the answers took minutes, then hours. Past Saturn, Neil sent a message in the morning and got the reply only in the evening.
+
+In the seventh month, Oscar came to Neil with his notebook and a strange look on his face.
+
+“Commander, got a minute?”
+
+They squeezed into the very nose of the ship: a narrow compartment stuffed with instruments and sensors. Oscar knocked on the wall with his knuckles.
+
+“Hear that?”
+
+Neil listened. The sound was dull and thin. Like knocking on a tin can.
+
+“I compared it to the blueprints,” Oscar said, opening his notebook. “Not the ones in our computer, the first ones. I copied them by hand back on Earth, when they were still building the ship. Right here, along the nose, there should be reinforcing ribs. Eight of them. And there aren't any. Not one.”
+
+“Maybe they changed the design? Found a stronger material?”
+
+“Maybe.” Oscar snapped the notebook shut. “Only, near the black hole, gravity is going to pull on the nose harder than on the stern. That's the first thing to break. If I were the designers, I'd have added ribs, not taken them out.”
+
+Neil sent a report to Earth. A detailed one, with all of Oscar's numbers.
+
+The answer came eleven hours later.
+
+On Earth, in the office on the top floor of the black tower, Edward Sterling read the report to the end. Slowly, line by line. Then he closed the folder and turned to his assistant.
+
+“Reply that the changes were approved. The structure has been calculated with a safety margin. They should continue the mission.”
+
+“And if the engineer insists?”
+
+“Reply with the same thing again.”
+
+On the Horizon, Oscar read the answer and was silent for a long time.
+
+“Well?” asked Neil.
+
+“‘Calculated with a safety margin,’” Oscar repeated. “Sounds nice.”
+
+“Listen, they put billions into us,” said Neil. “Why would they want to lose us? If something were wrong, they'd have turned us around.”
+
+Oscar nodded. But from that day on, every morning he crawled into the nose of the ship and knocked on the wall. And every morning the sound was just as thin.
+`},
+{ t: "Horizon", x: `
+In the eleventh month, Tara woke everyone up in the middle of the night.
+
+“Get up. It's here.”
+
+Eight people crammed into the cockpit and stared at the main screen.
+
+At first nobody saw anything. Stars, blackness, more stars. And then Tara zoomed in, and everyone gasped.
+
+In the middle of the blackness hung a ring. Thin, glowing, as if someone had rolled a scrap of the starry sky into a little circle. The stars behind it didn't disappear: they stretched and curved around the empty spot in the center. And in the very center there was nothing. Nothing at all. Blacker than space itself.
+
+“It's so small,” Lily whispered.
+
+“And so heavy,” said Tara. Her voice was shaking. Tears ran down her cheeks, and she didn't even try to wipe them away. “I spent twelve years looking for it through telescopes. And now it's just… here.”
+
+For the first week they circled far away, in a safe orbit. They filmed, measured, launched probes. The data came in such a flood that Tara barely slept. Ben forced her to go to her cabin, and an hour later she was back in the cockpit.
+
+On the eighth day, a new order came from Earth.
+
+"To complete the program, reduce distance to the object to three hundred kilometers. Take measurements for six hours. Execute."
+
+“Three hundred?” Oscar went pale. “We can feel the hull creaking at a thousand.”
+
+“It's an order,” Yuri said quietly.
+
+Neil read the message three times. Then he looked at his crew.
+
+“We go in slow,” he decided. “If anything at all goes wrong, we pull out right away. Forget the order.”
+
+They began their approach.
+
+At six hundred kilometers, the main antenna started acting up: gravity was pulling on it, knocking it out of alignment. Without the antenna, there was no contact with Earth and no data.
+
+“I'll go out,” said Neil. “Tighten it up and come back. Twenty minutes.”
+
+“I'll go,” Sam jumped in.
+
+“The commander goes first,” Neil smiled. “Better me getting carried off than you. Who'd slip me notes then?”
+
+He put on his spacesuit, checked his tether and went out into open space.
+
+Outside, it was quiet. So quiet that Neil could hear his own heart. The ring of stars hung very close, enormous, filling half the sky. He clipped himself to the antenna and got to work.
+
+“Commander,” Oscar's voice came through his headset. “The nose. Load sensors are in the red.”
+
+“We're leaving,” said Neil. “Lily, turn us around. I'll finish outside.”
+
+“Turning…”
+
+And then the ship groaned.
+
+Neil felt it even through his suit: a long, low sound, as if a huge beast had woken up inside the metal. He turned around and saw a crack running along the Horizon's nose. A thin silver line. Then a second one. Then a third.
+
+“Sealing the bulkheads!” Oscar shouted. “Everyone to the stern! Now!”
+
+“Oscar, get out of there!”
+
+“I told you…” Oscar's voice broke. “I told you about the nose…”
+
+The ship's nose tore off without a sound.
+
+There is no sound in space. Neil watched the metal open up like paper, watched debris, instruments and pages from Oscar's notebook fly out of the breach. Without the nose, the hull lost its strength, and the cracks ran on: to the cockpit, to the cabins, to the stern. Neil watched the lights go out in the compartments, one after another. The air was gone in a few seconds. He screamed names into the radio, Lily, Tara, Ben, Yuri, Sam, Ina, Oscar, and nobody answered.
+
+A sheet of paper with a drawn whale floated past his helmet. The same one Sam had stuck over the control panel.
+
+Neil reached for it. And at that moment the tether snapped.
+
+He was pulled forward. Gently, almost tenderly, and then harder and harder. Pieces of the ship flew alongside him, overtook him, disappeared into the black center of the ring. Neil watched the ring of stars grow bigger and bigger, until it filled everything.
+
+Then there was nothing.
+`},
+];
+
+// ===== SHADE-9 AND THE ABYSS (English, ch. 5–8) =====
+BOOK_TEXTS_EN["l-shadow-abyss"].push(
+{ t: "Abyss", x: `
+The fall didn't end.
+
+Neil didn't know how long it lasted. A second. A year. Maybe a thousand years. Time inside had become thick, like tar, and it tore into pieces. He saw his hand, and the hand stretched out for kilometers, then shrank into a dot.
+
+Then came the pain.
+
+Not like a burn or a broken bone. The pain was everywhere at once, as if he were being taken apart, every cell, every thought, every memory, and put back together in a different order. He screamed, but there was no scream. There was nothing here. Not even darkness. Darkness is at least something, and here there was an emptiness where even the word "emptiness" disappeared.
+
+And then the emptiness looked at him.
+
+Neil was never able to explain what it was. Not eyes, not a face, not a voice. Just the feeling of being looked at from the inside. That the emptiness had noticed him. Studied him. And decided not to let him go, but to keep him for itself.
+
+It went into him. Or he went into it. There was no difference anymore.
+
+When Neil opened his eyes, there were stars around him again.
+
+He was hanging in open space. His spacesuit was gone. No helmet, no gloves, no boots: the black hole had taken everything that wasn't him. He should have died in seconds, from the cold, from the vacuum, from having nothing to breathe. But he didn't die. He didn't need a spacesuit anymore. He wasn't breathing at all. And he wasn't cold.
+
+Neil raised his hands to his face and didn't recognize them.
+
+His skin had turned dark and gray, like ash after a campfire. Thin cracks ran across it, and light seeped from the cracks: pale, violet, like the glow of that ring of stars. He ran his fingers over his face and felt bare bone where his cheeks and lips had been. His lower jaw stuck out like a skull's.
+
+He wanted to scream. The sound that came out of his mouth was like wind howling through an empty pipe.
+
+The black hole hung behind him, far away, many thousands of kilometers off. Neil didn't remember how he had gotten so far away. As if it had swallowed him, chewed him up and spat him back out. Only different.
+
+Nearby, the wreckage of the Horizon slowly drifted.
+
+Neil flew among the pieces. He suddenly realized he could move just by wanting to, and the emptiness itself carried him forward. A piece of hull plating with the ship's number. An open locker. Ben's guitar with broken strings. Pages covered in Oscar's tiny handwriting.
+
+He found all of them. All seven.
+
+Neil hung beside them for a long time and couldn't move. Then he gathered them together, covered them with what was left of the big solar sail, and let them go. Slowly, gently. The way you push a boat out to sea.
+
+“I'm sorry,” he said in a hollow, unfamiliar voice. “I should have brought you back.”
+
+Then he saw a jagged piece of debris flying straight at him and threw up his hand to shield himself.
+
+A dark clot burst out of his palm: a black core in a violet halo. It punched right through the debris like paper and kept going, off into the black.
+
+Neil stared at his hand. Then he slowly raised both hands and concentrated.
+
+Space crackled between his palms. Sparks and dark rays pulled together into one point, and a small black vortex flared. The debris around him trembled and crept toward it, faster and faster, spiraling, until the vortex sucked it in and ground it to dust. Then it collapsed with a flash.
+
+The emptiness was inside him now. And it obeyed.
+
+Neil looked toward a spot where, among millions of stars, one burned a little brighter than the rest. A bluish dot. Earth.
+
+He didn't know what was waiting for him there. He didn't know what he had become or whether they would take him back. He knew only one thing: he had to go home.
+
+And he flew.
+
+The trip home took almost a year.
+`},
+{ t: "The Squad", x: `
+On Earth, the Horizon's crew was buried a month after contact was lost.
+
+There was no one to bury, so eight empty coffins draped with flags were set up in the square in front of the black tower. Half the city came. People brought flowers and candles, cried, hugged. Sterling stepped up to the microphone, for the first time in many years, and gave a short speech about how they had been heroes and how their flight had not been in vain.
+
+He spoke very quietly. The square went silent to hear him.
+
+The cause of the accident was announced as a meteorite. A one-in-a-million chance. Nobody asked any questions.
+
+Four months went by.
+
+One night, an alarm went off at Shade's observatory. The astronomer on duty rubbed his eyes, looked at the screen and immediately dialed the number he'd been given for absolute emergencies.
+
+Twenty minutes later, Sterling was already standing behind him.
+
+“Something is moving away from the black hole,” said the astronomer. “Straight toward us. Slowly, but heading right for Earth. And that's not all. Listen.”
+
+He pressed a button. Crackling came out of the speakers, hissing, and through the hissing, scraps of a voice. Hollow, distorted, as if a man were speaking from the bottom of a deep well.
+
+"…Horizon… unit one… coming back…"
+
+The astronomer went pale.
+
+“That's the Horizon's frequency. That's the commander's voice. Hawkins… Is he alive?”
+
+Sterling listened to the hissing for a long time. His face didn't change.
+
+“Hawkins is dead,” he said at last. “That isn't him. It's something that crawled out of the black hole and is wearing his voice. Assign the object a code name.”
+
+“What name?”
+
+Sterling looked at the screen, where a tiny dot was blinking in the blackness.
+
+“Abyss.”
+
+The next morning, a new project was launched in Shade's tower. It was called "The Shades".
+
+Lucas Grey was twenty-four. For twelve of those years, Shade had been paying for him.
+
+When he was twelve, his parents died in a crash on the highway, and Lucas was left alone. No grandparents, no uncles, no aunts. Just a social worker with tired eyes and an orphanage on the edge of town. And a month later, a letter came: Shade would pay for his education at the best school in the city. Then college. Then a job in the company's security service.
+
+Lucas had never seen Sterling in person. But he was sure he owed Shade everything. So when a notice went around the security service, "Volunteers wanted for a secret project, dangerous, details after signing", he signed first.
+
+Actually, last. Ninth.
+
+They were gathered in the gym on the second underground level of the tower. Nine people in identical gray uniforms. Each one was given a number.
+
+Shade-1: Sergeant Grant West, the squad leader. Stern, with a scar through one eyebrow, never smiled, and knew every one of them by name.
+
+Shade-2 and Shade-3: the Cole brothers, twins. Nobody could tell them apart except themselves, and they shamelessly took advantage of it.
+
+Shade-4: Mason Reed. Lucas's best friend since the Shade school. Talked nonstop, told jokes, and could fall asleep on any surface in thirty seconds.
+
+Shade-5: Douglas, a big guy who lifted cars by the bumper on a bet.
+
+Shade-6: Nora, a former firefighter who had pulled twenty-two people out of fires.
+
+Shade-7: Ava Santos, sniper. Quiet, observant, always carried a chess knight in her pocket.
+
+Shade-8: Riley. He talked so rarely that Mason took bets on how many words he'd say in a week.
+
+And Shade-9: Lucas Grey.
+
+For four months they were driven so hard that by evening they couldn't lift their arms. Obstacle courses, shooting, running in gas masks, night drills. Sergeant West yelled at them, and then brought hot tea to the barracks himself.
+
+In the evenings, Ava taught Lucas to play chess. He lost every single game to her.
+
+“You're in too much of a hurry,” she would say, taking his queen off the board. “The knight doesn't move straight. It jumps from where you don't expect it. Learn from the knight.”
+
+Once during a drill, Mason's safety line snapped six meters up. Lucas jumped before he could think. He caught his friend by the jacket, slammed his shoulder into the wall, but didn't let go.
+
+“Psycho,” Mason said when they were pulled down. “You could've killed yourself.”
+
+“We're a team,” Lucas answered, holding his shoulder. “You don't leave your own behind.”
+
+That was the first time anyone in the squad could remember Sergeant West smiling.
+`},
+{ t: "Eight of Nine", x: `
+The procedure was scheduled for Monday.
+
+On Sunday evening, the squad sat in the barracks pretending everything was normal. Mason told jokes, the Cole brothers argued about which of them was seven minutes older, Douglas did knuckle push-ups. Ava set up the chess board, but nobody played.
+
+“They did explain it to us,” said Nora. “The serum's been tested. The risk is minimal.”
+
+“And ‘minimal’ means how much?” Mason asked.
+
+No one answered.
+
+That night, Lucas didn't sleep. He lay on his bunk staring at the ceiling. In the next row, Riley wasn't sleeping either, and suddenly he said, looking into the dark:
+
+“Just in case, it's been an honor.”
+
+Mason later swore that was the longest sentence Riley had said in four months.
+
+In the morning they were taken to a closed floor. White walls, white light, the smell of medicine. In the middle of the room stood nine capsules: transparent, like giant glass cocoons. Wires and tubes ran to each one.
+
+A scientist in a white coat explained it once more: the serum would change the way the body interacts with light. It was based on data the Horizon's probes had managed to send before it was destroyed. Near a black hole, light bends around emptiness. If everything worked, light would bend around them too.
+
+“We'll turn you into shades,” the scientist said. “Real ones.”
+
+They went in by number. Sergeant West first. Before lying down in the capsule, he turned to the squad:
+
+“See you on the other side, soldiers.”
+
+The capsule closed. A dark, almost black liquid flowed through the tubes.
+
+Lucas stood at the end of the line and saw everything.
+
+He saw the pulse line on the sergeant's monitor jumping, fast, faster, faster still. Saw it suddenly stretch into a flat line. Saw the scientists rush to the capsule, someone shout "clear," and nothing happen.
+
+He wanted to stop all of it. He wanted to scream. But the line kept moving, the capsules closed one after another, and the scientists said: “Continue. The first subject's body reacted atypically. Continue.”
+
+Shade-2. Flat line.
+
+Shade-3. Flat line.
+
+Mason winked at him as he lay down in the capsule. “Don't get bored, psycho.” Two minutes later, his line went flat.
+
+Douglas. Nora. Riley.
+
+Ava lay down in the seventh capsule and, before the lid closed, pressed the chess knight into Lucas's palm.
+
+“Hold this,” she said. “Give it back later.”
+
+Her line went flat three minutes later.
+
+The eighth capsule. Flat line.
+
+“Shade-9,” said the scientist. His voice was hoarse. “Your turn.”
+
+Lucas could have refused. Nobody would have blamed him. But if he refused, all of it had been for nothing. Eight people had died for nothing. He squeezed the chess knight in his fist and lay down in the capsule.
+
+The lid closed.
+
+The serum was cold. The cold ran through his veins, from his arms to his heart, from his heart to his head. He stopped feeling his fingers, then his arms, then his whole body. He felt like he was dissolving. Like he was gone.
+
+“There's a pulse!” someone shouted outside. “There's a pulse, but… where is he? The capsule's empty!”
+
+The scientists crowded around. There was no one inside the capsule. Only tubes and wires disappearing into emptiness.
+
+And then Lucas took a breath, sharp, with a sob, and appeared again. Wet, shaking, white as chalk. He was clutching the chess knight in his fist.
+
+Out of nine, one survived.
+
+They kept him in the medical wing for two weeks. He barely ate or spoke. Once he asked for permission to go to the squad's funeral.
+
+“The families will be notified,” they told him. “The funeral will be private.”
+
+The bodies of the eight weren't taken to the morgue. From the window of the medical wing, Lucas watched eight covered gurneys being rolled into a freight elevator. The elevator went down and stopped at the seventh underground level, a place where not even the doctors had clearance.
+
+On the third day, Sterling himself came to see him.
+
+He sat down by the bed, was silent for a long time, then said in his quiet voice:
+
+“I'm very sorry, Nine. They were the best. But they didn't die for nothing. You are what all of this was for. You're the last Shade.”
+
+Lucas looked out the window.
+
+“Shade-9,” he said. “Let it stay that way. Number nine. So I remember there were eight before me.”
+`},
+{ t: "The Hunter in the Shadows", x: `
+For the first few weeks, the invisibility came on its own. Without asking.
+
+Lucas got scared, angry, nervous, and vanished. Once he dissolved right in the cafeteria holding a tray, and the cook dropped a pot with a shriek when the tray floated through the air by itself. Another time he woke up and couldn't see his own legs under the blanket.
+
+Shade's scientists stuck a dozen sensors on him and ran him through tests every day.
+
+Little by little, he learned. To disappear when he wanted and appear when he needed to. First for five seconds, then for a minute, then for ten. It turned out that while he was invisible, he couldn't be seen by people, by cameras or by thermal imaging. Light flowed around him the way water flows around a stone.
+
+But there was something else to the invisibility.
+
+During training against combat robots, Lucas vanished, circled behind one and hit it. An ordinary punch, the kind he'd thrown at a punching bag hundreds of times. A half-ton robot flew into the wall and folded in half.
+
+The engineers spent three hours going over the recordings afterward. The first strike out of invisibility turned out to be three times stronger than normal. And blows from behind, before the enemy understood where the attack was coming from, hurt twice as much again.
+
+“You're a born hunter,” said the instructor, looking at the flattened robot. “A hunter in the shadows.”
+
+Lucas trained twelve hours a day. He had nothing else to do. The barracks where the squad had slept stood empty, and he couldn't bring himself to go in. At night he sat in his room, set up the chess board and played against himself. He always moved the black knight first.
+
+Three months later, he was given his first assignment.
+
+Arms dealers had holed up at the port: twelve men, automatic rifles, a hostage, a warehouse guard. The police had been standing at the gates for six hours and couldn't get close.
+
+Lucas walked in through the main gate. No one saw him.
+
+Four minutes later, twelve men were lying on the concrete with their hands tied, and the guard was sitting in an ambulance with no idea who had untied him. The warehouse cameras recorded nothing. Only rifles flying out of hands one after another and dropping to the floor on their own.
+
+Then there was a gang robbing armored cars. Then a fire in an apartment building, where Lucas carried four kids out of the smoke while the firefighters were still setting up their ladder. Then a judge's kidnapped daughter.
+
+Rumors spread through the city. Blurry videos appeared online of criminals falling down when there was no one near them. Some people called it "the ghost." Others called it "the invisible hunter." Lucas himself just called it work.
+
+He did what he was good at, and he saved people. Which meant Shade was saving people. That's what he thought. And that was enough for him.
+
+One evening he was called up to the top floor of the tower.
+
+Sterling was standing at the huge window, looking at the city at night. He didn't turn around when Lucas came in.
+
+“Do you know what happened to the Horizon?”
+
+“A meteorite,” said Lucas. “It was on every channel.”
+
+“Not quite.”
+
+Sterling went to his desk and turned on the screen. There was a photograph on it, grainy, taken through Shade's most powerful telescope. A dark figure in the blackness of space. An ordinary human silhouette, the height of a man. Except that thin cracks of violet light ran all over its body.
+
+“The crew died at the black hole,” said Sterling. “All eight of them. And four months later, this flew out of it. It's been flying toward Earth for almost a year, and it speaks in our commander's voice. We've named it the Abyss.”
+
+Lucas looked at the figure on the screen, and a chill ran down his spine.
+
+“What does it want?”
+
+“I don't know. But whatever crawls out of a black hole can't be human. It will say it's Neil Hawkins. It will tell you anything at all to make you lower your guard. Don't believe it.”
+
+Sterling turned to Lucas, and for the first time ever, something like worry sounded in his voice.
+
+“Your squad died so that we would have a weapon against this. Do you understand?”
+
+Lucas squeezed the chess knight in his pocket.
+
+“I understand,” he said. “I'll stop it.”
+
+Two weeks later, Shade's telescopes recorded the object called Abyss entering Earth's atmosphere.
+`}
+);
+
+// ===== SHADE-9 AND THE ABYSS (English, ch. 9–11) =====
+BOOK_TEXTS_EN["l-shadow-abyss"].push(
+{ t: "The Return", x: `
+That night, a shooting star crossed the sky over the city.
+
+Thousands of people saw it. It drew a violet streak across the sky, too slow for a meteorite, too straight for a plane, and fell into the bay beyond the old port. A column of steam rose over the water. In the morning, the news said it had been a piece of a satellite, and everyone forgot about it.
+
+At dawn, a man walked out of the water onto the empty beach.
+
+Or rather, something that looked like a man. Average height, average build, only with ash-colored skin crossed by cracks of violet light. Instead of the lower half of his face, bare bone.
+
+A jogger in earbuds saw him from the other end of the beach, stopped, then turned around and ran faster than he had ever run in his life.
+
+Neil watched him go. Then he bent over a puddle left by the tide and, for the first time, saw his whole face.
+
+He stood over that puddle for a long time.
+
+During the day he hid in an abandoned warehouse by the old pier. Through the cracks in the walls came the noise of the city: cars, voices, music from a café. A year ago he had dreamed of hearing all of it again. Now every sound cut like glass.
+
+In the evening, a screen lit up on the wall of the bar across the street. The news was on. Neil moved closer to a crack.
+
+On the screen was the square in front of the black tower. On the wall of the tower, a memorial plaque with eight names. His name was there too. Next to Lily, Tara, Oscar…
+
+"A year ago, the crew of the Horizon was killed in a collision with a meteorite," the anchor was saying. "Today, the Shade corporation opened a science center in their honor…"
+
+A meteorite.
+
+Neil remembered the crack running along the nose of the ship. The thin sound Oscar's knuckles made on the wall every morning. “I told you about the nose…”
+
+There had been no meteorite.
+
+He waited for dark. But he didn't go to the tower right away.
+
+First he went up to his home. Not by the stairs, but up the wall, to the sixth floor, to the window of his old apartment. The apartment was dark and empty. Apparently Shade had never found anyone to give it to.
+
+On the windowsill, next to the dried-up flowers, sat a little blue whale with an embroidered smile. Waiting. For almost two years.
+
+Neil looked at it through the glass for a long time. Let it wait for us at home, he had said back then. Us.
+
+He didn't open the window. A monster with ash-gray skin had no business in this apartment.
+
+“Wait a little longer,” he said quietly.
+
+And he went to the tower.
+
+The city was different at night. Neil moved along rooftops and alleys, and the emptiness carried him over the streets the way the wind carries ash. Below, windows were lit, cars drove by, people laughed on patios. No one looked up.
+
+Shade's tower rose over the city like a black needle. At the top, the windows of the top floor were lit.
+
+Neil didn't go to the main entrance. Back in training before the flight, they had been shown the layout of the tower, and he remembered: service tunnels ran underneath it, and the fourth underground level held the archive of every project the company had ever run.
+
+He tore the tunnel grate apart with his hands. He crushed the steel door of the archive with a small black vortex, and the lock folded inward with a crunch, like an empty can.
+
+Inside stood endless rows of shelves with folders. Shade didn't trust computers with the most important things. Neil walked along the rows until he saw a familiar word on a spine.
+
+HORIZON.
+
+He pulled out the folder with shaking hands.
+
+Blueprints. The first version of the ship, with eight reinforcing ribs along the nose. Exactly like the ones in Oscar's notebook. And a second version, without them. A sheet with a short order was clipped to it.
+
+"Remove reinforcement of the nose section. Crew return is not planned. Reason: classified. E. Sterling."
+
+Neil read those lines a dozen times. The letters swam before his eyes.
+
+Underneath was another sheet: a copy of that order to approach the black hole to three hundred kilometers. With the same signature.
+
+They hadn't been lost. They had been killed. Calmly, in advance, with a signature and a stamp. Seven people who had believed in Shade. Lily and her whale. Tara, who had cried with happiness at the sight of the ring of stars. Oscar, who had figured it all out, and whom nobody had listened to.
+
+On the next shelf stood a thinner folder. On its spine was written: "Object: Abyss". Inside was a grainy photograph of a dark figure in space.
+
+His photograph.
+
+“Abyss,” Neil said in his hollow voice, and almost laughed. “So that's what you named me.”
+
+A red lamp started blinking over the archive door. Somewhere above, a siren began to wail.
+
+Neil didn't hide. He dropped the folder on the floor and headed for the stairs. Up. Toward the light on the top floor.
+
+At that same moment, in a room on the forty-second floor, Lucas Grey's phone rang.
+
+“Object Abyss is in the tower,” said the voice of the duty officer. “Fourth underground level, the archive. It's coming up.”
+`},
+{ t: "The Fight", x: `
+Lucas ran down the service stairs, jumping whole flights.
+
+On the second underground level, emergency lights flooded the corridors with red. Somewhere below, something was booming, dull and heavy, as if someone were punching through walls. Lab techs in white coats were running toward him.
+
+“That way!” one shouted, pointing back. “It's coming this way!”
+
+Lucas pressed himself against the wall, breathed out and vanished.
+
+He saw the Abyss at the end of the corridor. A figure the height of an ordinary man, walking slowly, not looking back. The violet cracks on its body pulsed with every step. Lucas crept up behind it.
+
+Strange: up close it looked even more human than in the photograph. Ordinary height, ordinary shoulders. Only skin like ash and light in the cracks.
+
+Lucas pushed the thought away and struck.
+
+A strike out of invisibility, three times stronger than normal. The Abyss flew forward, smashed backward through a set of double doors and hit the wall of a lab. Plaster rained down. Glass rang.
+
+The Abyss got up. Slowly turned its head toward where Lucas had just been standing. There was no one there.
+
+“Who's there?” it rumbled.
+
+It raised a hand, and a dark projectile burst from its palm. It punched straight through the wall, then the next one, then another. Lucas jumped aside, and the second projectile passed a centimeter from his shoulder.
+
+He circled around the Abyss and hit again, from behind, in the spine. The Abyss swayed but stayed on its feet. A third blow. A fourth. Lucas moved fast and silently, coming in from a new side every time.
+
+You're in too much of a hurry, Ava would have said. But right now, speed was all he had.
+
+And then the Abyss stopped swinging.
+
+It slowly raised its palms, and space crackled between them. A small black vortex flared. Dust, scraps of paper, shards of glass, everything in the lab tore loose and began to spiral.
+
+And in that cloud of dust, Lucas suddenly saw himself. Or rather, an emptiness in his shape. A human silhouette that the dust flowed around on every side.
+
+The Abyss saw it too.
+
+The blow was so strong that Lucas flew across the whole lab, smashed through a partition and crashed onto the floor of the next room. His invisibility dropped. His ears were ringing, and he tasted blood.
+
+The Abyss stepped over the wreckage of the partition.
+
+“A man,” it said, looking Lucas over. “An ordinary man. Did they remake you too?”
+
+Lucas got up on one knee.
+
+“You're a killer,” he gasped. “Neil Hawkins died at the black hole. And you're whatever crawled out of it, wearing his voice.”
+
+The Abyss laughed. The sound was terrible, like wind howling through an empty pipe.
+
+“Did Sterling tell you that?”
+
+He stepped closer.
+
+“Go down to the fourth underground level, to the archive. Find the folder marked Horizon. There's an order in it: ‘Crew return is not planned.’ His signature. They left the ship's nose unreinforced on purpose. They drove us into the black hole on purpose. My people weren't killed by a meteorite. They were killed by Shade.”
+
+Lucas looked up at him. For a moment, just for a moment, he hesitated.
+
+At that instant, four guards with guns ran into the room.
+
+“Freeze! Hands up!”
+
+The Abyss slowly turned toward them. The cracks on his body flared brighter. A dark projectile began to gather in his palm, the kind that went through walls.
+
+Lucas didn't think. He just jumped.
+
+The projectile grazed his shoulder, tearing through his uniform and his skin, and went into the ceiling. Lucas knocked the nearest guard off his feet and yelled at the others:
+
+“Back! Everybody back, this isn't your fight!”
+
+The guards retreated toward the exit. Lucas got up, clutching his shoulder, and stood between them and the Abyss.
+
+You don't leave your own behind.
+
+He vanished again.
+
+They fought across the whole level. In corridors, on stairs, in empty labs. The Abyss blasted through walls with his projectiles; Lucas appeared and disappeared, struck and slipped away. Both of them were bleeding. The cracks of light on the Abyss flickered weaker and weaker, and red spots swam before Lucas's eyes.
+
+The last room turned out to be the gym on the second underground level. The very one where his squad had been drilled for four months. Where Mason had told jokes, Douglas had lifted weights, and Sergeant West had brought hot tea in the evenings.
+
+The Abyss stood in the middle of the gym and raised both hands over his head.
+
+This time the vortex was enormous.
+
+The space above the gym cracked like glass. A singularity flared, a glowing disk spun around it, and everything in the gym was pulled toward the center. Machines, benches, mats, light fixtures. The floor began to crack. People screamed in the doorway: several scientists hadn't made it out in time, and now they were being dragged across the floor toward the roaring black hole.
+
+Lucas rushed to them. He grabbed the nearest one by the coat and shoved him out into the corridor. Went back for the second. For the third. He was being pulled toward the vortex himself now, his feet sliding on the concrete.
+
+The knight doesn't move straight. It jumps from where you don't expect it.
+
+A steel beam, torn loose by the vortex, was falling from the ceiling. Lucas jumped onto it, pushed off and soared over the gym, higher than the Abyss could have expected. He vanished in midair. And came down on him from above and behind, putting everything he had left into the blow.
+
+The Abyss crashed to his knees.
+
+The vortex trembled. The glowing disk faltered, rippled, and collapsed with a flash so bright that for a second it was light as day.
+
+And then the floor gave way beneath them.
+`},
+{ t: "Each to His Own Side", x: `
+The underground levels of Shade's tower folded one onto another like cardboard boxes.
+
+The second level fell onto the third, the third onto the fourth. The dust was so thick you couldn't see your own outstretched hand. Somewhere sirens wailed, somewhere people screamed, somewhere pipes burst with a roar.
+
+The tower itself held. It had been built of Shade's alloys, and it only shuddered, as if from a strong gust of wind. The windows on the upper floors rattled but didn't break.
+
+Lucas came to under the rubble. His left leg was pinned under a slab, and his shoulder was on fire. Twisted rebar hung above him, and beyond it something was moving in the dust.
+
+The Abyss was climbing out of the wreckage, slowly, heavily. The cracks of light on his body were barely smoldering, like embers in a dying campfire. He saw Lucas stuck under the slab and stopped.
+
+Lucas tried to vanish. It didn't work. He didn't even have the strength for that.
+
+The Abyss stepped toward him. Raised his hand.
+
+And pressed his palm against the slab. The emptiness shuddered, the slab creaked and shifted aside just enough for Lucas to pull his leg free.
+
+“Why?” Lucas rasped.
+
+The Abyss looked at him for a long time.
+
+“You jumped in front of my shot for guards you don't even know,” he said. “My crew was like that too. You're not my enemy, Shade. You're just like me. They made you out of someone else's death too.”
+
+He straightened up. Above them, a crack gaped in the concrete, and through it the night sky was visible.
+
+“Tell Sterling,” said the Abyss. “I'll come for everyone who signed that order. Not today. But I'll come.”
+
+“I'll find you,” Lucas answered.
+
+“I know.”
+
+The emptiness lifted the Abyss, and he rose up through the crack, into the night. A minute later he was gone.
+
+Lucas lay on the rubble, looking at the sky. Then he got up, holding onto the wall, and went toward the screams.
+
+Until morning, he pulled people out from under the rubble. Lab techs, guards, night cleaners. Without invisibility, without strength, just with his hands. Forty-three people. When the rescuers with dogs reached the underground levels, he was sitting at the tunnel entrance, gray with dust, unable to unclench his fingers.
+
+People said later that out of all the underground levels, only one survived. The seventh. Its door didn't even have a scratch.
+
+In the morning, Sterling came down to the ruins himself.
+
+He stopped next to Lucas, brushed the dust off the sleeve of his expensive jacket and was silent for a long time.
+
+“You saved forty-three people,” he said at last. “Your squad would have been proud of you.”
+
+Lucas raised his eyes to him.
+
+“He told me about the order. ‘Crew return is not planned.’ With your signature.”
+
+Sterling didn't blink.
+
+“A lie,” he said calmly. “He told you what he wanted you to hear. That's his weapon, Nine. Not projectiles, not black holes. Doubt. He wants you to stop trusting us. He wants you to be alone.”
+
+Lucas said nothing.
+
+He thought about the orphanage on the edge of town and the letter that had come a month later. About school, about college, about the job. About the gym on the second underground level that no longer existed. About eight people who had lain down in those capsules because they believed they were doing the right thing.
+
+If Shade was lying, then they had died for nothing. And that couldn't be. He couldn't believe that.
+
+“Shade pulled me out when I was nobody,” he said at last. “I'm with you.”
+
+Sterling nodded.
+
+“He'll be back. Find him before he finds us.”
+
+“I'll find him,” said Lucas. “But not from here. As long as I'm in the tower, he'll always know where to look for me. I'll go out into the city and hunt on my own.”
+
+That same day, Shade-9 left the Shade tower. Nobody saw him go.
+
+Late that evening, a man was sitting on the roof of an old apartment block on the other side of the city. His shoulder was bandaged, his leg hurt, and in his palm lay a small black chess knight.
+
+Give it back later, Ava had said.
+
+“I will,” Lucas promised the dark. “When it's all over.”
+
+And on the far shore of the bay, where the city lights ended, a dark silhouette stood at the water's edge. Dim violet cracks ran across its skin.
+
+He was looking at the black tower, at the foot of which the lights of the rescue vehicles were still flashing.
+
+“You named me the Abyss,” he said quietly. “Now stare into it.”
+
+And so the city had two of them.
+
+One hunted from the shadows and still believed in the people who had made him.
+
+The other had become darkness itself and knew the truth about them.
+
+Each stayed on his own side. And both knew this was only the beginning.
+`}
+);
+
+// ===== STREET LEAGUE: CIVIL WAR (English, ch. 1–7) =====
+BOOK_TEXTS_EN["l-versus"] = [
+{ t: "Night at the Shade Tower", x: `
+The city was asleep. Only the Shade tower never slept.
+
+The black needle of glass and alloy rose over the rooftops, and on its upper floors the lights were always on. Guards, cameras, sensors, laser grids. People said there was no way into the Shade tower without a pass.
+
+At three in the morning, a camera on the forty-first floor went dark.
+
+Then a second. Then a tenth. Green lines of code ran across the security monitors, and the guard on duty rubbed his eyes for a long time before he realized it wasn't a glitch.
+
+Virus walked down the empty corridor, and the doors opened in front of him on their own. He didn't kick down a single one. He didn't hit a single guard. He just touched the panels, and the green infection ran through the wires faster than thought. The elevator came for him by itself. The alarm switched itself off.
+
+And on the other side of the building, twenty floors down, the wall of a service tunnel was sucked into emptiness.
+
+The concrete crumpled inward like paper, was pulled into a small black point and crushed. Out of the breach stepped a man with ash-gray skin, crossed by cracks of violet light.
+
+The Abyss didn't hide. He had nothing to hide.
+
+Each of them came his own way. Neither knew anything about the other.
+
+And both were heading for the Director.
+`},
+{ t: "The Director's Office", x: `
+The doors of the Director's office opened from two sides at once.
+
+Virus came in from the stairs. The Abyss came from the elevator shaft, leaving a ragged hole where the elevator doors had been. For a few seconds they just looked at each other.
+
+The Director stood at the floor-to-ceiling window and didn't even turn around.
+
+“Two in one night,” he said in a quiet, even voice. “How convenient. I was just about to introduce you to someone.”
+
+He pressed a button on his desk. Panels slid apart in the office walls, and out of the darkness behind them stepped eight figures.
+
+Eight fighters in gray uniforms, covered in silver alloy from head to toe. Smooth metal masks instead of faces. Half-worn-off numbers on their shoulders.
+
+“Meet our finest employees,” said the Director.
+
+Behind him, a panel in the wall slid open without a sound. A secret elevator. The Director stepped inside, and the doors closed before anyone could move.
+
+The metal ones advanced. All at once. No sound, no command.
+
+Virus struck first. A green beam pierced the nearest fighter and jumped to the second, and Virus was already getting ready for his Hack: any second now they would turn around and start beating each other.
+
+Nothing happened.
+
+“It's not working,” Virus hissed. “It doesn't work on the metal ones!”
+
+The Abyss raised his hands. Space crackled between his palms, a black hole flared, and the fighters were dragged toward it across the floor, metal scraping on parquet. Virus kept hitting the ones being pulled in with his beam, not letting them get up.
+
+They fought back to back, even though a minute ago they hadn't known the other existed.
+
+“Who even are you?” Virus shouted, dodging a metal fist.
+
+“The Abyss,” the other rumbled.
+
+“Virus.” A green beam blew the Director's desk to splinters. “Nice to meet you, monster.”
+`},
+{ t: "Phantom", x: `
+The eight metal fighters didn't get tired. They didn't feel pain. Virus's beam left nothing but black streaks on them, and they clawed their way out of the black hole, gripping the floor.
+
+Virus was just figuring out where that armor's weak spot might be when the office went cold.
+
+Through the wall, straight through the wall, without opening any doors, came a man in a dark hooded cloak. A chain clinked in his hand.
+
+He didn't say a word. He just swung the chain, and it wrapped around the neck of the nearest fighter. A yank. The fighter flew toward him, and the stranger met him with a blow from above, right on the top of the head.
+
+The metal on its head cracked like an eggshell. The fighter crashed to the floor and didn't get up again.
+
+Virus froze. Through the crack in the metal skull, a face was visible. A human face. Young.
+
+“Wait, were they alive?” he breathed.
+
+“They were,” said the man in the hood. “So was I.”
+
+“Who are you?”
+
+“Phantom.” The chain flew up into the air again. “I was in the same lab as them. On the next table over.”
+
+Now there were three of them.
+
+Phantom hooked the fighters with his chain and dragged them into range. The Abyss pulled them into his black hole. Virus hit them from above with his beam, on the head, and the metal cracked, and the fighters fell one after another.
+
+The last one, the eighth, walked straight at Virus. Virus didn't even raise his hands. He just looked up at the ceiling, where a steel fire shutter was hanging, and it tore loose from its mounts. A ton of metal came down exactly on the fighter's head. The head cracked from the top. Silence.
+
+“Hack doesn't work on them,” said Virus, brushing the dust off his sleeve. “But it works on the tower.”
+
+Eight metal bodies lay on the floor of the wrecked office.
+
+Phantom crouched next to one of them and looked into the cracked mask for a long time.
+
+“I remember them,” he said quietly. “Not by name. By their voices. They used to laugh in the next ward, until they were taken away.”
+`},
+{ t: "The Archive", x: `
+Behind the Director's office there was another door. No handle, no lock, no panel. Virus ran his palm over it and felt the wires behind the metal.
+
+“There's something in there,” he said. “Something he really doesn't want anyone to see.”
+
+The door held out for thirty seconds. For Virus, that was an eternity.
+
+Behind it was an archive. Endless rows of shelves with folders. Shade didn't trust computers with the most important things.
+
+Virus walked along the rows, reading the spines, until he stopped at one folder. It had an address on it. His address. Building number fourteen.
+
+Inside was a report from Shade's testing grounds. Five years old. "Artificial lightning test. Target: antenna on the roof of building no. 14. Subject: teenager, hacker, a threat to the corporation's networks. Result: direct hit. Subject survived. Monitor."
+
+Virus read it three times.
+
+He had always thought that night was an accident. That the discharge came out of nowhere. That he had just been unlucky. But Shade had hit him on purpose. Aimed. Wanted him never to sit down at a computer again.
+
+“They almost killed me,” he said in a very even voice. “On purpose.”
+
+The Abyss was standing at the next shelf with another folder in his hands. HORIZON.
+
+“Me too,” he rumbled. “They sent my ship into the black hole on purpose. Left the nose unreinforced on purpose. Seven people died so Shade could hide something. And I came back like this.”
+
+Phantom stood silently in the aisle. He didn't need a folder. He already knew what was in it.
+
+The three of them stood in the middle of the archive, a hacker, an astronaut and a dead man, all thinking the same thing.
+
+“Shade broke every one of us,” Virus said at last. “Every one.”
+
+“Then we take it down,” said the Abyss.
+
+“Together,” Phantom nodded.
+
+Virus looked at both of them.
+
+“Together,” he said. “But if it comes to it, I'm on my own side.”
+
+“If it comes to it,” Phantom agreed, “so am I.”
+
+The Abyss just nodded. That was enough.
+`},
+{ t: "The News", x: `
+"BREAKING. Unknown attackers have struck the Shade corporation tower. Security staff were injured. Police are calling the attackers supervillains and asking citizens to report any suspicious activity."
+
+The footage played on a loop. A green beam. A black vortex. A hooded shadow walking through a wall. The shattered windows of the forty-first floor.
+
+The city woke up scared.
+
+Mark Kowalski watched the news in a diner by the plant, holding a cup of coffee that was going cold. The metal armor on his shoulders creaked softly whenever he moved. The waitress had long since stopped staring at it.
+
+“Supervillains,” he muttered. “Sure.”
+
+He went online looking for anything besides that footage. Who were they? Where did they come from? How many were there? The news kept repeating the same thing. Social media kept retelling the news. Nothing.
+
+Until he stumbled onto a thread on 4chan.
+
+An anonymous post, published that same night, at 3:40. Before the news.
+
+"I saw how it started. The cameras went dark floor by floor from the bottom up, like someone was walking up the stairs inside. Then the tunnel wall on the south side caved in. There was a second one there. I know him. I've fought him before."
+
+Signed: Shade-9.
+
+Cobalt read the post three times. Then he opened the profile. No photos, no friends, no likes. Just the name and a dozen posts about the city, each one about some incident the news only reported the next day.
+
+“You're a real ghost,” Cobalt told the screen.
+
+And he sent him a message.
+`},
+{ t: "The League Comes Together", x: `
+Cobalt called for help openly. An Instagram post, a picture of his armor with the Shade tower in the background:
+
+"Seen the news? Nobody can stop them alone. If anyone else in this city can do things other people can't, DM me. Cobalt."
+
+Shade-9 called in his own way. A new post appeared on 4chan: a string of numbers and letters that looked like total nonsense. Only for those who knew how to read between the lines. A cipher.
+
+Three days later, six of them stood on the roof of an old parking garage on the edge of town.
+
+The first to come was the one nobody had called. The air next to Cobalt rippled, and out of the ripple stepped a man in a long dark coat. Gray temples, calm eyes, and on his chest a clock-face medallion with hands pointing in different directions.
+
+“Don't be alarmed,” he said. “My name is Chronos. I've seen this team in the future.”
+
+“And how are we doing there?” Cobalt asked.
+
+“Together,” Chronos answered. “The rest is still blurry.”
+
+The second was a guy of about seventeen, scruffy, in a hoodie, with sparks running over his fingers. He hesitated by the stairs for a long time before coming over.
+
+“I'm Storm-Jay,” he said. And added, looking at the ground: “The green guy on the news is my big brother.”
+
+It went quiet.
+
+“I want to stop him,” said Jay. “Before he does something that can't be undone.”
+
+The third was Graviton. Isaac Hale didn't read Instagram and didn't believe in teams. He had stumbled onto Shade-9's cipher by accident, and he couldn't just walk past it.
+
+“Four minutes,” he said instead of hello. “Not a bad cipher. But four minutes.”
+
+For the first time, Shade-9 stepped out of invisibility and shook his hand.
+
+The last was Blaze. Danny Ashford was holding a thermos of cocoa and smiling awkwardly.
+
+“I used to work at Shade myself,” he said. “Built flamethrowers. Those are my old coworkers lying in the hospital after that night. Regular guys.”
+
+Six of them stood on the roof and looked out at the city at night. Metal armor, an invisible man, the Keeper of Time, a kid with lightning, an inventor with a cannon and a fire mage with a thermos.
+
+Cobalt cleared his throat.
+
+“So… Street League?”
+
+Nobody argued.
+`},
+{ t: "The First Battle", x: `
+The League tracked the antiheroes for a week. Shade-9 watched the city network, Graviton calculated where Virus hacked most often, Chronos looked ahead as far as he could. They caught up with them at the foot of the Shade tower: the antiheroes were heading there again.
+
+The fight started right away. No talking.
+
+Virus turned toward a flash of lightning and froze. A few meters away stood a kid in a hoodie with sparks on his fingers.
+
+“Kid?” Virus couldn't believe his eyes. “What are you doing here?”
+
+“Stopping you,” said Storm-Jay.
+
+And he struck with lightning.
+
+And then the ground shook. Not from a blow, not from a vortex, but deep and heavy, as if the planet itself had sighed. From around the corner of the tower, smashing everything in his way, came a giant made of stone. He was pounding the Shade walls with his fists, and glass rained down from the floors.
+
+It was Titan. He had come to smash the tower on his own.
+
+He saw the fight. He saw Shade-9, visible for a second after taking a hit. On his shoulder gleamed the squad's old emblem: a dark circle with a thin bright rim. An eclipse. Titan had seen it a thousand times, on every check Shade had ever written him.
+
+He covered the distance in three steps and slammed Shade-9 so hard that he smashed backward through a parked van.
+
+“You're one of them!” Titan roared. “Shade broke my life!”
+
+Virus, the Abyss and Phantom looked at each other.
+
+“We all are,” they said in unison.
+
+Titan slowly turned toward them. And stood beside them.
+
+Now there were four antiheroes. And Virus stopped holding back.
+
+A green beam hit Cobalt, Shade-9 and Storm-Jay at the same time. Hack. Their eyes clouded over with green. They turned around and went for their own team.
+
+Blaze didn't even have time to raise his hands. Graviton did, but not against three at once. A minute later, both of them lay on the asphalt and didn't move.
+
+Chronos saw it. And the hands on his medallion spun backward.
+
+The world jerked. Blaze and Graviton rose from the asphalt, sounds ran backward, and time rolled back a minute. Virus was standing with his hands raised again, gathering his Hack.
+
+This time Chronos was ready. He hurled a projectile at Virus right in the middle of the spell…
+
+But Phantom's chain wrapped around his arm and yanked it back. The projectile went into the sky.
+
+The Hack went through. Only differently this time. Green clouded the eyes of Shade-9, Graviton, Blaze and Storm-Jay. Four against two.
+
+“Lucas!” Cobalt rushed to Shade-9 and grabbed him by the shoulders. “Lucas, it's me! Don't do this! We're friends! You hear me?! We're friends!”
+
+Shade-9 froze. The green in his eyes wavered. Flickered. And went out.
+
+He broke free.
+
+The first thing he did was go after Graviton, to knock him out before he could hit Cobalt. But Graviton lifted him into the air with one movement of his hand and slammed him into the asphalt. And then the other hacked ones piled on top of him.
+
+They stomped on him until he stopped moving.
+
+Chronos rewound time a second time.
+
+The world jerked again. Sounds running backward again, Shade-9 alive again. And this time Chronos didn't take any chances.
+
+“We're leaving!” he shouted. “Everyone! Now!”
+
+The League retreated. Graviton covered them with debris, Blaze with a wall of fire. A minute later, only the antiheroes were left at the tower.
+
+Phantom stood a little off to the side and watched them go. Time didn't affect him. He remembered both endings.
+
+“What?” he said quietly. “Didn't like the bad ending?”
+`},
+];
+
+// ===== STREET LEAGUE: CIVIL WAR (English, ch. 8–13) =====
+BOOK_TEXTS_EN["l-versus"].push(
+{ t: "Old Friends", x: `
+The antiheroes set up their base in an abandoned workshop by the old port. Rusty machines, holes in the roof, one bare light bulb on a wire. Titan barely fit through the gate.
+
+That night, after the Abyss had gone off to wander the shore and Titan had fallen asleep leaning against the wall, Virus sat at the table with his laptop and couldn't work.
+
+He kept seeing his brother. The kid. Who should have been at home playing video games, not hitting him with lightning in the middle of the street.
+
+Virus ran his hand over his head and pushed back the hair that had fallen onto his forehead. An old habit. He always did it when he was nervous. Since he was twelve.
+
+Phantom was sitting across from him on a crate, and suddenly he stopped twirling the chain in his fingers.
+
+“Do that again,” he said.
+
+“Do what?”
+
+“The hair thing. Only one person I ever knew did that.”
+
+Virus slowly raised his head. Phantom raised his hands and pulled back his hood.
+
+His face was pale, almost transparent. Shadows under his eyes. But it was his face. The face of the kid Alex used to split his last soda with and argue over who'd beat the game first.
+
+“Tyler?”
+
+“Alex.”
+
+For a second it was quiet.
+
+“You disappeared,” said Alex, and his voice cracked. “I texted you for weeks. Weeks!”
+
+“You're the one who disappeared!” Tyler jumped up from the crate. “You stopped answering, I went looking for you and ended up on their table!”
+
+They glared at each other across the table, both red-faced, both angry. And then they stepped toward each other at the same time and hugged so hard that Alex's ribs cracked.
+
+“Can't believe it,” Tyler muttered into his shoulder. “I'm hugging a villain.”
+
+“Shut up!” said Alex.
+
+But he didn't let go.
+
+Titan opened one eye by the wall, looked at them, and closed it again. Sometimes it's better to pretend you're asleep.
+`},
+{ t: "The Heroes' Hideout", x: `
+The League's hideout was Shade-9's apartment. Empty, no furniture, a mattress on the floor and a chess board on the windowsill. The six of them were crammed in like in an elevator.
+
+Nobody talked. Blaze silently poured cocoa. Graviton was fixing his cannon. Storm-Jay sat in the corner with his forehead pressed to his knees.
+
+Chronos stood at the window for a long time. Then he turned to them.
+
+“You think we ran away,” he said. “We didn't run away. We survived.”
+
+“Meaning what?” Cobalt didn't understand.
+
+“I rewound time. Twice.” Chronos spoke slowly, as if every word weighed a ton. “You don't remember, because for you it never happened. But I remember. The first time, Virus hacked Cobalt, Shade-9 and Jay, and they killed Blaze and Graviton.”
+
+Blaze froze with the thermos in his hand. Graviton dropped his screwdriver.
+
+“The second time, the hacked ones were Shade-9, Graviton, Blaze and Jay. Cobalt pulled Shade-9 out of the hack. And he was stomped to death.”
+
+Shade-9 slowly raised his eyes to Cobalt. Cobalt looked away.
+
+“So you,” Lucas said quietly, “were yelling at me that we're friends?”
+
+“Well.” Cobalt scratched the back of his metal head. “I don't remember. But I probably was. Sounds like me.”
+
+Jay jumped up so fast he hit his head on a shelf.
+
+“He used me!” Lightning crackled between his fingers. “My own brother! Hacked me like some computer and set me on my own team!”
+
+“He hacked you,” Chronos said calmly, “so you wouldn't get hurt.”
+
+Jay stopped short.
+
+“I saw both battles,” Chronos went on. “He never touched the ones he hacked. Not once. Not a single blow landed on you. He was taking you out of the fight, Jay. The fastest way he knew.”
+
+Jay slowly sat back down in the corner. The lightning on his fingers went out.
+
+“He's still a jerk,” he said at last.
+
+“Maybe,” Chronos agreed. “But a jerk who's looking out for you.”
+
+Nobody slept that night. Shade-9 sat on the windowsill moving the black knight around the board. Cobalt sat next to him in silence. It was a good kind of silence.
+`},
+{ t: "The Multiverse", x: `
+Chronos knew: next time, two rewinds might not be enough.
+
+Toward morning, when the others had finally fallen asleep, he went up onto the roof, closed his eyes and ran his hand through the air. Space parted like a curtain. Behind it was an emptiness full of worlds: thousands of worlds hanging in the dark like soap bubbles, each with its own time.
+
+Chronos stepped inside.
+
+He was going to the Multiverse Boss. The one who had once given him his mission in the Middle Ages. The one who had made him the Keeper of Time. If anyone could help, it was him.
+
+The Boss was waiting for him. Enormous, the size of the sun, if the sun had a face.
+
+Only there were two Bosses.
+
+Two identical giants stood side by side. Identical faces, identical voices, identically ancient eyes. They turned to Chronos at the same moment.
+
+“Keeper,” they both said. “Help me. He's an impostor.”
+
+Chronos looked at them for a very long time. So long that in one of the bubble worlds around them, an era came and went.
+
+Then he saw the spot on the ear. Small, almost invisible. He remembered it: back then he had spent three hours kneeling before the Boss, eyes on the ground, and all he could see was that ear. And the spot on it. Green.
+
+The giant on the left had a green spot.
+
+The one on the right, a purple one.
+
+Chronos raised his hands. The hands on his medallion began to spin, not backward, but forward. Only for one of them. For the one on the right. Faster. Faster still. A thousand years. A million. A billion.
+
+The twin screamed. His skin turned gray, cracked, crumbled. All that was left of the sun-sized giant was stardust, instantly scattered between the worlds.
+
+The real Boss looked for a long time at the spot where his double had stood.
+
+“You could tell,” he said. “Many couldn't have.”
+
+He held out his hand, and a blade appeared in the air in front of Chronos. Long, thin, shining with cold light. The edges of space pulled back slightly from the edge, like water from the bow of a ship.
+
+“The Multiverse Blade. It cuts everything. Time, space, and whatever lies between them. Take care of it, Keeper. And be careful whom you cut with it.”
+
+When Chronos got back to the roof, it still wasn't light out. Three seconds had passed.
+`},
+{ t: "The Second Battle", x: `
+The second battle came four days later, at the old port, by the antiheroes' workshop. The League came on its own. This time they knew what to expect from the Hack: Graviton kept Virus at a distance by hurling shipping containers at him, and Chronos never took his eyes off him.
+
+The fight was worse than the first one. Titan smashed the piers, the Abyss pulled cranes into his black holes, Blaze set half the port on fire, and Storm-Jay hit the water with lightning to knock Titan off his feet with the current.
+
+Phantom caught Blaze with his chain, yanked him close and took him over. Blaze turned around and hurled a fireball at Graviton. Four seconds later, Phantom shot out of his body back into his own, and Blaze collapsed to his knees.
+
+“Recharging,” Phantom grinned, backing away. “Give me a minute, guys.”
+
+And then Chronos stopped time.
+
+Drops of water hung in the air. Fire froze in tongues of flame. Jay's lightning stood still in the middle of the sky like a jagged white line. The world turned into a photograph.
+
+Only Chronos was moving.
+
+He walked through the frozen port with the Multiverse Blade in his hand. He had seen how this battle would end if he didn't stop it. Virus would hack everyone. The Abyss would pull them into a black hole. And a third rewind might not be enough.
+
+If he took out two of them, none of that would happen.
+
+Chronos walked up to Virus. He was frozen with his hands raised, gathering his Hack. Chronos looked at his face. Thought about Jay. Looked away.
+
+One stroke of the Blade. Then a second, for the Abyss.
+
+Chronos lowered the blade. He felt terrible. But he had done what he had to do.
+
+Phantom saw everything. Time didn't affect him: he stood in the middle of the frozen port and watched his best friend fall. But his power was still recharging. All he could do was watch.
+
+One second. Two. Three.
+
+“Recharge complete,” said Phantom.
+
+Chronos didn't even have time to turn around. A white haze covered his eyes, and his body stopped obeying him. His own hand unfroze time.
+
+The water fell. The fire flared. Lightning struck the pier. Virus and the Abyss collapsed onto the wet boards and didn't get up.
+
+The heroes turned to Chronos. Chronos smiled at them with a strange, crooked smile that wasn't his.
+
+“We won!” he said in Chronos's voice.
+
+And exploded from the inside.
+
+A white flash. Chronos was thrown against the wall of the workshop and slid down it, covered in soot and blood. Phantom slipped out of him like out of an old jacket, returned to his own body, and rushed to Virus.
+
+“Alex… Alex, get up…”
+
+Chronos was alive. Barely. Down to his last scraps of life. He lay by the wall and saw Virus and the Abyss dead, saw Jay running to his brother, saw Phantom on his knees by his friend's body.
+
+He raised a trembling hand. The hands on his medallion spun backward.
+
+This time, for everyone.
+`},
+{ t: "The Switch", x: `
+They came to right where they had been standing a minute before time stopped.
+
+But this time, everyone remembered. Every one of them. Virus remembered the cold of the Blade. The Abyss, falling onto the boards. Phantom, kneeling. Jay, running to his brother and not making it.
+
+The battle stopped on its own. Nobody attacked anymore.
+
+Titan stood in the middle of the wrecked pier, looking at his stone hands. Cobalt walked over to him, slowly, no dash, no punch. His armor was cracked all over.
+
+“They broke me too,” said Cobalt. “The plant was theirs. The vat was theirs. I burned in it.” He paused. “But revenge won't put out the pain. You can tear that tower down to the last floor, and it'll still be empty inside. I know.”
+
+Titan was silent for a long time. Then he sat down right on the boards, and the pier groaned under him.
+
+“I just wanted them to hurt,” he said. “Like me.”
+
+“I know,” said Cobalt, and sat down next to him.
+
+And Chronos stood by the workshop wall, still covered in soot, and thought.
+
+He had just killed two people. For what? For Shade? For the tower that had struck a teenager with lightning? That had sent astronauts to their deaths? That had put Tyler Brooks on a table?
+
+He had seen the future. He had seen every possibility. And in none of them did Shade become any better.
+
+“We're on the wrong side,” he said out loud. “Shade isn't what it seems.”
+
+Cobalt turned around. Chronos was already taking the League emblem off his chest, the one Jay had once drawn for him with a marker.
+
+“I'm sorry,” said Chronos. “I'm going over to them.”
+
+Virus watched him from the pier. Not angry. Just watching.
+
+“You just killed me,” he said.
+
+“I know,” Chronos answered. “That's why I'm leaving.”
+
+He walked over to the antiheroes.
+
+And Titan, heavily getting up from the boards, walked the other way. To Cobalt. And stood beside him.
+
+The teams stood facing each other again. Only the lineups were different.
+`},
+{ t: "The Note", x: `
+A week later, Virus and Chronos went back to the Shade tower. Just the two of them, quietly, no fighting.
+
+The Director's office was still wrecked from that first night. Pieces of the desk, the broken window, cracks in the walls. Nobody had cleaned anything up. As if the Director had known they would come back.
+
+On the surviving edge of the desk lay a note. Neat, precise handwriting.
+
+"For my assistant."
+
+Under the words was a line of symbols. Numbers, letters, signs. A cipher.
+
+“The code to the secret elevator,” said Chronos. “He left it for one of his people.”
+
+“Or for us,” said Virus. “He wants us to come.”
+
+He looked at the cipher for ten seconds. Exactly ten.
+
+“Done.”
+
+The secret elevator behind the wall opened with a soft chime.
+
+A couple of minutes later, the Street League burst into the office. Shade-9 had noticed that someone was in the tower again, and they had all rushed over at once, including Titan, who got stuck in the doorway and took the whole frame out.
+
+Graviton was the first to see the note. He grabbed it and stared at the cipher.
+
+“Wait… wait…” He counted on his fingers, muttered, ran his fingernail along the line. “Got it! One minute! New record!”
+
+“We already opened it,” said Virus, nodding at the open elevator.
+
+Graviton slowly lowered the note.
+
+The two teams stood facing each other in the wrecked office. Nobody attacked.
+
+“The Director is down there,” said Chronos. “The one who did all this to every one of us. We can deal with him first. And then with each other.”
+
+Cobalt looked at his people. Jay was looking at his brother. Shade-9 was looking at the elevator.
+
+“Let's go,” said Cobalt.
+
+The elevator was built for four. They went down in three trips.
+`}
+);
+
+// ===== STREET LEAGUE: CIVIL WAR (English, ch. 14–20) =====
+BOOK_TEXTS_EN["l-versus"].push(
+{ t: "The Secret Lab", x: `
+The elevator went down for a very long time. Past the second underground level, the fourth, the seventh. Lower still. To a place not even the tower's blueprints reached.
+
+The doors opened onto a huge white hall. Rows of capsules along the walls, tubes, wires, monitors. And on the monitors: them. All of them. Footage from both battles. Jay's lightning. The Abyss's black holes. Blaze's fire. Shade-9's invisibility, filmed with thermal cameras. Every blow, every move, with charts and numbers.
+
+The Director stood in the middle of the hall.
+
+“Finally,” he said in his quiet voice. “All together. I've been waiting for this for a very long time.”
+
+“What is this?” Cobalt asked, looking at the monitors.
+
+“Every one of your battles is my data,” said the Director. “You thought you were fighting each other. But you were working for me. Every blow, every ability. I recorded it. Studied it. Collected it.”
+
+He raised his arm. An IV line ran into his wrist, filled with a dark, shimmering liquid.
+
+“And then I took it for myself.”
+
+His body began to grow.
+
+First his shoulders. Then his arms. His suit split at the seams. His skin turned into metal plates, like Cobalt's armor, then into stone, like Titan's. Sparks of lightning ran across it. Fire burst from his palms. Debris lifted by telekinesis began to circle around him. A black vortex opened on his chest, exactly like the Abyss's.
+
+A minute later, a giant stood before them. Up to the ceiling of the hall. He had absorbed the powers of all the heroes and of the Abyss.
+
+“Almost all,” he said, and his voice thundered like a rockslide. “One didn't work.”
+
+He looked at Chronos.
+
+“Time can't be stolen,” said Chronos.
+
+“Not yet,” the Director answered.
+`},
+{ t: "On His Own", x: `
+The giant didn't attack right away. He looked down at them the way you look down at ants.
+
+Then his gaze settled on one of them.
+
+“Nine,” said the Director, and his voice became almost gentle. “You've always been with us. We raised you. We paid for your school, your college. We gave you your power. You're the last of the squad. You are Shade. Stand beside me.”
+
+Everyone turned to Shade-9.
+
+Lucas stood still. In his pocket he was clutching the chess knight.
+
+He thought about the orphanage and the letter that had come a month later. About the gym on the second underground level. About eight capsules. About eight metal bodies on the office floor. About the tags the antiheroes had found. About how the Director had come to see him in the medical wing and said: “I'm sorry. They didn't die for nothing.”
+
+About how, in all those years, the Director had never once called him by his name.
+
+“You don't even know my name,” said Lucas.
+
+The Director blinked. Just once. But it was enough.
+
+“I'm not with you,” said Lucas. He looked at Cobalt, at the Abyss, at all of them. “And I'm not with them. I'm with no one.”
+
+He turned and walked toward the wall.
+
+“Lucas!” Cobalt shouted.
+
+Shade-9 stopped for a second. Without turning around.
+
+“I'm on my own, Mark. It's more honest that way.”
+
+And he vanished. He didn't walk away, he dissolved into the air. Only his footsteps sounded on the white floor for one more second. Then they were gone too.
+
+Cobalt stared at the spot where he had stood for a long time.
+
+“He'll come back,” Blaze said quietly.
+
+“He'll come back,” Cobalt agreed. But he didn't sound very sure.
+`},
+{ t: "Leveled Up", x: `
+The giant struck.
+
+The very first blow scattered both teams across the hall. An earthquake like Titan's, fire like Blaze's, lightning like Jay's, all at once. The capsules along the walls burst like soap bubbles.
+
+Virus got up from under the debris, wiping blood from his lip. He wasn't scared. He was curious.
+
+All those weeks, while the others slept, he had been sitting over himself like over a program. The others accepted their powers as they were. Fire meant fire. Lightning meant lightning. He had never been able to do that. He took his power apart line by line. And rewrote it.
+
+Before, to hack something, he first had to infect it with his beam. Not anymore.
+
+Virus stretched out his hand and pointed at a chunk of wall flying at Blaze. The chunk turned around in midair and flew back at the giant.
+
+He pointed at the cables under the ceiling, and they wrapped around the giant's arm like snakes.
+
+He pointed at the security turrets, and the turrets opened fire on their own master.
+
+“He hacks whatever he points at,” Graviton breathed. “No beam. No infection. He just… points.”
+
+But that wasn't all. The green energy in Virus's hands didn't scatter anymore. It held its shape. A blade. A shield. A whip. A spear. He switched between them with a flick of his fingers.
+
+Phantom watched him from behind a column and grinned.
+
+“You always were a nerd, Alex.”
+
+“I was always the smartest, Tyler.”
+
+Storm-Jay stood a few meters away, lightning on his fingers. Virus could see him out of the corner of his eye. He could hack him with one gesture. Take him out of the fight in a second, like that time at the tower.
+
+He didn't.
+
+“Exception,” he said to himself.
+
+Jay heard it. And said nothing. Only the lightning on his fingers got brighter.
+`},
+{ t: "Gathering the Powers", x: `
+The giant went down and got up. Went down and got up.
+
+Graviton slammed him into the floor, and he got up. The Abyss blew a hole in him with a dark projectile, and the hole closed before their eyes. Virus hacked his left arm, the arm punched the giant in his own face, and a second later it obeyed its master again.
+
+“He's regenerating,” said Cobalt, backing behind a column. “We can't break through.”
+
+Chronos stood next to him, his back pressed against the same column. He was looking at the IV line still sticking out of the giant's wrist. At the dark shimmering liquid inside it.
+
+“We can,” he said. “His body can barely hold what he's poured into it. Seven powers that aren't his, in one body. One more dose, and it'll choke.”
+
+“What dose?” Cobalt didn't understand.
+
+“Ours. All our powers at once. In one syringe.”
+
+On a table by the broken capsules lay empty syringes, the same ones Shade had once used on its test subjects. Phantom brought one over. He looked at it for a very long time. Then he handed it to Chronos.
+
+They gave their powers one by one, behind the column, while the others kept the giant busy.
+
+Blaze dipped a finger into the syringe, and fire flared inside. Graviton closed his eyes, and the liquid turned heavy, pulling downward. Titan touched the glass with a stone finger, Cobalt with a metal one. The Abyss dropped a speck of emptiness inside. Phantom, something cold and translucent, like mist.
+
+Virus added green light. Then he turned to his brother.
+
+“I need your lightning, kid,” he said. “But only if you give it yourself.”
+
+Jay gave him a long look. His big brother, who had hacked him in the middle of the street. Who had died before his eyes. Who had said "exception."
+
+“Take it,” said Jay.
+
+Blue lightning struck the syringe, and all the liquid inside lit up so brightly it hurt to look at.
+
+Chronos didn't add anything.
+
+“He can't steal my time anyway,” he said. “I'll save it for later.”
+`},
+{ t: "A Present", x: `
+There was only one thing left: get close to the giant.
+
+It was almost impossible. A whirlwind of debris surrounded him, fire and lightning shot out in every direction, and the floor heaved underfoot.
+
+“Distract him,” said Virus. “I need one second.”
+
+They distracted him.
+
+Titan grabbed the giant's leg, and the two of them rolled across the hall, smashing everything around them. Graviton pulled his arms apart with telekinesis, going white with the strain. Blaze shot fire into his eyes. The Abyss held a black hole above them, sucking in the flying debris. Cobalt knocked the giant off his feet with a dash just as he was getting back up.
+
+Phantom caught the IV line on the giant's wrist with his chain. Yanked it. The giant's arm jerked down.
+
+One second.
+
+Virus was already running. Up Titan's back, over his shoulder, along the huge metal arm, to the wrist, to the spot where the IV line went in.
+
+“Hey, big guy!” he shouted. “I've got a present for you!”
+
+And he drove the syringe all the way in.
+
+The giant froze.
+
+At first nothing happened. Then cracks ran across his skin: violet, green, blue, fiery, all at once. The metal plates started falling off. The stone skin chipped. Lightning and fire burst out of him with no order at all, in every direction.
+
+His body could still hold seven powers that weren't his. Fifteen, it couldn't.
+
+The giant screamed, and the scream shattered the last working monitors.
+
+Virus jumped off his arm and rolled to the column where the others were standing.
+
+“Well,” he said, breathing hard. “Present delivered.”
+`},
+{ t: "Chronos Strikes", x: `
+The giant knelt in the middle of the ruined hall. His body was cracking and crumbling, but he was still alive. Still strong. The stolen powers were tearing him apart from the inside, but they wouldn't let go.
+
+He raised his head and looked at them.
+
+“You… don't… understand anything…” His voice was hoarse, ragged. “All of this… was for…”
+
+He didn't finish.
+
+Everyone turned to Chronos. The Keeper of Time stood a little to the side, his hand on the hilt of the Multiverse Blade.
+
+“Go on, Keeper,” said Virus. “You've earned it.”
+
+Chronos walked up to the giant. Slowly, without hurrying. He stopped right in front of him.
+
+“You took power from every one of us,” he said. “Fire. Lightning. Metal. Emptiness. But time, you couldn't take.”
+
+He stretched out his hand. The hands on his medallion spun forward.
+
+“Time can't be stolen.”
+
+He drove time forward for one person only. For the Director. First years. Then decades.
+
+The stolen powers drained out of the giant's body like water out of sand. First the fire, then the lightning, then the emptiness. The metal plates crumbled to dust. The stone skin fell apart into sand. The giant got smaller, and smaller, and smaller.
+
+When Chronos lowered his hand, an old man was sitting on the floor in the middle of the hall.
+
+Thin, hunched, in the rags of an expensive suit. Gray hair fell over his face. A white film covered his eyes: he couldn't see anymore. There was no power left in him at all. Not a drop.
+
+He groped around the floor with his hands, as if he were looking for something.
+
+“Where…” he whispered. “Where are you all…”
+
+Nobody answered him.
+`},
+{ t: "The Dome", x: `
+“What do we do with him?” Cobalt asked.
+
+Nobody knew. None of them could kill a blind, powerless old man. Not even the Abyss, who had the most reason to. He stood over the Director for a very long time, and the cracks on his skin flared and faded. Then he turned away.
+
+“Not me,” he said. “Not like this.”
+
+Virus stepped forward.
+
+“I know what to do with him.”
+
+He spread his hands. Green energy flowed from his palms, but not as a beam or a blade. It spread around the old man, curved, closed over the top. A dome. Translucent, glowing from within, as if made of matter itself.
+
+The old man inside went still as he felt the walls.
+
+“Time doesn't pass for him in there,” said Virus. “He doesn't age. He doesn't die. He just sits. And remembers. Every day. Every one of us.”
+
+“How long will he last in there?” Storm-Jay asked.
+
+Virus looked at his brother.
+
+“Until I feel like letting him out.” He shrugged. “So, forever.”
+
+It took them a long time to get out from under the tower. The elevator didn't work, there were no stairs, and Titan punched a path upward for them straight through the concrete, floor by floor.
+
+When they came out onto the square, the sun was already rising over the city.
+
+The two teams stood on the steps of the Shade tower. Dusty, battered, covered in soot. Nobody knew what to say.
+
+“So what now?” Graviton finally asked. “Are we enemies again?”
+
+Virus looked at Cobalt. Cobalt looked at Virus.
+
+“We'll see,” said Virus.
+
+“We'll see,” Cobalt agreed.
+
+Storm-Jay stepped up to his brother and awkwardly bumped his shoulder with his fist. Virus bumped him back. That was enough.
+
+And on the roof of the building across the street, where nobody was looking, sat a man nobody could see. He was holding a small black chess knight. He had watched them all come out. Seen that they were alive.
+
+Then he stood up and dissolved into the morning air.
+
+On his own. Just like he'd said.
+`}
+);
 
 </script>
 <script>
@@ -3861,6 +6432,25 @@ var CATALOG = [
   { id: "w-imp4", shelf: "wip", soon: true, wip: true, title: "Импульс 4", cover: { kind: "imp4", lbl: "Книга IV", ttl: "ИМПУЛЬС 4" } }
 ];
 var BYID = {}; CATALOG.forEach(function (b) { BYID[b.id] = b; });
+var CATALOG_EN = {
+  imp1: { t: "Impulse", lbl: "Book I", ttl: "IMPULSE", sub: "Book One", ann: ["The whole school laughed at Max. Because of his weight, he was everyone's favorite target.", "But this fall, someone will appear over the city. Someone everyone will call Impulse."] },
+  imp2: { t: "Impulse 2", lbl: "Book II", ttl: "IMPULSE 2", sub: "Book Two", ann: ["A few months have passed since that battle. The city has healed, and Max finally has a normal life: classes, tests, shows in the evening.", "It seems like it's finally over."] },
+  imp3: { t: "Impulse 3: Doctor Doom", lbl: "Book III", ttl: "IMPULSE 3", small: "DOCTOR DOOM", sub: "Book Three", ann: ["Max goes to university and patrols the city at night. He hasn't run into anything scarier than car thieves in a long time.", "Then, right in the middle of a jump, a portal flares open in front of him."] },
+  "l-virus": { t: "Virus", lbl: "Street League", ttl: "VIRUS", sub: "File · Street League", ann: ["The smartest one in the Street League. He wrote a virus to hack a game and ended up hacking the whole world."] },
+  "l-shadow-abyss": { t: "Shade-9 and the Abyss", lbl: "Street League", ttl: "SHADE-9<br>&amp;&nbsp;ABYSS", sub: "Street League", ann: ["The Shade corporation is building the future. It does its most important work where no one can see.", "Eight people fly to the edge of the Solar System to see a black hole up close. Meanwhile, on Earth, a squad of nine is being put together."] },
+  "l-phantom": { t: "Phantom", lbl: "Street League", ttl: "PHANTOM", sub: "File · Street League", ann: ["He didn't survive Shade's experiments. But death turned out not to be the end."] },
+  "l-titan": { t: "Titan", lbl: "Street League", ttl: "TITAN", sub: "File · Street League", ann: ["A miner who went down where no one had ever come back from."] },
+  "l-cobalt": { t: "Cobalt", lbl: "Street League", ttl: "COBALT", sub: "File · Street League", ann: ["An ordinary worker from a Shade plant who became a warrior in living armor."] },
+  "l-storm": { t: "Storm-Jay", lbl: "Street League", ttl: "STORM-JAY", sub: "File · Street League", ann: ["A kid who got hit by blue lightning in his own backyard."] },
+  "l-grav": { t: "Graviton", lbl: "Street League", ttl: "GRAVITON", sub: "File · Street League", ann: ["A lone inventor whose own cannon gave him telekinesis."] },
+  "l-flame": { t: "Blaze", lbl: "Street League", ttl: "BLAZE", sub: "File · Street League", ann: ["He built flamethrowers for Shade, until the fire became part of him."] },
+  "l-chronos": { t: "Chronos", lbl: "Street League", ttl: "CHRONOS", sub: "File · Street League", ann: ["A scientist who broke time and became its keeper."] },
+  "l-versus": { t: "Street League: Civil War", lbl: "Street League", ttl: "CIVIL WAR", sub: "Street League", ann: ["One night, two intruders break into the Shade corporation tower. Each in his own way. Both heading for the Director.", "In the morning the city learns it has supervillains. Three days later, it learns it has heroes too."] },
+  "w-sun": { t: "Street League: Secret of the Sun", lbl: "Street League", ttl: "SECRET OF THE SUN", sub: "Street League · Part 2", ann: ["Mercury once had a moon that no telescope on Earth ever saw.", "One day a warrior in golden armor falls from the sky onto the central square. He wants just one thing: to find Shade."] },
+  "w-imp4": { t: "Impulse 4", lbl: "Book IV", ttl: "IMPULSE 4" }
+};
+CATALOG.forEach(function (b) { var e = CATALOG_EN[b.id]; if (!e) return; b.title_en = e.t; if (e.sub) b.sub_en = e.sub; if (e.ann) b.ann_en = e.ann; b.cover.lbl_en = e.lbl; b.cover.ttl_en = e.ttl; if (e.small) b.cover.small_en = e.small; });
+
 
 // ================= ОБЛОЖКИ (canvas) =================
 function rng(seed) { var a = seed >>> 0; return function () { a |= 0; a = a + 0x6D2B79F5 | 0; var t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
@@ -3954,9 +6544,9 @@ function coverURL(b) {
 function coverHTML(b) {
   var league = b.shelf !== "imp" && b.id !== "w-imp4";
   var cls = "cover " + (league ? "league" : b.cover.kind);
-  var badge = b.soon ? '<span class="badge">' + (b.wip ? "Пишется" : "Скоро") + "</span>" : "";
+  var badge = b.soon || noText(b) ? '<span class="badge">' + (b.wip ? L("wip") : L("soon")) + "</span>" : "";
   return '<div class="' + cls + '" style="background-image:url(' + coverURL(b) + ')">' + badge +
-    '<div class="ct"><span class="lbl">' + esc(b.cover.lbl) + '</span><span class="ttl">' + b.cover.ttl + (b.cover.small ? "<small>" + esc(b.cover.small) + "</small>" : "") + '</span><span class="au">AOYT</span></div></div>';
+    '<div class="ct"><span class="lbl">' + esc(cLbl(b)) + '</span><span class="ttl">' + cTtl(b) + (cSmall(b) ? "<small>" + esc(cSmall(b)) + "</small>" : "") + '</span><span class="au">AOYT</span></div></div>';
 }
 
 // ================= ХРАНИЛИЩЕ (только для удобства этого читателя) =================
@@ -3964,29 +6554,73 @@ var S = { ver: 3, set: { size: 17, theme: "auto", font: "times", lh: "tight" }, 
 try { var saved = JSON.parse(localStorage.getItem("cxbooks1") || "null"); if (saved && typeof saved === "object") { if (saved.ver === 3 && saved.set) for (var k in saved.set) S.set[k] = saved.set[k]; S.pos = saved.pos || {}; S.pct = saved.pct || {}; S.last = saved.last || null; if (saved.ver !== 3) { delete S.pos.imp1; delete S.pct.imp1; } } } catch (e) {}
 function save() { try { localStorage.setItem("cxbooks1", JSON.stringify(S)); } catch (e) {} }
 
+// ================= ЯЗЫК =================
+var UI = {
+  ru: { title: "Claudix Книги", eyebrow: "Книги", lib: "Библиотека", libSub: "Вся вселенная AOYT в книгах. Открой обложку и листай.", shImp: "Импульс", shImpS: "серия · 16+", shLg: "Лига Улиц", shLgS: "полные книги и досье героев", full: "Полные книги", files: "Досье", shWip: "Пишется", shWipS: "появятся, когда будут закончены",
+    tight: "Плотно", loose: "Свободно", auto: "Авто", system: "Системный", toc: "Оглавление", soon: "Скоро", wip: "Пишется", fileSfx: " (досье)", file: "Досье", isNew: "Новая", done: "Прочитано",
+    start: "Начни отсюда", cont: "Продолжить чтение", firstSub: "Первая книга серии «Импульс» · 16+", readPct: "Прочитано {n}%", read: "Читать", goOn: "Продолжить",
+    tCopied: "Ссылка на «{t}» скопирована", tCopyFail: "Не получилось скопировать: {u}", tWarn: "Сначала прочитай все остальные книги: «Импульс» 1–3 и всю «Лигу Улиц». Уверен? Нажми ещё раз", tWip: "«{t}» ещё пишется. Появится, когда автор закончит", tSoon: "«{t}» скоро появится в библиотеке", tTr: "«{t}»: перевод скоро", ch: "Глава {n}", bonus: "Бонус", end: "КОНЕЦ", next: "Дальше: «{t}»", nextBtn: "Дальше: {t} →",
+    pages: "Стр. {a} из {n}", left: " · осталось {k} стр. в главе", chEnd: " · конец главы", credits: "{s} · 16+<br>Сюжет: AOYT · Claudix Книги", q1: "«", q2: "»" },
+  en: { title: "Claudix Books", eyebrow: "Books", lib: "Library", libSub: "The whole AOYT universe in books. Open a cover and turn the pages.", shImp: "Impulse", shImpS: "series · 16+", shLg: "Street League", shLgS: "full books and hero files", full: "Full books", files: "Hero files", shWip: "In progress", shWipS: "coming when they're finished",
+    tight: "Compact", loose: "Relaxed", auto: "Auto", system: "System", toc: "Contents", soon: "Soon", wip: "In progress", fileSfx: " (file)", file: "File", isNew: "New", done: "Finished",
+    start: "Start here", cont: "Continue reading", firstSub: "Book one of the Impulse series · 16+", readPct: "{n}% read", read: "Read", goOn: "Continue",
+    tCopied: "Link to “{t}” copied", tCopyFail: "Couldn't copy: {u}", tWarn: "Read all the other books first: Impulse 1–3 and all of Street League. Sure? Tap again", tWip: "“{t}” is still being written. It'll appear when the author finishes it", tSoon: "“{t}” is coming to the library soon", tTr: "“{t}”: English translation coming soon", ch: "Chapter {n}", bonus: "Bonus", end: "THE END", next: "Next: “{t}”", nextBtn: "Next: {t} →",
+    pages: "Page {a} of {n}", left: " · {k} {pg} left in chapter", chEnd: " · end of chapter", credits: "{s} · 16+<br>Story: AOYT · Claudix Books", q1: "“", q2: "”" }
+};
+var LANG = (function () {
+  if (S.set.lang === "ru" || S.set.lang === "en") return S.set.lang;
+  try { var c = localStorage.getItem("claudix-lang"); if (c === "ru" || c === "en") return c; } catch (e) {}
+  var n = (navigator.language || "ru").toLowerCase(); return /^(ru|uk|be|kk)/.test(n) ? "ru" : "en";
+})();
+function L(k, v) { var t = (UI[LANG] && UI[LANG][k] != null) ? UI[LANG][k] : UI.ru[k]; if (v) for (var x in v) t = t.split("{" + x + "}").join(v[x]); return t; }
+function bT(b) { return LANG === "en" && b.title_en ? b.title_en : b.title; }
+function bSub(b) { return (LANG === "en" && b.sub_en) || b.sub || ""; }
+function bAnn(b) { return (LANG === "en" && b.ann_en) || b.ann || []; }
+function cLbl(b) { return (LANG === "en" && b.cover.lbl_en) || b.cover.lbl; }
+function cTtl(b) { return (LANG === "en" && b.cover.ttl_en) || b.cover.ttl; }
+function cSmall(b) { return (LANG === "en" && b.cover.small_en) || b.cover.small; }
+function TX(id) { return LANG === "en" ? (window.BOOK_TEXTS_EN && BOOK_TEXTS_EN[id]) : BOOK_TEXTS[id]; }
+function noText(b) { return !b.soon && !TX(b.id); }
+function PK(id) { return LANG === "en" ? id + "@en" : id; }
+function Q(t) { return L("q1") + t + L("q2"); }
+function applyLang() {
+  document.documentElement.lang = LANG; document.title = L("title");
+  Array.prototype.forEach.call(document.querySelectorAll("[data-i18n]"), function (el) { el.textContent = L(el.getAttribute("data-i18n")); });
+  Array.prototype.forEach.call(document.querySelectorAll("[data-lang]"), function (el) { el.classList.toggle("on", el.getAttribute("data-lang") === LANG); });
+  FLOWS_LANG();
+}
+function setLang(l) {
+  if (l === LANG) return; LANG = l; S.set.lang = l; save();
+  try { localStorage.setItem("claudix-lang", l); } catch (e) {}
+  applyLang();
+  if (R.id) { if (TX(R.id)) { var id = R.id; openBook(id); } else closeBook(); } else renderLibrary();
+}
+
 // ================= БИБЛИОТЕКА =================
-function progLabel(b) { if (b.soon) return (b.wip ? "Пишется" : "Скоро") + (b.dossier ? " (досье)" : ""); var p = S.pct[b.id]; if (p === undefined) return b.dossier ? "Досье" : "Новая"; if (p >= 100) return "Прочитано"; return p + "%"; }
+function progLabel(b) { if (b.soon || noText(b)) return (b.wip ? L("wip") : L("soon")) + (b.dossier ? L("fileSfx") : ""); var p = S.pct[PK(b.id)]; if (p === undefined) return b.dossier ? L("file") : L("isNew"); if (p >= 100) return L("done"); return p + "%"; }
 function renderLibrary() {
   ["imp", "league", "wip"].forEach(function (sh) {
     var el = sh === "league" ? null : $("g-" + sh); if (el) el.innerHTML = ""; else { $("g-league-full").innerHTML = ""; $("g-league-dos").innerHTML = ""; }
     CATALOG.filter(function (b) { return b.shelf === sh; }).forEach(function (b) {
       var box = el || $(b.dossier ? "g-league-dos" : "g-league-full");
-      var btn = document.createElement("button"); btn.className = "book" + (b.soon ? " soon" : ""); btn.setAttribute("data-id", b.id);
-      btn.innerHTML = coverHTML(b) + '<span class="meta"><span class="bt">' + esc(b.title) + '</span><span class="bp">' + progLabel(b) + "</span></span>";
-      btn.addEventListener("click", function () { if (b.soon) toast("«" + b.title + "» " + (b.wip ? "ещё пишется. Появится, когда автор закончит" : (b.dossier ? "— досье героя — скоро появится в библиотеке" : "скоро появится в библиотеке"))); else openBook(b.id); });
+      var btn = document.createElement("button"); btn.className = "book" + (b.soon || noText(b) ? " soon" : ""); btn.setAttribute("data-id", b.id);
+      btn.innerHTML = coverHTML(b) + '<span class="meta"><span class="bt">' + esc(bT(b)) + '</span><span class="bp">' + progLabel(b) + "</span></span>";
+      btn.addEventListener("click", function () { if (b.soon) toast(L(b.wip ? "tWip" : "tSoon", { t: bT(b) })); else if (noText(b)) toast(L("tTr", { t: bT(b) })); else tryOpen(b); });
       box.appendChild(btn);
     });
   });
-  var lb = S.last && BYID[S.last] && !BYID[S.last].soon ? BYID[S.last] : null, first = !lb;
+  var lb = S.last && BYID[S.last] && !BYID[S.last].soon && TX(S.last) ? BYID[S.last] : null, first = !lb;
   if (!lb) lb = BYID.imp1;
-  var pct = S.pct[lb.id] || 0;
-  $("cont").innerHTML = coverHTML(lb) + '<div class="cont-txt"><span class="cont-k">' + (first ? "Начни отсюда" : "Продолжить чтение") + '</span><span class="cont-t">' + esc(lb.title) + '</span>' +
-    (first ? '<span class="cont-p">Первая книга трилогии «Импульс» · 16+</span>' : '<div class="cont-bar"><i style="width:' + pct + '%"></i></div><span class="cont-p">Прочитано ' + pct + "%</span>") +
-    '<div class="cont-row"><button class="btn" id="contBtn">' + (first ? "Читать" : "Продолжить") + "</button></div></div>";
+  var pct = S.pct[PK(lb.id)] || 0;
+  $("cont").innerHTML = coverHTML(lb) + '<div class="cont-txt"><span class="cont-k">' + (first ? L("start") : L("cont")) + '</span><span class="cont-t">' + esc(bT(lb)) + '</span>' +
+    (first ? '<span class="cont-p">' + L("firstSub") + '</span>' : '<div class="cont-bar"><i style="width:' + pct + '%"></i></div><span class="cont-p">' + L("readPct", { n: pct }) + "</span>") +
+    '<div class="cont-row"><button class="btn" id="contBtn">' + (first ? L("read") : L("goOn")) + "</button></div></div>";
   $("contBtn").onclick = function () { openBook(lb.id); };
 }
 var toastT = 0;
-function toast(t) { var el = $("toast"); el.textContent = t; el.classList.add("on"); clearTimeout(toastT); toastT = setTimeout(function () { el.classList.remove("on"); }, 2600); }
+function toast(t, ms) { var el = $("toast"); el.textContent = t; el.classList.add("on"); clearTimeout(toastT); toastT = setTimeout(function () { el.classList.remove("on"); }, ms || 2600); }
+var warnArm = null, warnT;
+function tryOpen(b) { if (b.warn && S.pct[PK(b.id)] === undefined && warnArm !== b.id) { warnArm = b.id; clearTimeout(warnT); warnT = setTimeout(function () { warnArm = null; }, 6000); toast(L("tWarn"), 6000); return false; } warnArm = null; openBook(b.id); return true; }
 
 // ================= ЧИТАЛКА =================
 var R = { id: null, pages: 1, page: 0, W: 0, GAP: 64, paraPage: [], chPage: [], anim: null, drag: null, spread: false };
@@ -3994,16 +6628,17 @@ var reader = $("reader"), stage = $("stage"), leaf = $("leaf");
 function pgObj(id) { var el = $(id); return { el: el, flow: el.querySelector(".flow"), hd: el.querySelector(".hd"), pn: el.querySelector(".pn"), shade: el.querySelector(".shade"), gloss: el.querySelector(".gloss") }; }
 var PG = { uL: pgObj("uL"), uR: pgObj("uR"), lF: pgObj("lF"), lB: pgObj("lB") };
 var FLOWS = [PG.uL.flow, PG.uR.flow, PG.lF.flow, PG.lB.flow];
+function FLOWS_LANG() { FLOWS.forEach(function (f) { f.setAttribute("lang", LANG); }); }
 
 function bookHTML(id) {
-  var b = BYID[id], chs = BOOK_TEXTS[id], h = [], pi = 0, num = 0;
-  h.push('<section class="tp"><h1>' + esc(b.title) + '</h1><img alt="" src="' + coverURL(b) + '"><div class="ann">' + (b.ann || []).map(function (t) { return "<p>" + esc(t) + "</p>"; }).join("") + '</div><div class="c">' + esc(b.sub || "") + " · 16+<br>Сюжет: AOYT · Claudix Книги</div></section>");
+  var b = BYID[id], chs = TX(id), h = [], pi = 0, num = 0;
+  h.push('<section class="tp"><h1>' + esc(bT(b)) + '</h1><img alt="" src="' + coverURL(b) + '"><div class="ann">' + bAnn(b).map(function (t) { return "<p>" + esc(t) + "</p>"; }).join("") + '</div><div class="c">' + L("credits", { s: esc(bSub(b)) }) + "</div></section>");
   chs.forEach(function (c, ci) {
     if (!c.post) num++;
-    h.push('<h2 data-ch="' + ci + '"' + (c.post ? ' class="post"' : "") + '><span class="gl">' + (b.dossier ? "Досье" : c.post ? "Бонус" : "Глава " + num) + '</span><span class="gt">' + esc(c.t) + "</span></h2>");
+    h.push('<h2 data-ch="' + ci + '"' + (c.post ? ' class="post"' : "") + '><span class="gl">' + (b.dossier ? L("file") : c.post ? L("bonus") : L("ch", { n: num })) + '</span><span class="gt">' + esc(c.t) + "</span></h2>");
     c.x.trim().split(/\n\s*\n/).forEach(function (p) { h.push('<p data-i="' + (pi++) + '">' + esc(p.trim()) + "</p>"); });
   });
-  h.push('<section class="end" data-end="1"><b>КОНЕЦ</b><span>' + esc(b.title) + (b.next && BYID[b.next] ? "<br>Дальше: «" + esc(BYID[b.next].title) + "»" : "") + "</span></section>");
+  h.push('<section class="end" data-end="1"><b>' + L("end") + '</b><span>' + esc(bT(b)) + (b.next && BYID[b.next] && TX(b.next) ? "<br>" + esc(L("next", { t: bT(BYID[b.next]) })) : "") + "</span></section>");
   return h.join("");
 }
 function applySettings() {
@@ -4037,8 +6672,8 @@ function normPage(p) { p = clamp(p, 0, R.pages - 1); if (R.spread) p -= p % 2; r
 function step() { return R.spread ? 2 : 1; }
 function headerFor(p) {
   if (p <= 0 || p >= R.pages - 1 || R.chPage.indexOf(p) >= 0) return "";
-  if (R.spread && p % 2 === 0) return BYID[R.id].title;
-  var c = BOOK_TEXTS[R.id][chapterAt(p)]; return c ? c.t : "";
+  if (R.spread && p % 2 === 0) return bT(BYID[R.id]);
+  var c = TX(R.id)[chapterAt(p)]; return c ? c.t : "";
 }
 function setPage(P, p) {
   var ok = p >= 0 && p < R.pages;
@@ -4067,13 +6702,13 @@ function updateInfo() {
   var b = BYID[R.id], last = !canFwd();
   var rp = R.spread ? Math.min(R.page + 1, R.pages - 1) : R.page;
   var ch = chapterAt(rp), nextCh = R.chPage[ch + 1] !== undefined ? R.chPage[ch + 1] : R.pages - 1, left = nextCh - rp - 1;
-  var info = "Стр. " + (R.page + 1) + (R.spread && R.page + 1 < R.pages ? "–" + (R.page + 2) : "") + " из " + R.pages;
-  if (rp > 0 && rp < R.pages - 1) info += left > 0 ? " · осталось " + left + " стр. в главе" : " · конец главы";
+  var info = L("pages", { a: (R.page + 1) + (R.spread && R.page + 1 < R.pages ? "–" + (R.page + 2) : ""), n: R.pages });
+  if (rp > 0 && rp < R.pages - 1) info += left > 0 ? L("left", { k: left, pg: left === 1 ? "page" : "pages" }) : L("chEnd");
   $("rInfo").textContent = info; $("rScrub").value = R.page;
-  var nb = b.next && BYID[b.next];
-  $("rNext").hidden = !(last && nb); if (nb) $("rNext").textContent = "Дальше: " + nb.title + " →";
+  var nb = b.next && BYID[b.next] && TX(b.next) ? BYID[b.next] : null;
+  $("rNext").hidden = !(last && nb); if (nb) $("rNext").textContent = L("nextBtn", { t: bT(nb) });
   if (last && nb) reader.classList.add("chrome");
-  S.pos[R.id] = anchorFor(R.page); S.pct[R.id] = R.pages > 1 ? Math.min(100, Math.round((R.page + step() - 1) / (R.pages - 1) * 100)) : 100; S.last = R.id; save();
+  S.pos[PK(R.id)] = anchorFor(R.page); S.pct[PK(R.id)] = R.pages > 1 ? Math.min(100, Math.round((R.page + step() - 1) / (R.pages - 1) * 100)) : 100; S.last = R.id; save();
   var cur = document.querySelector("#tocList li.cur"); if (cur) cur.classList.remove("cur");
   var li = document.querySelector('#tocList li[data-ch="' + ch + '"]'); if (li && rp > 0) li.classList.add("cur");
 }
@@ -4081,12 +6716,12 @@ function openBook(id) {
   R.id = id; var b = BYID[id];
   applySettings();
   var html = bookHTML(id); FLOWS.forEach(function (f) { f.innerHTML = html; });
-  $("rTitle").textContent = b.title; $("tocTitle").textContent = b.title;
+  $("rTitle").textContent = bT(b); $("tocTitle").textContent = bT(b);
   var tl = $("tocList"); tl.innerHTML = ""; var num = 0;
-  BOOK_TEXTS[id].forEach(function (c, ci) { if (!c.post) num++; var li = document.createElement("li"); li.setAttribute("data-ch", ci); li.innerHTML = '<button><span class="n">' + (c.post ? "★" : num) + '</span><span class="t">' + esc(c.t) + '</span><span class="p"></span></button>'; li.querySelector("button").onclick = function () { closePanels(); go(R.chPage[ci] || 0); }; tl.appendChild(li); });
+  TX(id).forEach(function (c, ci) { if (!c.post) num++; var li = document.createElement("li"); li.setAttribute("data-ch", ci); li.innerHTML = '<button><span class="n">' + (c.post ? "★" : num) + '</span><span class="t">' + esc(c.t) + '</span><span class="p"></span></button>'; li.querySelector("button").onclick = function () { closePanels(); go(R.chPage[ci] || 0); }; tl.appendChild(li); });
   $("lib").setAttribute("aria-hidden", "true"); reader.hidden = false; document.documentElement.style.overflow = "hidden";
   reader.classList.add("chrome");
-  relayout(S.pos[id]);
+  relayout(S.pos[PK(id)]);
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { if (R.id === id) relayout(); });
   setTimeout(function () { if (R.id === id && canFwd()) reader.classList.remove("chrome"); }, 1800);
 }
@@ -4176,7 +6811,7 @@ $("rAa").onclick = function (e) { e.stopPropagation(); var h = $("aa").hidden; c
 $("rToc").onclick = function (e) { e.stopPropagation(); var h = $("toc").hidden; closePanels(); $("toc").hidden = !h; var cur = document.querySelector("#tocList li.cur"); if (cur) cur.scrollIntoView({ block: "center" }); };
 $("tocClose").onclick = closePanels;
 $("rScrub").addEventListener("input", function () { go(+this.value); });
-$("rNext").onclick = function () { var b = BYID[R.id]; if (b.next) { closePanels(); openBook(b.next); } };
+$("rNext").onclick = function () { var b = BYID[R.id]; if (b.next) { var nb = BYID[b.next]; if (nb.warn && S.pct[PK(nb.id)] === undefined && warnArm !== nb.id) { tryOpen(nb); return; } closePanels(); tryOpen(nb); } };
 var SIZES = [13, 14, 15, 16, 17, 18, 19, 20, 22, 24, 26, 28];
 function bump(d) { var i = SIZES.indexOf(S.set.size); if (i < 0) i = 4; i = clamp(i + d, 0, SIZES.length - 1); S.set.size = SIZES[i]; save(); applySettings(); relayout(); }
 $("fsDown").onclick = function () { bump(-1); };
@@ -4186,8 +6821,35 @@ Array.prototype.forEach.call(document.querySelectorAll("#themes button"), functi
 Array.prototype.forEach.call(document.querySelectorAll("#fonts button"), function (b) { b.onclick = function () { S.set.font = b.getAttribute("data-f"); save(); applySettings(); relayout(); if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { relayout(); }); }; });
 var rzT = 0; addEventListener("resize", function () { clearTimeout(rzT); rzT = setTimeout(function () { if (R.id) relayout(); }, 120); });
 
+Array.prototype.forEach.call(document.querySelectorAll("[data-lang]"), function (el) { el.addEventListener("click", function () { setLang(el.getAttribute("data-lang")); }); });
+function bookUrl(id) {
+  var base = "https://claudix.aoyt.workers.dev/books.html";
+  try { if (/books\.html$/.test(location.pathname) && /^https?:$/.test(location.protocol)) base = location.origin + location.pathname; } catch (e) {}
+  return base + "?book=" + encodeURIComponent(id) + (LANG === "en" ? "&lang=en" : "");
+}
+function copyText(t, ok, fail) {
+  try { if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(t).then(ok, function () { legacy(); }); return; } } catch (e) {}
+  legacy();
+  function legacy() { try { var ta = document.createElement("textarea"); ta.value = t; ta.setAttribute("readonly", ""); ta.style.position = "fixed"; ta.style.opacity = "0"; document.body.appendChild(ta); ta.select(); var r = document.execCommand("copy"); document.body.removeChild(ta); r ? ok() : fail(); } catch (e) { fail(); } }
+}
+$("rShare").onclick = function () {
+  var b = BYID[R.id]; if (!b) return; var url = bookUrl(b.id), title = bT(b);
+  var copy = function () { copyText(url, function () { toast(L("tCopied", { t: title })); }, function () { toast(L("tCopyFail", { u: url }), 6000); }); };
+  try { if (navigator.share) { navigator.share({ title: title, url: url }).catch(function (e) { if (!e || e.name !== "AbortError") copy(); }); return; } } catch (e) {}
+  copy();
+};
+applyLang();
 renderLibrary();
-if (window.__TEST__) window.__BK = { R: R, S: S, openBook: openBook, next: next, prev: prev, go: go, closeBook: closeBook, relayout: relayout, bump: bump };
+(function () {
+  try {
+    var q = new URLSearchParams(location.search), id = q.get("book"), lg = q.get("lang");
+    if (!id && /^#book=/.test(location.hash)) id = decodeURIComponent(location.hash.slice(6));
+    if (lg === "en" || lg === "ru") { if (lg !== LANG) setLang(lg); }
+    var b = id && BYID[id];
+    if (b && !b.soon && !noText(b)) openBook(b.id);
+  } catch (e) {}
+})();
+if (window.__TEST__) window.__BK = { R: R, S: S, openBook: openBook, next: next, prev: prev, go: go, closeBook: closeBook, relayout: relayout, bump: bump, setLang: setLang, lang: function () { return LANG; } };
 })();
   try { if (/books\.html$/.test(location.pathname)) { var hl = document.getElementById("homeLink"); hl.href = "/"; hl.removeAttribute("target"); } } catch (e) {}
 </script>
