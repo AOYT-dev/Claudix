@@ -6836,7 +6836,7 @@ Array.prototype.forEach.call(document.querySelectorAll("[data-lang]"), function 
 function bookUrl(id) {
   var base = "https://claudix.aoyt.workers.dev/books";
   try { if (/\/books(\.html)?\/?$/.test(location.pathname) && /^https?:$/.test(location.protocol)) base = location.origin + "/books"; } catch (e) {}
-  var q = "book=" + encodeURIComponent(id) + (LANG === "en" ? "&lang=en" : "");
+  var q = "book=" + encodeURIComponent(id);
   return base + "?" + q + "#" + q;
 }
 function copyText(t, ok, fail) {
@@ -6859,8 +6859,9 @@ renderLibrary();
   try {
     var q = new URLSearchParams(location.search), id = q.get("book"), lg = q.get("lang");
     if (!id && /^#book=/.test(location.hash)) { var hq = new URLSearchParams(location.hash.slice(1)); id = hq.get("book"); lg = lg || hq.get("lang"); }
-    if (lg === "en" || lg === "ru") { if (lg !== LANG) setLang(lg); }
     var b = id && BYID[id];
+    if (b && lg !== "en") lg = "ru";
+    if ((lg === "en" || lg === "ru") && lg !== LANG) setLang(lg);
     if (b && !b.soon && !noText(b)) openBook(b.id);
   } catch (e) {}
 })();
