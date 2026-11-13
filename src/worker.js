@@ -123,7 +123,7 @@ function validSave(str) {
 
 
 // ---- подарки от разработчика (меняют сохранение Лиги Улиц игрока) ----
-const LIGA_HEROES = ["cobalt", "storm", "shade", "graviton", "flame", "abyss", "virus", "phantom", "titan", "chronos"];
+const LIGA_HEROES = ["cobalt", "storm", "shade", "graviton", "flame", "abyss", "virus", "phantom", "titan", "chronos", "sol", "sirius", "beta"];
 async function giftTo(env, b) {
   const name = typeof b.name === "string" ? b.name.trim() : "";
   if (!NAME_RE.test(name)) return fail("bad_name", 400);
@@ -322,7 +322,7 @@ async function route(req, env) {
 }
 
 // ---- онлайн-лобби: одна общая комната на всех (Durable Object, WebSocket) ----
-const HERO_IDS = ["cobalt", "storm", "shade", "graviton", "flame", "abyss", "virus", "phantom", "titan", "chronos"];
+const HERO_IDS = ["cobalt", "storm", "shade", "graviton", "flame", "abyss", "virus", "phantom", "titan", "chronos", "sol", "sirius", "beta"];
 const ROOM_MAX = 24;
 const ADV_RELAY = ["ap", "ae", "ah", "ax", "aa", "ar"];
 // Halloween Adventure пока на проверке: в очередь пускаем только этих игроков (uid). Пустой список = всех.
@@ -498,7 +498,7 @@ export class Room {
       // эффект атаки / удар по сопернику
       const o = this.sockOf(a.d);
       if (!o) return;
-      if (m.t === "da") this.sendTo(o, { t: "da", k: m.k ? 1 : 0, f: lim(m.f, 10), x: lim(m.x, 20), z: lim(m.z, 20) });
+      if (m.t === "da") this.sendTo(o, { t: "da", k: m.k === 2 ? 2 : m.k ? 1 : 0, f: lim(m.f, 10), x: lim(m.x, 20), z: lim(m.z, 20) });
       else {
         const now = Date.now();
         if (now - a.hs < 40) return; // не чаще 25 ударов в секунду
