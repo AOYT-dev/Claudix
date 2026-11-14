@@ -337,25 +337,7 @@ body.touchy #nitro { display: none; }
   function T(name) {
     if (TEX[name]) return TEX[name];
     var S = GFX.hi ? 512 : 256, t;
-    if (name === "asphalt" || name === "asphaltWet") {
-      // асфальт: крупные пятна, мелкое зерно, светлый и тёмный щебень, по краям белые линии
-      var wet = name === "asphaltWet";
-      t = texFrom(S, S, function (u, v) {
-        var n = NZ(u, v, 6, 4), fine = Math.random(), k = 62 + (n - 0.5) * 30 + (fine - 0.5) * 22;
-        if (fine > 0.985) k += 45; else if (fine < 0.02) k -= 26;
-        var edge = (u > 0.018 && u < 0.034) || (u > 0.966 && u < 0.982);
-        if (edge) { var wear = NZ2(u * 4, v * 3, 4, 3); k = wear > 0.72 ? k + 40 : 205 + (fine - 0.5) * 30; }
-        if (wet) k *= 0.62;
-        return [k, k + 2, k + 6];
-      });
-    } else if (name === "asphaltBump") {
-      t = texFrom(S, S, function (u, v) { var k = 120 + (NZ(u, v, 24, 3) - 0.5) * 90 + (Math.random() - 0.5) * 80; return [k, k, k]; }, { linear: true });
-    } else if (name === "kerb") {
-      t = texFrom(128, 128, function (u, v) {
-        var red = v < 0.5, k = (Math.random() - 0.5) * 18, edge = Math.min(u, 1 - u) < 0.06 ? -30 : 0;
-        return red ? [205 + k + edge, 32 + k, 36 + k] : [236 + k + edge, 236 + k + edge, 232 + k + edge];
-      });
-    } else if (name === "grass") {
+    if (name === "grass") {
       t = texFrom(S, S, function (u, v) {
         var n = NZ(u, v, 8, 5), m = NZ2(u, v, 3, 3), blade = Math.random();
         var g = 0.55 + (n - 0.5) * 0.7 + (blade - 0.5) * 0.35, dry = Math.max(0, m - 0.58) * 2.2;
@@ -382,14 +364,39 @@ body.touchy #nitro { display: none; }
       t = canvasTex(128, 128, function (g, w, h) {
         for (var k = 0; k < 14; k++) { var x = w / 2 + (Math.random() - 0.5) * 50, y = h / 2 + (Math.random() - 0.5) * 50, r = 20 + Math.random() * 30, gr = g.createRadialGradient(x, y, 0, x, y, r); gr.addColorStop(0, "rgba(255,255,255,0.35)"); gr.addColorStop(1, "rgba(255,255,255,0)"); g.fillStyle = gr; g.fillRect(0, 0, w, h); }
       });
-    } else if (name === "cloud") {
-      t = canvasTex(256, 128, function (g, w, h) {
-        for (var k = 0; k < 40; k++) { var x = 40 + Math.random() * (w - 80), y = 50 + Math.random() * 40 - Math.abs(x - w / 2) * 0.12, r = 18 + Math.random() * 30, gr = g.createRadialGradient(x, y, 0, x, y, r); gr.addColorStop(0, "rgba(255,255,255,0.5)"); gr.addColorStop(1, "rgba(255,255,255,0)"); g.fillStyle = gr; g.fillRect(0, 0, w, h); }
-      });
     } else if (name === "waterN") {
       // карта нормалей для ряби: из шума считаем наклоны
       var H = function (u, v) { return NZ(u, v, 8, 4); };
       t = texFrom(256, 256, function (u, v) { var e = 1 / 256, dx = (H(u + e, v) - H(u - e, v)) * 6, dy = (H(u, v + e) - H(u, v - e)) * 6; return [128 + dx * 127, 128 + dy * 127, 255]; }, { linear: true });
+    } else if (name === "kerbD") {
+      // поребрик: 1 м красного, 1 м белого; у края асфальта чёрные следы резины, сколы краски, грязь у внешнего края
+      var Rk = PRNG(31);
+      t = canvasTex(128, 256, function (g, w, h) {
+        g.fillStyle = "#c21f27"; g.fillRect(0, 0, w, h / 2); g.fillStyle = "#ecebe6"; g.fillRect(0, h / 2, w, h / 2);
+        for (var q = 0; q < 900; q++) { var x = Rk() * w, y = Rk() * h; g.fillStyle = "rgba(" + (Rk() < 0.5 ? "0,0,0," : "255,255,255,") + (0.03 + 0.05 * Rk()) + ")"; g.fillRect(x, y, 2 + Rk() * 6, 1 + Rk() * 3); }
+        for (q = 0; q < 70; q++) { var cx = Rk() * w, cy = Rk() * h, rr = 1 + Rk() * 3.5; g.fillStyle = "rgba(120,116,110," + (0.5 + 0.4 * Rk()) + ")"; g.beginPath(); g.ellipse(cx, cy, rr * (1 + Rk()), rr, Rk() * 3, 0, 7); g.fill(); }
+        for (q = 0; q < 26; q++) { var sx = Rk() * w * 0.55, sy = Rk() * h, len = 30 + Rk() * 120, gr = g.createLinearGradient(0, sy, 0, sy + len); gr.addColorStop(0, "rgba(10,10,10,0)"); gr.addColorStop(0.5, "rgba(10,10,10," + (0.25 + 0.35 * Rk()) + ")"); gr.addColorStop(1, "rgba(10,10,10,0)"); g.fillStyle = gr; g.fillRect(sx, sy, 4 + Rk() * 10, len); g.fillRect(sx, sy - h, 4 + Rk() * 10, len); }
+        var ed = g.createLinearGradient(w * 0.86, 0, w, 0); ed.addColorStop(0, "rgba(40,34,28,0)"); ed.addColorStop(1, "rgba(40,34,28,0.55)"); g.fillStyle = ed; g.fillRect(w * 0.86, 0, w * 0.14, h);
+        g.fillStyle = "rgba(0,0,0,0.35)"; g.fillRect(0, h / 2 - 1, w, 2); g.fillRect(0, 0, w, 1);
+      });
+    } else if (name === "kerbN") {
+      // рифление поперёк хода через каждые 12,5 см на внешней части поребрика
+      var KH = new Float32Array(128 * 256), Rn = PRNG(55);
+      for (var ky = 0; ky < 256; ky++) for (var kx = 0; kx < 128; kx++) { var on = Math.max(0, Math.min(1, (kx / 128 - 0.3) / 0.08)), ph = (ky % 16) / 16; KH[ky * 128 + kx] = on * Math.pow(Math.sin(ph * Math.PI), 0.6) * 0.9 + Rn() * 0.04; }
+      t = dataTex(128, normalsFrom(KH, 128, 1.6, 256), false, 256);
+    } else if (name === "tuft" || name === "tuftDry") {
+      // пучок травы: травинки сужаются к кончику, прозрачный фон
+      var dry = name === "tuftDry", Rt = PRNG(dry ? 91 : 19);
+      t = canvasTex(128, 128, function (g, w, h) {
+        g.clearRect(0, 0, w, h);
+        for (var q = 0; q < 46; q++) {
+          var bx = w * (0.18 + 0.64 * Rt()), tipX = bx + (Rt() - 0.5) * w * 0.5, tipY = h * (0.04 + 0.5 * Rt()), bw = 2 + Rt() * 3.5, cxp = (bx + tipX) / 2 + (Rt() - 0.5) * 18;
+          var hue = dry ? 38 + 16 * Rt() : 78 + 34 * Rt(), sat = dry ? 30 + 20 * Rt() : 38 + 26 * Rt(), lit = dry ? 34 + 22 * Rt() : 16 + 22 * Rt() + (h - tipY) / h * 6;
+          g.fillStyle = "hsl(" + hue + "," + sat + "%," + lit + "%)";
+          g.beginPath(); g.moveTo(bx - bw, h); g.quadraticCurveTo(cxp - bw * 0.5, (h + tipY) / 2, tipX, tipY); g.quadraticCurveTo(cxp + bw * 0.5, (h + tipY) / 2, bx + bw, h); g.closePath(); g.fill();
+        }
+      });
+      t.wrapS = t.wrapT = THREE.ClampToEdgeWrapping;
     } else if (name === "windows") {
       t = canvasTex(128, 256, function (g, w, h) {
         g.fillStyle = "#151824"; g.fillRect(0, 0, w, h);
@@ -410,31 +417,163 @@ body.touchy #nitro { display: none; }
     return TEX[key];
   }
 
+  // ---------- реалистичные поверхности: асфальт крупным планом, поребрики, трава, облака ----------
+  var PRNG = function (seed) { var s = seed % 2147483647 || 1; return function () { s = (s * 16807) % 2147483647; return (s - 1) / 2147483646; }; };
+  // текстура прямо из байтов: без canvas, поэтому без потерь на альфе; мипмапы и анизотропия для дальних участков
+  function dataTex(S, d, srgb, h) {
+    var t = new THREE.DataTexture(d, S, h || S, THREE.RGBAFormat);
+    t.wrapS = t.wrapT = THREE.RepeatWrapping; t.magFilter = THREE.LinearFilter; t.minFilter = THREE.LinearMipmapLinearFilter; t.generateMipmaps = true;
+    t.anisotropy = MAX_ANI; if (srgb) t.encoding = THREE.sRGBEncoding; t.needsUpdate = true; return t;
+  }
+  // нормали из карты высот (бесшовно); k — крутизна рельефа
+  function normalsFrom(H, S, k, h2) {
+    var Hh = h2 || S, d = new Uint8Array(S * Hh * 4);
+    for (var y = 0; y < Hh; y++) for (var x = 0; x < S; x++) {
+      var i = y * S + x, du = (H[y * S + (x + 1) % S] - H[y * S + (x + S - 1) % S]) * k, dv = (H[((y + 1) % Hh) * S + x] - H[((y + Hh - 1) % Hh) * S + x]) * k, l = Math.sqrt(du * du + dv * dv + 1);
+      d[i * 4] = (-du / l * 0.5 + 0.5) * 255; d[i * 4 + 1] = (-dv / l * 0.5 + 0.5) * 255; d[i * 4 + 2] = (1 / l * 0.5 + 0.5) * 255; d[i * 4 + 3] = 255;
+    }
+    return d;
+  }
+  // асфальт гоночной трассы: тёмный битум, в нём щебень разной породы и размера, отполированный шинами сверху, и поры.
+  // Плитка 1,6 м: альбедо, нормали (камни выпуклые) и шероховатость (верх камней глаже битума)
+  function asphaltSet() {
+    if (TEX.asphD) return;
+    var S = GFX.hi ? 1024 : 512, N = S * S, sc = S / 1024, R = PRNG(4242);
+    var H = new Float32Array(N), A = new Float32Array(N * 3), Ro = new Float32Array(N), Mk = new Uint8Array(N), x, y, i, k;
+    // пятна битума плавные — шум считаем на сетке 128×128 и растягиваем, так в разы быстрее
+    var G = 128, gn = new Float32Array(G * G), gf = new Float32Array(G * G);
+    for (y = 0; y < G; y++) for (x = 0; x < G; x++) { gn[y * G + x] = NZ(x / G, y / G, 12, 3); gf[y * G + x] = NZ2(x / G, y / G, 48, 2); }
+    for (y = 0; y < S; y++) {
+      var gy = y / S * G, y0 = Math.floor(gy), fy = gy - y0, y1 = (y0 + 1) % G;
+      for (x = 0; x < S; x++) {
+        var gx = x / S * G, x0 = Math.floor(gx), fx = gx - x0, x1 = (x0 + 1) % G, a00 = y0 * G + x0, a10 = y0 * G + x1, a01 = y1 * G + x0, a11 = y1 * G + x1;
+        var n = (gn[a00] * (1 - fx) + gn[a10] * fx) * (1 - fy) + (gn[a01] * (1 - fx) + gn[a11] * fx) * fy, f = (gf[a00] * (1 - fx) + gf[a10] * fx) * (1 - fy) + (gf[a01] * (1 - fx) + gf[a11] * fx) * fy;
+        i = y * S + x; var b = 40 + 12 * (n - 0.5) + 7 * (f - 0.5);
+        H[i] = 0.1 + 0.08 * n + 0.05 * f; A[i * 3] = b * 0.98; A[i * 3 + 1] = b; A[i * 3 + 2] = b * 1.04; Ro[i] = 0.88 + 0.08 * f;
+      }
+    }
+    var cnt = Math.round(24000 * sc * sc);
+    for (k = 0; k < cnt; k++) {
+      var cx = R() * S, cy = R() * S, r = (1.15 + 4.9 * Math.pow(R(), 2.4)) * sc, el = 0.68 + 0.5 * R(), rot = R() * 6.283, p1 = R() * 6.283, p2 = R() * 6.283, a3 = 0.06 + 0.12 * R(), a5 = 0.04 + 0.08 * R();
+      var ty = R(), g = ty < 0.05 ? 122 + 24 * R() : ty < 0.24 ? 50 + 12 * R() : 72 + 34 * R(), warm = ty > 0.95;
+      var cr = g * (warm ? 1.08 : 0.99), cg = g * (warm ? 0.98 : 1), cb = g * (warm ? 0.9 : 1.03);
+      var hs = 0.5 + 0.5 * R() * Math.min(1, r / (3 * sc)), rough = 0.46 + 0.22 * R(), ext = Math.ceil(r * 1.55) + 1, cs = Math.cos(rot), sn = Math.sin(rot), bx = Math.floor(cx), by = Math.floor(cy);
+      var c1 = Math.cos(p1), s1 = Math.sin(p1), c2 = Math.cos(p2), s2 = Math.sin(p2), rmax = r * (1 + a3 + a5), rmin = r * (1 - a3 - a5);
+      for (var dy = -ext; dy <= ext; dy++) for (var dx = -ext; dx <= ext; dx++) {
+        var rx = bx + dx + 0.5 - cx, ry = by + dy + 0.5 - cy, qx = (rx * cs + ry * sn) / el, qy = -rx * sn + ry * cs, d2 = qx * qx + qy * qy;
+        if (d2 >= rmax * rmax) continue;
+        var d = Math.sqrt(d2), rr = r;
+        if (d > rmin && d > 1e-6) {
+          // неровный край камня: 3-я и 5-я гармоники по углу, через полиномы вместо atan2/sin
+          var co = qx / d, si = qy / d, s3 = 3 * si - 4 * si * si * si, c3 = 4 * co * co * co - 3 * co, si2 = si * si, s5 = si * (5 - 20 * si2 + 16 * si2 * si2), c5 = co * (16 * co * co * co * co - 20 * co * co + 5);
+          rr = r * (1 + a3 * (s3 * c1 + c3 * s1) + a5 * (s5 * c2 + c5 * s2));
+        }
+        if (d >= rr) continue;
+        var t = d / rr, hh = 0.2 + hs * Math.sqrt(1 - t * t * t * t), ii = ((by + dy + S) % S) * S + ((bx + dx + S) % S);
+        if (hh <= H[ii]) continue;
+        var sh = 0.9 + 0.14 * (1 - t) + (R() - 0.5) * 0.1;
+        H[ii] = hh; A[ii * 3] = cr * sh; A[ii * 3 + 1] = cg * sh; A[ii * 3 + 2] = cb * sh; Ro[ii] = rough + 0.2 * t * t; Mk[ii] = 1;
+      }
+    }
+    // поры между камнями
+    for (k = 0; k < 7000 * sc * sc; k++) {
+      var px = Math.floor(R() * S), py = Math.floor(R() * S), pr = Math.max(1, Math.round((0.6 + 1.2 * R()) * sc));
+      for (var oy = -pr; oy <= pr; oy++) for (var ox = -pr; ox <= pr; ox++) { if (ox * ox + oy * oy > pr * pr + pr) continue; var pi = ((py + oy + S) % S) * S + ((px + ox + S) % S); if (Mk[pi]) continue; H[pi] -= 0.12; A[pi * 3] *= 0.45; A[pi * 3 + 1] *= 0.45; A[pi * 3 + 2] *= 0.45; Ro[pi] = 1; }
+    }
+    // полости темнее, вершины камней светлее: сравниваем высоту с размытой
+    var Hb = new Float32Array(N), tmp = new Float32Array(N), br = Math.max(2, Math.round(4 * sc)), wn = 2 * br + 1;
+    for (y = 0; y < S; y++) { var acc = 0; for (x = -br; x <= br; x++) acc += H[y * S + (x + S) % S]; for (x = 0; x < S; x++) { tmp[y * S + x] = acc / wn; acc += H[y * S + (x + br + 1) % S] - H[y * S + (x - br + S) % S]; } }
+    for (x = 0; x < S; x++) { var ac2 = 0; for (y = -br; y <= br; y++) ac2 += tmp[((y + S) % S) * S + x]; for (y = 0; y < S; y++) { Hb[y * S + x] = ac2 / wn; ac2 += tmp[((y + br + 1) % S) * S + x] - tmp[((y - br + S) % S) * S + x]; } }
+    var dA = new Uint8Array(N * 4), dR = new Uint8Array(N * 4);
+    for (i = 0; i < N; i++) {
+      var cav = Math.max(0, Math.min(1, (Hb[i] - H[i]) * 2.4)), top = Math.max(0, Math.min(1, (H[i] - Hb[i]) * 2)), m = (1 - 0.55 * cav) * (1 + 0.1 * top) * (0.95 + 0.1 * R());
+      dA[i * 4] = Math.min(255, A[i * 3] * m); dA[i * 4 + 1] = Math.min(255, A[i * 3 + 1] * m); dA[i * 4 + 2] = Math.min(255, A[i * 3 + 2] * m); dA[i * 4 + 3] = 255;
+      var rg = Math.max(0.3, Math.min(1, Ro[i] + 0.1 * cav)) * 255; dR[i * 4] = dR[i * 4 + 1] = dR[i * 4 + 2] = rg; dR[i * 4 + 3] = 255;
+    }
+    TEX.asphD = dataTex(S, dA, true); TEX.asphN = dataTex(S, normalsFrom(H, S, 2.4 / sc), false); TEX.asphR = dataTex(S, dR, false);
+  }
+  // четыре независимых бесшовных шума в каналах RGBA: тон покрытия, пятна, износ разметки, полосы торможений
+  function noiseRGBA() {
+    if (TEX.nzRGBA) return TEX.nzRGBA;
+    var S = 256, d = new Uint8Array(S * S * 4);
+    for (var y = 0; y < S; y++) for (var x = 0; x < S; x++) { var u = x / S, v = y / S, o = (y * S + x) * 4; d[o] = NZ(u, v, 4, 4) * 255; d[o + 1] = NZ2(u, v, 8, 4) * 255; d[o + 2] = NZ(u + 0.37, v + 0.11, 16, 3) * 255; d[o + 3] = NZ2(u + 0.5, v + 0.25, 32, 2) * 255; }
+    return (TEX.nzRGBA = dataTex(S, d, false));
+  }
+  // залитые битумом трещины и швы (плитка 16×16 м): продольные швы полос укладки, извилистые «змейки», поперечные трещины
+  function crackTex() {
+    if (TEX.cracks) return TEX.cracks;
+    var S = GFX.hi ? 1024 : 512, k = S / 1024, R = PRNG(777);
+    TEX.cracks = canvasTex(S, S, function (g, w, h) {
+      g.fillStyle = "#000"; g.fillRect(0, 0, w, h); g.strokeStyle = "#fff"; g.lineCap = "round"; g.lineJoin = "round";
+      function walk(x, y, ang, len, wid, turn, branch) {
+        var pts = [[x, y]], st = 5 * k;
+        for (var s = 0; s < len; s += st) { ang += (R() - 0.5) * turn; x += Math.cos(ang) * st; y += Math.sin(ang) * st; pts.push([x, y]); if (branch && R() < 0.02) walk(x, y, ang + (R() < 0.5 ? 1 : -1) * (0.6 + R()), len * 0.25, wid * 0.7, turn, false); }
+        g.lineWidth = wid;
+        [-w, 0, w].forEach(function (ox) { [-h, 0, h].forEach(function (oy) { g.beginPath(); pts.forEach(function (p, i) { if (i) g.lineTo(p[0] + ox, p[1] + oy); else g.moveTo(p[0] + ox, p[1] + oy); }); g.stroke(); }); });
+      }
+      // u = 0.5 — ось трассы, плитка 16 м поперёк: швы между полосами укладки на ±4 м
+      [0.25, 0.75].forEach(function (u) { for (var y0 = 0; y0 < h; y0 += h / 3) if (R() < 0.7) walk(u * w + (R() - 0.5) * 6 * k, y0, Math.PI / 2, h / 3 * (0.6 + 0.4 * R()), 2.6 * k, 0.03, false); });
+      for (var i = 0; i < 4; i++) walk(R() * w, R() * h, Math.PI / 2 + (R() - 0.5) * 1.2, (160 + 360 * R()) * k, (1.8 + 1.2 * R()) * k, 0.55, true);
+      for (i = 0; i < 2; i++) walk(R() * w, R() * h, (R() - 0.5) * 0.6 + (R() < 0.5 ? 0 : Math.PI), (120 + 220 * R()) * k, (1.6 + R()) * k, 0.45, true);
+    }, true);
+    return TEX.cracks;
+  }
+  // облака для неба: бесшовный шум с завихрениями
+  function cloudTex() {
+    if (TEX.clouds) return TEX.clouds;
+    var S = 512, d = new Uint8Array(S * S * 4), F = new Float32Array(S * S), sum = 0, sq = 0, i;
+    for (var y = 0; y < S; y++) for (var x = 0; x < S; x++) {
+      var u = x / S, v = y / S, wu = NZ2(u, v, 4, 3) - 0.5, wv = NZ2(u + 0.5, v + 0.3, 4, 3) - 0.5, n = NZ(u + wu * 0.35, v + wv * 0.35, 4, 5);
+      F[y * S + x] = n; sum += n; sq += n * n;
+    }
+    // выравниваем: среднее 0.5, разброс 0.2 — тогда доля облаков на небе равна cloud[0]
+    var mean = sum / (S * S), sd = Math.sqrt(Math.max(1e-6, sq / (S * S) - mean * mean));
+    for (i = 0; i < S * S; i++) { d[i * 4] = d[i * 4 + 1] = d[i * 4 + 2] = Math.max(0, Math.min(255, (0.5 + (F[i] - mean) / sd * 0.2) * 255)); d[i * 4 + 3] = 255; }
+    return (TEX.clouds = dataTex(S, d, false));
+  }
+
   // ---------- небо и окружение ----------
   // по трассам: цвет неба у зенита и у горизонта, положение и цвет солнца (ночью — луны), свет и туман
+  // cloud: доля неба под облаками, цвет освещённой стороны и тени; grade: оттенок кадра в постобработке
   var LOOKS = [
-    { top: 0x2c4a8a, hor: 0xffad72, bot: 0x4a4038, sun: [-0.62, 0.13, -0.77], sunC: 0xffb36b, size: 0.0012, glow: 1.5, sunI: 2.7, hemi: [0xffd6b0, 0x4a4238, 0.55], fog: [110, 760], ground: "grass", tint: 0xc8c090, shoulder: "grass", trees: "mix", mount: [0x41503f, 0x7a7a80, 0xe6d8c8], clouds: 0xffd0b0, crowd: true },
-    { top: 0x1f63d6, hor: 0xbfdcf2, bot: 0x58606a, sun: [0.35, 0.78, 0.45], sunC: 0xfff6e8, size: 0.0009, glow: 0.9, sunI: 3.0, hemi: [0xd8ecff, 0x55603f, 0.7], fog: [160, 900], ground: "grass", tint: 0xa8c890, shoulder: "grass", trees: "broad", mount: [0x355a33, 0x6f7a72, 0xf4f6fa], clouds: 0xffffff, lake: true, crowd: true },
-    { top: 0x3d74c4, hor: 0xf5d2a2, bot: 0x7a5a40, sun: [0.55, 0.42, -0.62], sunC: 0xffe2b8, size: 0.001, glow: 1.2, sunI: 3.1, hemi: [0xffe8cc, 0x7a5a40, 0.65], fog: [140, 820], ground: "sand", tint: 0xffffff, shoulder: "gravel", trees: "cactus", mount: [0x8a4a2a, 0xb06a3a, 0xd89a60], rocks: true, clouds: 0xfff4e8 },
-    { top: 0x03060f, hor: 0x18223c, bot: 0x05060a, sun: [-0.4, 0.5, -0.7], sunC: 0xa8c0ff, size: 0.0007, glow: 0.35, sunI: 0.45, hemi: [0x6f86c0, 0x12141a, 0.32], fog: [60, 460], ground: "grass", tint: 0x707a80, shoulder: "grass", trees: "pine", mount: [0x10161c, 0x1a2028, 0x2a3240], night: true, stars: true, poles: 0xffa040 },
-    { top: 0x0c0620, hor: 0x5a2a66, bot: 0x0a0812, sun: [0.3, 0.35, 0.8], sunC: 0xffb8ff, size: 0.0005, glow: 0.3, sunI: 0.35, hemi: [0x8a70c0, 0x14101c, 0.3], fog: [70, 560], ground: "concrete", tint: 0x8a8898, shoulder: "concrete", trees: "none", night: true, stars: true, poles: 0xfff1d0, city: true, wet: true }
+    { top: 0x2c4a8a, hor: 0xffad72, bot: 0x4a4038, sun: [-0.62, 0.13, -0.77], sunC: 0xffb36b, size: 0.0012, glow: 1.5, sunI: 2.7, hemi: [0xffd6b0, 0x4a4238, 0.55], fog: [110, 760], ground: "grass", tint: 0xc8c090, shoulder: "grass", trees: "mix", mount: [0x41503f, 0x7a7a80, 0xe6d8c8], cloud: [0.5, 0xffc8a0, 0x6c5a78], grade: [1.03, 1.0, 0.96], crowd: true },
+    { top: 0x1f63d6, hor: 0xbfdcf2, bot: 0x58606a, sun: [0.35, 0.78, 0.45], sunC: 0xfff6e8, size: 0.0009, glow: 0.9, sunI: 3.0, hemi: [0xd8ecff, 0x55603f, 0.7], fog: [160, 900], ground: "grass", tint: 0xa8c890, shoulder: "grass", trees: "broad", mount: [0x355a33, 0x6f7a72, 0xf4f6fa], cloud: [0.44, 0xffffff, 0x95a3b8], grade: [1.0, 1.0, 1.02], lake: true, crowd: true },
+    { top: 0x3d74c4, hor: 0xf5d2a2, bot: 0x7a5a40, sun: [0.55, 0.42, -0.62], sunC: 0xffe2b8, size: 0.001, glow: 1.2, sunI: 3.1, hemi: [0xffe8cc, 0x7a5a40, 0.65], fog: [140, 820], ground: "sand", tint: 0xffffff, shoulder: "gravel", trees: "cactus", mount: [0x8a4a2a, 0xb06a3a, 0xd89a60], cloud: [0.3, 0xfff3e2, 0xb89c8c], grade: [1.03, 1.0, 0.96], rocks: true },
+    { top: 0x03060f, hor: 0x18223c, bot: 0x05060a, sun: [-0.4, 0.5, -0.7], sunC: 0xa8c0ff, size: 0.0007, glow: 0.35, sunI: 0.45, hemi: [0x6f86c0, 0x12141a, 0.32], fog: [60, 460], ground: "grass", tint: 0x707a80, shoulder: "grass", trees: "pine", mount: [0x10161c, 0x1a2028, 0x2a3240], cloud: [0.3, 0x2a3552, 0x06080f], grade: [0.95, 1.0, 1.08], night: true, stars: true, poles: 0xffa040 },
+    { top: 0x0c0620, hor: 0x5a2a66, bot: 0x0a0812, sun: [0.3, 0.35, 0.8], sunC: 0xffb8ff, size: 0.0005, glow: 0.3, sunI: 0.35, hemi: [0x8a70c0, 0x14101c, 0.3], fog: [70, 560], ground: "concrete", tint: 0x8a8898, shoulder: "concrete", trees: "none", cloud: [0.42, 0x52386a, 0x110a1a], grade: [1.04, 0.96, 1.08], night: true, stars: true, poles: 0xfff1d0, city: true, wet: true }
   ];
   var SKY_VS = "varying vec3 vDir; void main(){ vDir = normalize((modelMatrix * vec4(position, 1.0)).xyz - cameraPosition); gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); gl_Position.z = gl_Position.w * 0.99999; }";
+  // небо: градиент, солнце и слой облаков, подсвеченных со стороны солнца
   var SKY_FS = [
     "uniform vec3 top; uniform vec3 hor; uniform vec3 bot; uniform vec3 sunDir; uniform vec3 sunC; uniform float size; uniform float glow;",
+    "uniform sampler2D tCloud; uniform float cloudK; uniform float time; uniform vec3 cloudLit; uniform vec3 cloudDark;",
     "varying vec3 vDir;",
     "void main(){ vec3 d = normalize(vDir); float h = d.y;",
     " vec3 c = h > 0.0 ? mix(hor, top, pow(clamp(h, 0.0, 1.0), 0.5)) : mix(hor, bot, pow(clamp(-h, 0.0, 1.0), 0.3));",
-    " float s = max(dot(d, normalize(sunDir)), 0.0);",
+    " vec3 sd = normalize(sunDir); float s = max(dot(d, sd), 0.0);",
     " c += sunC * (pow(s, 6.0) * 0.25 + pow(s, 48.0) * 0.6) * glow;",
-    " c += sunC * smoothstep(1.0 - size, 1.0 - size * 0.4, s) * 6.0;",
+    " float cov = 0.0;",
+    " if (cloudK > 0.0 && h > 0.0) {",
+    "  vec2 cuv = d.xz / (h + 0.12) * 0.06 + vec2(time * 0.0016, time * 0.0007);",
+    "  float d2 = texture2D(tCloud, cuv * 2.6 + vec2(0.31, 0.67)).r;",
+    "  float den = texture2D(tCloud, cuv).r * 0.76 + d2 * 0.24;",
+    "  cov = smoothstep(1.0 - cloudK, 1.0 - cloudK + 0.3, den) * smoothstep(0.0, 0.07, h);",
+    "  float dl = texture2D(tCloud, cuv + normalize(sd.xz + vec2(1e-4)) * 0.022).r * 0.76 + d2 * 0.24;",
+    "  float lit = clamp(0.62 + (den - dl) * 4.5, 0.0, 1.0);",
+    "  vec3 cc = mix(cloudDark, cloudLit, lit) + sunC * pow(s, 10.0) * 0.9 * glow * (1.0 - 0.5 * cov);",
+    "  cc = mix(cc, hor, smoothstep(0.16, 0.0, h) * 0.45);",
+    "  c = mix(c, cc, cov * 0.95);",
+    " }",
+    " c += sunC * smoothstep(1.0 - size, 1.0 - size * 0.4, s) * 6.0 * (1.0 - cov * 0.92);",
     " gl_FragColor = vec4(c, 1.0);",
     " #include <tonemapping_fragment>",
     " #include <encodings_fragment>",
     "}"].join("\n");
   function skyMaterial(L) {
+    var cl = L.cloud || [0, 0xffffff, 0xffffff];
     return new THREE.ShaderMaterial({ vertexShader: SKY_VS, fragmentShader: SKY_FS, side: THREE.BackSide, depthWrite: false, fog: false,
-      uniforms: { top: { value: col(L.top) }, hor: { value: col(L.hor) }, bot: { value: col(L.bot) }, sunDir: { value: new THREE.Vector3().fromArray(L.sun).normalize() }, sunC: { value: col(L.sunC) }, size: { value: L.size }, glow: { value: L.glow } } });
+      uniforms: { top: { value: col(L.top) }, hor: { value: col(L.hor) }, bot: { value: col(L.bot) }, sunDir: { value: new THREE.Vector3().fromArray(L.sun).normalize() }, sunC: { value: col(L.sunC) }, size: { value: L.size }, glow: { value: L.glow },
+        tCloud: { value: cloudTex() }, cloudK: { value: cl[0] }, time: { value: 0 }, cloudLit: { value: col(cl[1]) }, cloudDark: { value: col(cl[2]) } } });
   }
   var skyMesh = new THREE.Mesh(new THREE.SphereGeometry(1300, 48, 24), new THREE.MeshBasicMaterial()); skyMesh.renderOrder = -10; skyMesh.frustumCulled = false; scene.add(skyMesh);
   function applyLook(ti) {
@@ -453,6 +592,13 @@ body.touchy #nitro { display: none; }
     envScene.add(new THREE.Mesh(new THREE.SphereGeometry(50, 32, 16), skyMaterial(Object.assign({}, L, { glow: L.glow * 1.4 }))));
     var gd = new THREE.Mesh(new THREE.CircleGeometry(45, 24), basic(L.bot)); gd.rotation.x = -Math.PI / 2; gd.position.y = -4; envScene.add(gd);
     if (L.night) for (var k = 0; k < 10; k++) { var lp = new THREE.Mesh(new THREE.SphereGeometry(3, 8, 6), basic(L.poles || 0xffffff)); var a = k / 10 * Math.PI * 2; lp.position.set(Math.cos(a) * 30, 10, Math.sin(a) * 30); envScene.add(lp); }
+    // ночной город тоже попадает в отражения: в лужах и на кузовах видны окна и неон
+    if (L.city) for (var cb = 0; cb < 36; cb++) {
+      var ca = cb / 36 * Math.PI * 2 + 0.05 * Math.sin(cb * 7.3), ch = 4 + 10 * Math.abs(Math.sin(cb * 2.17)), cw = 3 + 2 * Math.abs(Math.cos(cb * 1.3));
+      var bx = new THREE.Mesh(new THREE.BoxGeometry(cw, ch, cw), new THREE.MeshBasicMaterial({ map: T("windows"), color: col(0xffffff).multiplyScalar(1.4) }));
+      bx.position.set(Math.cos(ca) * 40, ch / 2 - 2, Math.sin(ca) * 40); bx.rotation.y = -ca; envScene.add(bx);
+      if (cb % 3 === 0) { var ne = new THREE.Mesh(new THREE.BoxGeometry(cw * 0.8, 0.5, 0.2), basic([0xff3a8c, 0x39d3ff, 0xffd23f, 0x7dff6a][cb % 4])); ne.material.color.multiplyScalar(2.5); ne.position.set(Math.cos(ca) * 38, ch - 2.6, Math.sin(ca) * 38); ne.rotation.y = -ca + Math.PI / 2; envScene.add(ne); }
+    }
     if (envRT) envRT.dispose();
     envRT = pmrem.fromScene(envScene, 0.02);
     scene.environment = envRT.texture;
@@ -509,6 +655,169 @@ body.touchy #nitro { display: none; }
       if (o.geometry && !o.geometry.userData.keep) o.geometry.dispose();
       if (o.material) (Array.isArray(o.material) ? o.material : [o.material]).forEach(function (m) { m.dispose(); });
     });
+  }
+
+  // ---------- асфальт трассы ----------
+  // гоночная траектория «снаружи — внутрь — наружу»: к вершине поворота линия прижимается внутрь, на входе и выходе уходит к внешнему краю.
+  // Считаем как разницу кривизны, сглаженной узко и широко. По линии накатана резина, а перед поворотами — следы торможений
+  function computeLine() {
+    var n = TOTAL, per = LENGTH / TOTAL, lim = W / 2 - 2.3, kv = new Float32Array(n), i, j;
+    for (i = 0; i < n; i++) kv[i] = angDiff(TR[wrapI(i + 1)].h, TR[wrapI(i - 1)].h) / (2 * per); // > 0 — поворот к −n
+    var gauss = function (a, sig) {
+      var out = new Float32Array(n), R = Math.ceil(sig * 3), w = [], ws = 0;
+      for (j = -R; j <= R; j++) { var g = Math.exp(-j * j / (2 * sig * sig)); w.push(g); ws += g; }
+      for (i = 0; i < n; i++) { var s = 0; for (j = -R; j <= R; j++) s += a[wrapI(i + j)] * w[j + R]; out[i] = s / ws; }
+      return out;
+    };
+    var kn = gauss(kv, 2.5), kw = gauss(kv, 11), off = new Float32Array(n), b2 = new Float32Array(n);
+    for (i = 0; i < n; i++) off[i] = -lim * Math.tanh((kn[i] - kw[i]) * 140);
+    off = gauss(off, 2);
+    for (i = 0; i < n; i++) { var ahead = 0; for (j = 2; j <= 13; j++) ahead = Math.max(ahead, TR[wrapI(i + j)].curv); b2[i] = clamp((ahead - TR[i].curv * 1.3) * 6 - 0.2, 0, 1); }
+    return { off: off, brk: gauss(b2, 1.2) };
+  }
+  // полотно: щебень кладём по мировым координатам (плитка 1,6 м), поэтому он нигде не тянется и не перекашивается.
+  // aRoad: смещение от оси, путь вдоль трассы, где идёт траектория, сила торможения
+  function roadGeo(RL) {
+    var ns = 8, per = LENGTH / TOTAL, hw = W / 2, TILE = 1.6, pos = [], uv = [], ar = [], idx = [];
+    for (var i = 0; i <= TOTAL; i++) {
+      var p = TR[wrapI(i)], s = i * per, lo = RL.off[wrapI(i)], br = RL.brk[wrapI(i)];
+      for (var j = 0; j <= ns; j++) {
+        var o = -hw + 2 * hw * j / ns, x = p.x + p.nx * o, z = p.z + p.nz * o;
+        pos.push(x, 0.05, z); uv.push(x / TILE, z / TILE); ar.push(o, s, lo, br);
+        if (i < TOTAL && j < ns) { var a = i * (ns + 1) + j, b = a + ns + 1; idx.push(a, a + 1, b, a + 1, b + 1, b); }
+      }
+    }
+    var g = new THREE.BufferGeometry();
+    g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute("uv", new THREE.Float32BufferAttribute(uv, 2)); g.setAttribute("aRoad", new THREE.Float32BufferAttribute(ar, 4));
+    g.setIndex(idx); g.computeVertexNormals(); return g;
+  }
+  var ROAD_HEAD = [
+    "uniform sampler2D tNoise; uniform sampler2D tCrack; uniform float uHalfW; uniform float uLen; uniform float uPatchN; uniform float uCrackK;",
+    "varying vec4 vRoad;",
+    "float rHash(float n) { return fract(sin(n) * 43758.5453); }"].join("\n");
+  var ROAD_ALBEDO = [
+    "float rLat = vRoad.x, rS = vRoad.y, rLine = vRoad.z, rBrk = vRoad.w, rAbs = abs(rLat);",
+    "vec4 nzA = texture2D(tNoise, vec2(rLat * 0.021, rS * 0.0131));",
+    "vec4 nzB = texture2D(tNoise, vec2(rLat * 0.097, rS * 0.0617));",
+    // накатанная траектория: широкая тёмная полоса и две колеи
+    "float dL = rLat - rLine;",
+    "float rRub = exp(-dL * dL * 0.13) * (0.5 + 0.5 * (exp(-(dL - 0.82) * (dL - 0.82) * 3.2) + exp(-(dL + 0.82) * (dL + 0.82) * 3.2)));",
+    "rRub = min(1.0, rRub * (0.7 + 0.6 * nzB.b));",
+    // следы торможений: чёрные полосы вдоль колей перед поворотами
+    "float stk = texture2D(tNoise, vec2(rLat * 1.9, rS * 0.0045)).a;",
+    "float rSkid = min(1.0, rBrk * smoothstep(0.48, 0.78, stk) * (exp(-(dL - 0.82) * (dL - 0.82) * 6.0) + exp(-(dL + 0.82) * (dL + 0.82) * 6.0)));",
+    // в стороне от траектории к краям: пыль и катышки резины, покрытие светлее
+    "float rDust = smoothstep(uHalfW - 5.0, uHalfW - 0.6, rAbs) * (1.0 - min(1.0, rRub * 1.5));",
+    // заплатки: прямоугольник в ячейке ~35 м, свежий асфальт темнее или старый светлее, по контуру шов битумом
+    "float pc = rS / uLen * uPatchN, pci = floor(pc), pcf = fract(pc), cellL = uLen / uPatchN;",
+    "float h1 = rHash(pci * 12.9898 + 4.1), h2 = rHash(pci * 78.233 + 1.7), h3 = rHash(pci * 39.425 + 9.3);",
+    "float pa = mix(-uHalfW + 0.6, 1.5, h2), pb = pa + mix(2.4, uHalfW * 0.9, h3), c0 = 0.12 + 0.3 * h3, c1 = c0 + 0.18 + 0.32 * h2;",
+    "float inLat = step(pa, rLat) * step(rLat, pb), inS = step(c0, pcf) * step(pcf, c1), isP = step(0.6, h1);",
+    "float rPatch = isP * inLat * inS;",
+    "float eLat = min(abs(rLat - pa), abs(rLat - pb)), eS = min(abs(pcf - c0), abs(pcf - c1)) * cellL;",
+    "float rSeam = isP * max(inS * (1.0 - smoothstep(0.025, 0.07, eLat)), inLat * (1.0 - smoothstep(0.025, 0.07, eS)));",
+    // залитые битумом трещины: блестящие чёрные «змейки», не везде
+    "float rTar = texture2D(tCrack, vec2(rLat * 0.0625 + 0.5, rS * uCrackK)).r * smoothstep(0.5, 0.66, nzA.g) * (0.85 - 0.5 * rRub);",
+    "rTar = max(rTar, rSeam * 0.6);",
+    // разметка: белые линии по краям, краска местами стёрта
+    "float rFw = fwidth(rAbs) * 1.3 + 0.004;",
+    "float rPaint = 1.0 - smoothstep(0.11 - rFw, 0.11 + rFw, abs(rAbs - (uHalfW - 0.42)));",
+    "rPaint *= smoothstep(0.16, 0.34, texture2D(tNoise, vec2(rLat * 2.1, rS * 0.33)).b);",
+    "vec3 asph = diffuseColor.rgb * (0.86 + 0.26 * nzA.r + 0.1 * (nzB.g - 0.5));",
+    "asph *= mix(1.0, mix(0.8, 1.2, step(0.5, h2)), rPatch);",
+    "asph *= 1.0 - 0.45 * rRub;",
+    "asph *= 1.0 - 0.6 * rSkid;",
+    "asph = mix(asph, asph * 1.22 + vec3(0.010, 0.009, 0.007), rDust * 0.65);",
+    "asph = mix(asph, vec3(0.016, 0.016, 0.017), rTar);",
+    "diffuseColor.rgb = mix(asph, vec3(0.80, 0.80, 0.77) * (0.88 + 0.5 * diffuseColor.g), rPaint);",
+    "#ifdef ROAD_WET",
+    // мокрая трасса: темнее, в низинах и у краёв лужи, а траектория подсыхает первой
+    "float rWet = 1.0 - 0.55 * rRub;",
+    "float rPud = smoothstep(0.64, 0.74, texture2D(tNoise, vec2(rLat * 0.06, rS * 0.037)).g + 0.16 * smoothstep(uHalfW - 3.5, uHalfW, rAbs)) * rWet * (1.0 - rPaint);",
+    "diffuseColor.rgb *= mix(1.0, 0.5, rWet);",
+    "#endif"].join("\n");
+  var ROAD_ROUGH = [
+    "roughnessFactor *= 1.0 - 0.14 * rRub;",
+    "roughnessFactor = mix(roughnessFactor, 0.5, rTar);",
+    "roughnessFactor = mix(roughnessFactor, 0.6, rPaint);",
+    "#ifdef ROAD_WET",
+    "roughnessFactor = mix(roughnessFactor, roughnessFactor * 0.32, rWet);",
+    "roughnessFactor = mix(roughnessFactor, 0.07, rPud);",
+    "#endif"].join("\n");
+  var ROAD_NORMAL = [
+    "float rFlat = max(rPaint * 0.75, rTar * 0.8);",
+    "#ifdef ROAD_WET",
+    "rFlat = max(rFlat, rPud);",
+    "#endif",
+    "normal = normalize(mix(normal, geometryNormal, rFlat));"].join("\n");
+  function roadMat(L) {
+    asphaltSet();
+    var m = new THREE.MeshStandardMaterial({ color: col(0xffffff), map: TEX.asphD, normalMap: TEX.asphN, roughnessMap: TEX.asphR, roughness: 1, metalness: 0, normalScale: new THREE.Vector2(0.9, 0.9), envMapIntensity: L.wet ? 0.8 : 1 });
+    var U = { tNoise: { value: noiseRGBA() }, tCrack: { value: crackTex() }, uHalfW: { value: W / 2 }, uLen: { value: LENGTH }, uPatchN: { value: Math.max(8, Math.round(LENGTH / 35)) }, uCrackK: { value: Math.max(1, Math.round(LENGTH / 16)) / LENGTH } };
+    if (L.wet) m.defines = { ROAD_WET: "" };
+    m.onBeforeCompile = function (sh) {
+      Object.keys(U).forEach(function (k) { sh.uniforms[k] = U[k]; });
+      sh.vertexShader = "attribute vec4 aRoad;\nvarying vec4 vRoad;\n" + sh.vertexShader.replace("#include <uv_vertex>", "#include <uv_vertex>\n  vRoad = aRoad;");
+      sh.fragmentShader = ROAD_HEAD + "\n" + sh.fragmentShader.replace("#include <map_fragment>", "#include <map_fragment>\n" + ROAD_ALBEDO).replace("#include <roughnessmap_fragment>", "#include <roughnessmap_fragment>\n" + ROAD_ROUGH).replace("#include <normal_fragment_maps>", "#include <normal_fragment_maps>\n" + ROAD_NORMAL);
+    };
+    m.customProgramCacheKey = function () { return L.wet ? "roadW" : "roadD"; };
+    return m;
+  }
+  // лента вдоль трассы по профилю поперёк: точки [смещение от base, высота, u]; side = ±1 — сторона трассы.
+  // ramp — плавно опустить концы (поребрики не обрываются ступенькой)
+  function alongProfile(prof, base, side, from, to, vLen, ramp) {
+    var pos = [], uv = [], idx = [], np = prof.length, per = LENGTH / TOTAL, cnt = 0, a0 = from == null ? 0 : from, a1 = to == null ? TOTAL : to;
+    for (var i = a0; i <= a1; i++) {
+      var p = TR[wrapI(i)], s = i * per, rk = ramp ? Math.min(1, 0.3 + 0.35 * Math.min(i - a0, a1 - i)) : 1;
+      for (var j = 0; j < np; j++) { var k = prof[j], o = side * (base + k[0]); pos.push(p.x + p.nx * o, ramp ? 0.052 + (k[1] - 0.052) * rk : k[1], p.z + p.nz * o); uv.push(k[2] || 0, s / vLen); }
+      if (i < a1) for (j = 0; j < np - 1; j++) { var a = cnt * np + j, b = a + np; if (side > 0) idx.push(a, a + 1, b, a + 1, b + 1, b); else idx.push(a, b, a + 1, a + 1, b, b + 1); }
+      cnt++;
+    }
+    var g = new THREE.BufferGeometry(); g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute("uv", new THREE.Float32BufferAttribute(uv, 2)); g.setIndex(idx); g.computeVertexNormals(); return g;
+  }
+  // поребрик поперёк: от асфальта вверх с наклоном, плоский верх с рифлением, скос к обочине
+  var KERB_PROF = [[-0.28, 0.052, 0], [-0.06, 0.085, 0.12], [0.35, 0.125, 0.3], [1.45, 0.14, 0.86], [1.7, 0.056, 1]];
+  // отбойник: W-образная балка, два гребня к трассе
+  var RAIL_PROF = [[0, 0], [-0.055, 0.04], [-0.075, 0.085], [-0.04, 0.13], [-0.035, 0.165], [-0.075, 0.215], [-0.055, 0.26], [0, 0.3]];
+  // пучки травы: две скрещённые плоскости, каждая с двух сторон; нормаль вверх, чтобы освещались как газон
+  var WIND = { value: 0 };
+  function tuftGeo() {
+    if (TREE_GEO.tuft) return TREE_GEO.tuft;
+    var pos = [], uv = [], nor = [], idx = [], w = 0.42, h = 0.5;
+    [0, Math.PI / 2].forEach(function (a) {
+      var cx = Math.cos(a) * w, cz = Math.sin(a) * w, b = pos.length / 3;
+      pos.push(-cx, 0, -cz, cx, 0, cz, cx, h, cz, -cx, h, -cz); uv.push(0, 0, 1, 0, 1, 1, 0, 1);
+      for (var q = 0; q < 4; q++) nor.push(0, 1, 0);
+      idx.push(b, b + 1, b + 2, b, b + 2, b + 3, b, b + 2, b + 1, b, b + 3, b + 2);
+    });
+    var g = new THREE.BufferGeometry(); g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute("normal", new THREE.Float32BufferAttribute(nor, 3)); g.setAttribute("uv", new THREE.Float32BufferAttribute(uv, 2)); g.setIndex(idx);
+    g.userData.keep = true; TREE_GEO.tuft = g; return g;
+  }
+  function addTufts(tg, L, kerbAt, lakeR) {
+    if (L.shoulder === "concrete") return;
+    var dry = L.shoulder === "gravel", n = Math.round((GFX.hi ? 7000 : 2200) * (dry ? 0.45 : 1)), R = PRNG(1234 + curTrack * 7);
+    var mat = std(0xffffff, 1, 0, { map: T(dry ? "tuftDry" : "tuft"), alphaTest: 0.5 });
+    mat.onBeforeCompile = function (sh) {
+      sh.uniforms.uWind = WIND;
+      sh.vertexShader = "uniform float uWind;\n" + sh.vertexShader.replace("#include <begin_vertex>", "#include <begin_vertex>\n#ifdef USE_INSTANCING\n  vec3 ip = vec3(instanceMatrix[3][0], instanceMatrix[3][1], instanceMatrix[3][2]); float sw = uv.y * uv.y;\n  transformed.x += sin(uWind * 1.9 + ip.x * 0.35 + ip.z * 0.21) * 0.07 * sw;\n  transformed.z += cos(uWind * 1.4 + ip.z * 0.3 + ip.x * 0.1) * 0.05 * sw;\n#endif");
+    };
+    mat.customProgramCacheKey = function () { return "tuft"; };
+    var im = new THREE.InstancedMesh(tuftGeo(), mat, n), dm = new THREE.Object3D(), c = 0, tint = col(dry ? 0xffffff : L.tint);
+    // зоны: обочина до отбойника, между отбойником и сеткой, за сеткой
+    var zones = [[0.46, 0], [0.24, 0.6], [0.3, 4.6]];
+    for (var tries = 0; tries < n * 4 && c < n; tries++) {
+      var zr = R(), z = zr < zones[0][0] ? 0 : zr < zones[0][0] + zones[1][0] ? 1 : 2, i = Math.floor(R() * TOTAL), side = R() < 0.5 ? 1 : -1, p = TR[i], q = TR[wrapI(i + 1)], f = R();
+      var lo = z === 0 ? (kerbAt(i) ? W / 2 + 1.85 : W / 2 + 0.3) : WALL + zones[z][1], hi2 = z === 0 ? WALL + 0.05 : z === 1 ? WALL + 3.9 : WALL + 17, off = side * (lo + R() * (hi2 - lo));
+      var x = p.x + (q.x - p.x) * f + p.nx * off, zz = p.z + (q.z - p.z) * f + p.nz * off;
+      if (z > 0 && Math.hypot(x - SL.x, zz - SL.z) < 70) continue;
+      if (lakeR && Math.hypot(x, zz) < lakeR + 7) continue;
+      if (z === 2 && Math.hypot(TR[nearestIdx(x, zz, i, 12)].x - x, TR[nearestIdx(x, zz, i, 12)].z - zz) < WALL + 4.4) continue;
+      // пятнами: где-то густо, где-то выкошено
+      if (NZ2(x / 300 + 0.5, zz / 300 + 0.5, 8, 2) < 0.42) continue;
+      var s = 0.6 + 0.75 * R(); dm.position.set(x, 0, zz); dm.rotation.set(0, R() * 6.283, 0); dm.scale.set(s, s * (0.8 + 0.5 * R()), s); dm.updateMatrix(); im.setMatrixAt(c, dm.matrix);
+      var k = 0.75 + 0.4 * R(); im.setColorAt(c, new THREE.Color(tint.r * k, tint.g * k * (0.95 + 0.1 * R()), tint.b * k)); c++;
+    }
+    im.count = c; im.receiveShadow = true; tg.add(im);
   }
 
   function buildTrack(ti) {
@@ -580,27 +889,27 @@ body.touchy #nitro { display: none; }
     }
     function add(mesh, shadow) { if (shadow & 1) mesh.castShadow = true; if (shadow & 2) mesh.receiveShadow = true; tg.add(mesh); return mesh; }
 
-    // дорога
-    var roadM = std(0xffffff, L.wet ? 0.38 : 0.86, L.wet ? 0.12 : 0, { map: T(L.wet ? "asphaltWet" : "asphalt"), bumpMap: T("asphaltBump"), bumpScale: 0.035 });
-    add(new THREE.Mesh(ribbon(-W / 2, W / 2, 0.05, W), roadM), 2);
+    // дорога: настоящий асфальт — щебень в битуме, накатанная траектория, следы торможений, заплатки, залитые трещины, разметка
+    add(new THREE.Mesh(roadGeo(computeLine()), roadMat(L)), 2);
     // обочина до отбойника
     var shTex = T(L.shoulder), shM = std(L.shoulder === "grass" ? L.tint : 0xffffff, 0.95, 0, { map: shTex });
     [[W / 2, WALL + 1.2], [-WALL - 1.2, -W / 2]].forEach(function (o) { add(new THREE.Mesh(ribbon(o[0], o[1], 0.04, 8), shM), 2); });
-    // поребрики в поворотах (чуть приподняты к внешнему краю)
-    var kerbM = std(0xffffff, 0.6, 0, { map: T("kerb") });
-    var inRun = false, runStart = 0;
+    // поребрики в поворотах: объёмный профиль, рифление, следы резины
+    var kerbM = std(0xffffff, 0.5, 0, { map: T("kerbD"), normalMap: T("kerbN"), polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 });
+    var inRun = false, runStart = 0, kerbHot = new Uint8Array(TOTAL);
     for (var ki = 0; ki <= TOTAL; ki++) {
       var hot = ki < TOTAL && (TR[ki].curv > 0.1 || TR[wrapI(ki + 3)].curv > 0.1 || TR[wrapI(ki - 3)].curv > 0.1);
+      if (hot) kerbHot[ki] = 1;
       if (hot && !inRun) { inRun = true; runStart = ki; }
       if ((!hot || ki === TOTAL) && inRun) {
         inRun = false;
-        add(new THREE.Mesh(ribbon(W / 2 - 0.2, W / 2 + 1.7, 0.07, 3, runStart, ki, 0.16), kerbM), 2);
-        add(new THREE.Mesh(ribbon(-W / 2 - 1.7, -W / 2 + 0.2, 0.16, 3, runStart, ki, 0.07), kerbM), 2);
+        add(new THREE.Mesh(alongProfile(KERB_PROF, W / 2, 1, runStart, ki, 2, true), kerbM), 2);
+        add(new THREE.Mesh(alongProfile(KERB_PROF, W / 2, -1, runStart, ki, 2, true), kerbM), 2);
       }
     }
-    // отбойник: две металлические балки на стойках
-    var railM = std(0xc8ccd4, 0.32, 0.9, { side: THREE.DoubleSide });
-    [WALL + 0.3, -WALL - 0.3].forEach(function (o) { add(new THREE.Mesh(wallRibbon(o, 0.45, 0.78, 4), railM), 1); add(new THREE.Mesh(wallRibbon(o, 0.84, 1.08, 4), railM), 1); });
+    // отбойник: две оцинкованные W-балки на стойках
+    var railM = std(0xb9bec6, 0.38, 0.85, { side: THREE.DoubleSide });
+    [1, -1].forEach(function (sd) { [0.44, 0.78].forEach(function (y0) { add(new THREE.Mesh(alongProfile(RAIL_PROF.map(function (r) { return [r[0], y0 + r[1]]; }), WALL + 0.3, sd, 0, TOTAL, 4, false), railM), 1); }); });
     var postGeo = new THREE.BoxGeometry(0.14, 1.15, 0.14), postM = std(0x5a5e66, 0.6, 0.6), posts = new THREE.InstancedMesh(postGeo, postM, TOTAL * 2), dm = new THREE.Object3D(), pc = 0;
     for (var pi = 0; pi < TOTAL; pi++) { var pp = TR[pi]; [WALL + 0.45, -WALL - 0.45].forEach(function (o) { dm.position.set(pp.x + pp.nx * o, 0.57, pp.z + pp.nz * o); dm.rotation.set(0, pp.h, 0); dm.updateMatrix(); posts.setMatrixAt(pc++, dm.matrix); }); }
     posts.castShadow = true; tg.add(posts);
@@ -741,13 +1050,8 @@ body.touchy #nitro { display: none; }
       }
       dm.scale.set(1, 1, 1); rocks.count = rc; rocks.castShadow = true; rocks.receiveShadow = true; tg.add(rocks);
     }
-    // облака
-    if (L.clouds && !night) {
-      for (var cc = 0; cc < 22; cc++) {
-        var sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: T("cloud"), color: col(L.clouds), transparent: true, opacity: rnd(0.55, 0.9), depthWrite: false, fog: false }));
-        var ca = rnd(0, 6.28), cr2 = rnd(500, 1050), csz = rnd(160, 340); sp.position.set(Math.cos(ca) * cr2, rnd(140, 300), Math.sin(ca) * cr2); sp.scale.set(csz, csz * 0.45, 1); tg.add(sp);
-      }
-    }
+    // трава пучками по обочинам и за ограждением (облака теперь рисует небо)
+    addTufts(tg, L, function (i) { return kerbHot[wrapI(i)] === 1; }, L.lake ? lakeR : 0);
     // звёзды
     if (L.stars) {
       var sv = []; for (var st = 0; st < 1600; st++) { var th = rnd(0, 6.28), ph = Math.acos(rnd(0.05, 1)), R2 = 1200; sv.push(Math.cos(th) * Math.sin(ph) * R2, Math.cos(ph) * R2, Math.sin(th) * Math.sin(ph) * R2); }
@@ -919,6 +1223,32 @@ body.touchy #nitro { display: none; }
     g.translate(0, 0, -depth / 2); g.rotateY(-Math.PI / 2); g.computeVertexNormals();
     return g;
   }
+  // нормали «с изломом»: в каждой вершине усредняем только грани, отличающиеся меньше чем на deg градусов
+  function creaseNormals(g, deg) {
+    var pos = g.attributes.position, n = pos.count, fn = new Float32Array(n * 3), out = new Float32Array(n * 3), lim = Math.cos(deg * Math.PI / 180), groups = {}, idx = g.index;
+    var a = new THREE.Vector3(), b = new THREE.Vector3(), c = new THREE.Vector3(), tri = function (k) { return idx ? idx.getX(k) : k; }, cnt = idx ? idx.count : n;
+    for (var f = 0; f < cnt; f += 3) {
+      var i0 = tri(f), i1 = tri(f + 1), i2 = tri(f + 2);
+      a.fromBufferAttribute(pos, i0); b.fromBufferAttribute(pos, i1).sub(a); c.fromBufferAttribute(pos, i2).sub(a); b.cross(c);
+      [i0, i1, i2].forEach(function (v) { fn[v * 3] += b.x; fn[v * 3 + 1] += b.y; fn[v * 3 + 2] += b.z; });
+    }
+    for (var i = 0; i < n; i++) { var key = Math.round(pos.getX(i) * 2000) + "_" + Math.round(pos.getY(i) * 2000) + "_" + Math.round(pos.getZ(i) * 2000); (groups[key] = groups[key] || []).push(i); }
+    Object.keys(groups).forEach(function (key) {
+      var L = groups[key];
+      L.forEach(function (v0) {
+        var x0 = fn[v0 * 3], y0 = fn[v0 * 3 + 1], z0 = fn[v0 * 3 + 2], l0 = Math.sqrt(x0 * x0 + y0 * y0 + z0 * z0), sx = 0, sy = 0, sz = 0;
+        L.forEach(function (v1) {
+          var x1 = fn[v1 * 3], y1 = fn[v1 * 3 + 1], z1 = fn[v1 * 3 + 2], l1 = Math.sqrt(x1 * x1 + y1 * y1 + z1 * z1);
+          if (l0 < 1e-12 || l1 < 1e-12 || (x0 * x1 + y0 * y1 + z0 * z1) / (l0 * l1) >= lim) { sx += x1; sy += y1; sz += z1; }
+        });
+        var ll = Math.sqrt(sx * sx + sy * sy + sz * sz);
+        if (ll < 1e-12) { sx = x0; sy = y0; sz = z0; ll = l0 || 1; }
+        out[v0 * 3] = sx / ll; out[v0 * 3 + 1] = sy / ll; out[v0 * 3 + 2] = sz / ll;
+      });
+    });
+    g.setAttribute("normal", new THREE.BufferAttribute(out, 3));
+    return g;
+  }
   function carGeo(id) {
     if (CAR_GEO[id]) return CAR_GEO[id];
     var S = CAR_STYLE[id], ar = S.wR * 1.16 + 0.063; // фаска раздувает контур на 0.063, арку делаем на столько же больше
@@ -939,6 +1269,8 @@ body.touchy #nitro { display: none; }
     }
     taper(body, 0.13, 0.07, S.yb + 0.25, 1.0);
     taper(cabin, 0.05, 0.16, S.cabin[0][1], S.cabin[2][1] + 0.07);
+    // плавные обводы: сглаживаем нормали между гранями, а острые кромки оставляем
+    creaseNormals(body, 48); creaseNormals(cabin, 42);
     // крыша: тонкая полоса цвета кузова по верху кабины
     var roofPts = [], n = 16, z0 = cb[1][0] + 0.06, z1 = cb[cb.length - 2][0] + 0.02;
     var cabTop = function (z) { return yOn(S.cabSp, z); };
@@ -995,6 +1327,7 @@ body.touchy #nitro { display: none; }
     var id = CAR_STYLE[model.id] ? model.id : "x", S = CAR_STYLE[id], mats = sharedCarMats(), geo = carGeo(id);
     var paint = S.paint === "matte" ? std(model.color, 0.62, 0.15) :
       GFX.hi ? new THREE.MeshPhysicalMaterial({ color: col(model.color), metalness: 0.55, roughness: 0.3, clearcoat: 1, clearcoatRoughness: 0.03, envMapIntensity: 1.25 }) : std(model.color, 0.3, 0.5, { envMapIntensity: 1.2 });
+    if (GFX.hi && S.paint !== "matte") flakes(paint);
     var root = new THREE.Group(), body = new THREE.Group(); root.add(body);
     function part(g, m, x, y, z, sh) { var o = new THREE.Mesh(g, m); o.position.set(x || 0, y || 0, z || 0); if (sh !== false) o.castShadow = true; body.add(o); return o; }
     part(geo.body, paint).receiveShadow = true;
@@ -1101,6 +1434,14 @@ body.touchy #nitro { display: none; }
     [-1, 1].forEach(function (sd) { var gm = new THREE.Sprite(new THREE.SpriteMaterial({ map: T("glow"), color: col(0xfff2d0), transparent: true, opacity: 0.85, depthWrite: false, blending: THREE.AdditiveBlending })); gm.scale.set(1.6, 1.6, 1); gm.position.set(sd * (Wd / 2 - 0.38), yf, zf + 0.2); gm.visible = false; body.add(gm); glows.push(gm); });
     mergeByMaterial(body, flames, glows);
     return { root: root, body: body, wheels: wheels, steerP: steerP, flames: flames, tailM: tailM, headM: headM, glows: glows, S: S, roll: 0, pitch: 0, paint: paint };
+  }
+  // металлик: под лаком искрятся крошечные чешуйки краски, заметно вблизи; лак остаётся гладким
+  function flakes(m) {
+    m.onBeforeCompile = function (sh) {
+      sh.vertexShader = "varying vec3 vFlk;\n" + sh.vertexShader.replace("#include <begin_vertex>", "#include <begin_vertex>\n  vFlk = position;");
+      sh.fragmentShader = "varying vec3 vFlk;\n" + sh.fragmentShader.replace("#include <normal_fragment_maps>", "#include <normal_fragment_maps>\n  { vec3 fp = floor(vFlk * 320.0); vec3 fr = fract(sin(vec3(dot(fp, vec3(127.1, 311.7, 74.7)), dot(fp, vec3(269.5, 183.3, 246.1)), dot(fp, vec3(113.5, 271.9, 124.6)))) * 43758.5453) - 0.5; normal = normalize(normal + fr * 0.075 * smoothstep(7.0, 2.0, length(vViewPosition))); }");
+    };
+    m.customProgramCacheKey = function () { return "flakes"; };
   }
   function mergeByMaterial(body, flames, glows) {
     body.updateMatrixWorld(true);
@@ -1956,15 +2297,85 @@ body.touchy #nitro { display: none; }
   $("on4").addEventListener("click", function () { queueRace(4); });
   $("onCancel").addEventListener("click", cancelQueue);
 
+  // ---------- постобработка: свечение ярких мест (солнце, фары, неон, нитро), размытие краёв на скорости, виньетка и тон кадра ----------
+  // Только на «Высокой» графике и WebGL2: кадр рисуется в буфер со сглаживанием, свечение считается в 1/4 и 1/8 размера
+  var POST = { on: false, ok: false };
+  (function initPost() {
+    if (!GFX.hi || !renderer.capabilities.isWebGL2 || !THREE.WebGLMultisampleRenderTarget) return;
+    try {
+      var opt = { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, format: THREE.RGBAFormat, stencilBuffer: false };
+      POST.rt = new THREE.WebGLMultisampleRenderTarget(4, 4, Object.assign({ encoding: THREE.sRGBEncoding }, opt)); POST.rt.samples = 4; POST.rt.texture.generateMipmaps = false;
+      ["a", "b", "c", "d"].forEach(function (k) { POST[k] = new THREE.WebGLRenderTarget(4, 4, Object.assign({ depthBuffer: false }, opt)); POST[k].texture.generateMipmaps = false; });
+      var VS = "varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }";
+      var sm = function (fs, u) { return new THREE.ShaderMaterial({ vertexShader: VS, fragmentShader: fs, uniforms: u, depthTest: false, depthWrite: false }); };
+      var box = "vec3 box(sampler2D t, vec2 uv, vec2 e){ return (texture2D(t, uv - e).rgb + texture2D(t, uv + e).rgb + texture2D(t, uv + vec2(e.x, -e.y)).rgb + texture2D(t, uv + vec2(-e.x, e.y)).rgb) * 0.25; }\n";
+      POST.bright = sm("uniform sampler2D tSrc; uniform vec2 texel; uniform float thr; uniform float knee; varying vec2 vUv;\n" + box +
+        "void main(){ vec3 c = box(tSrc, vUv, texel); float br = max(c.r, max(c.g, c.b)); float s = clamp(br - thr + knee, 0.0, 2.0 * knee); s = s * s / (4.0 * knee + 1e-4);" +
+        " gl_FragColor = vec4(c * max(s, br - thr) / max(br, 1e-4), 1.0); }", { tSrc: { value: null }, texel: { value: new THREE.Vector2() }, thr: { value: 0.85 }, knee: { value: 0.12 } });
+      POST.down = sm("uniform sampler2D tSrc; uniform vec2 texel; varying vec2 vUv;\n" + box + "void main(){ gl_FragColor = vec4(box(tSrc, vUv, texel), 1.0); }", { tSrc: { value: null }, texel: { value: new THREE.Vector2() } });
+      POST.blur = sm("uniform sampler2D tSrc; uniform vec2 dir; varying vec2 vUv;\nvoid main(){ vec2 o1 = dir * 1.3846153846, o2 = dir * 3.2307692308;" +
+        " vec3 c = texture2D(tSrc, vUv).rgb * 0.2270270270 + (texture2D(tSrc, vUv + o1).rgb + texture2D(tSrc, vUv - o1).rgb) * 0.3162162162 + (texture2D(tSrc, vUv + o2).rgb + texture2D(tSrc, vUv - o2).rgb) * 0.0702702703;" +
+        " gl_FragColor = vec4(c, 1.0); }", { tSrc: { value: null }, dir: { value: new THREE.Vector2() } });
+      POST.comp = sm(["uniform sampler2D tScene; uniform sampler2D tB1; uniform sampler2D tB2; uniform float bloom; uniform float speed; uniform float vig; uniform vec3 grade; varying vec2 vUv;",
+        "void main(){",
+        " vec3 c = texture2D(tScene, vUv).rgb;",
+        " if (speed > 0.002) { vec2 dv = vUv - vec2(0.5, 0.56); float m = smoothstep(0.1, 0.55, length(dv)) * speed * 0.016; vec3 acc = c;",
+        "  for (int i = 1; i < 6; i++) acc += texture2D(tScene, vUv - dv * m * float(i)).rgb;",
+        "  c = acc / 6.0; }",
+        " c += (texture2D(tB1, vUv).rgb * 0.75 + texture2D(tB2, vUv).rgb) * bloom;",
+        " vec2 q = (vUv - 0.5) * 2.0; c *= 1.0 - vig * smoothstep(0.5, 2.0, dot(q, q));",
+        " c = clamp(mix(c, c * grade, 0.6), 0.0, 1.0); c = mix(c, c * c * (3.0 - 2.0 * c), 0.14);",
+        " gl_FragColor = vec4(c, 1.0); }"].join("\n"), { tScene: { value: null }, tB1: { value: null }, tB2: { value: null }, bloom: { value: 0.5 }, speed: { value: 0 }, vig: { value: 0.32 }, grade: { value: new THREE.Vector3(1, 1, 1) } });
+      var g = new THREE.BufferGeometry(); g.setAttribute("position", new THREE.Float32BufferAttribute([-1, -1, 0, 3, -1, 0, -1, 3, 0], 3)); g.setAttribute("uv", new THREE.Float32BufferAttribute([0, 0, 2, 0, 0, 2], 2));
+      POST.quad = new THREE.Mesh(g, POST.comp); POST.quad.frustumCulled = false; POST.scene = new THREE.Scene(); POST.scene.add(POST.quad); POST.cam = new THREE.Camera();
+      POST.on = POST.ok = true;
+    } catch (e) { POST.on = POST.ok = false; }
+  })();
+  function sizePost() {
+    if (!POST.ok) return;
+    var v = renderer.getDrawingBufferSize(new THREE.Vector2()), w = Math.max(1, v.x), h = Math.max(1, v.y), r4 = function (x) { return Math.max(1, Math.round(x / 4)); }, r8 = function (x) { return Math.max(1, Math.round(x / 8)); };
+    POST.rt.setSize(w, h); POST.a.setSize(r4(w), r4(h)); POST.b.setSize(r4(w), r4(h)); POST.c.setSize(r8(w), r8(h)); POST.d.setSize(r8(w), r8(h)); POST.w = w; POST.h = h;
+  }
+  function postPass(mat, target) { POST.quad.material = mat; renderer.setRenderTarget(target); renderer.render(POST.scene, POST.cam); }
+  function postBlur(src, dst, dx, dy) { var u = POST.blur.uniforms; u.tSrc.value = src.texture; u.dir.value.set(dx / src.width, dy / src.height); postPass(POST.blur, dst); }
+  var RINFO = { calls: 0, tris: 0 }; // счётчики основного прохода (без теней и постобработки) — для автотестов
+  function renderFrame() {
+    renderer.setRenderTarget(POST.on ? POST.rt : null); renderer.render(scene, camera);
+    RINFO.calls = renderer.info.render.calls; RINFO.tris = renderer.info.render.triangles;
+    if (!POST.on) return;
+    var night = LOOK && LOOK.night, B = POST.bright.uniforms, D = POST.down.uniforms, C = POST.comp.uniforms;
+    B.tSrc.value = POST.rt.texture; B.texel.value.set(1 / POST.w, 1 / POST.h); B.thr.value = night ? 0.7 : 0.85; postPass(POST.bright, POST.a);
+    postBlur(POST.a, POST.b, 1, 0); postBlur(POST.b, POST.a, 0, 1);
+    D.tSrc.value = POST.a.texture; D.texel.value.set(1 / POST.a.width, 1 / POST.a.height); postPass(POST.down, POST.c);
+    postBlur(POST.c, POST.d, 1, 0); postBlur(POST.d, POST.c, 0, 1);
+    var r = player, spd = r && state !== "menu" ? Math.abs(r.vf || 0) : 0;
+    C.tScene.value = POST.rt.texture; C.tB1.value = POST.a.texture; C.tB2.value = POST.c.texture; C.bloom.value = night ? 0.8 : 0.5;
+    C.speed.value = r && state !== "menu" ? clamp((spd - 50) / 35, 0, 1) * 0.55 + (r.boosting ? 0.45 : 0) : 0;
+    if (LOOK && LOOK.grade) C.grade.value.fromArray(LOOK.grade);
+    postPass(POST.comp, null);
+  }
+  // если кадр не успевает (меньше ~40 к/с), сначала выключаем свечение, потом снижаем чёткость
+  var PERF = { t: 0, acc: 0, n: 0 };
+  function perfWatch(raw) {
+    if (state !== "race" || paused || window.__NO_RENDER__ || window.__NO_PERF__) { PERF.t = PERF.acc = PERF.n = 0; return; }
+    PERF.t += Math.min(raw, 0.2); PERF.acc += raw; PERF.n++;
+    if (PERF.t < 4) return;
+    var avg = PERF.acc / PERF.n; PERF.t = PERF.acc = PERF.n = 0;
+    if (avg > 1 / 40 && POST.on) { POST.on = false; return; }
+    if (avg > 1 / 34 && renderer.getPixelRatio() > 1) { renderer.setPixelRatio(1); lw = 0; }
+  }
+
   // ---------- цикл ----------
   var lw = 0, lh = 0, last = performance.now();
-  function resize() { var w = window.innerWidth, h = window.innerHeight; if (w === lw && h === lh) return; lw = w; lh = h; renderer.setSize(w, h); camera.aspect = w / h; camera.updateProjectionMatrix(); }
+  function resize() { var w = window.innerWidth, h = window.innerHeight; if (w === lw && h === lh) return; lw = w; lh = h; renderer.setSize(w, h); camera.aspect = w / h; camera.updateProjectionMatrix(); sizePost(); }
   function loop(now) {
     requestAnimationFrame(loop);
-    var dt = Math.min(0.05, (now - last) / 1000); last = now; if (dt <= 0) return;
+    var raw = (now - last) / 1000, dt = Math.min(0.05, raw); last = now; if (dt <= 0) return;
     resize(); if (!paused) step(dt); $("pauseBtn").hidden = !(state === "race" || state === "count") || paused; updateCars(dt); updateCamera(dt); updateShowcase(dt); updateStartLights(); updateFx(dt); updateHud(dt); updateAudio(dt);
     var gt = now / 1000; ghosts.forEach(function (g) { g.g.position.y = g.y + Math.sin(gt * 1.6 + g.ph) * 0.6; g.g.rotation.z = Math.sin(gt + g.ph) * 0.12; });
-    if (!window.__NO_RENDER__) renderer.render(scene, camera); // для автотестов: логика без отрисовки
+    WIND.value = gt % 1000; if (skyMesh.material.uniforms && skyMesh.material.uniforms.time) skyMesh.material.uniforms.time.value = gt % 10000;
+    perfWatch(raw);
+    if (!window.__NO_RENDER__) renderFrame(); // для автотестов: логика без отрисовки
   }
   // стартовый вид: камера над стартом
   buildTrack(0);
@@ -1972,7 +2383,7 @@ body.touchy #nitro { display: none; }
   racers = []; camH = SL.h; camera.position.set(SL.x - Math.sin(SL.h) * 14, 6, SL.z - Math.cos(SL.h) * 14); camera.lookAt(SL.x, 1, SL.z);
   $("who").textContent = SESSION ? "☁ " + (SESSION.name || SESSION.user) + " · прогресс в облаке" : "Гость · войди на главной, чтобы сохранять в облако";
   applyGfx(); renderCars(); resize();
-  window.__rc = { renderSound: function (carId, secs) {
+  window.__rc = { tex: function (n) { return TEX[n]; }, scene: function () { return scene; }, renderSound: function (carId, secs) {
       var sr = 44100, octx = new OfflineAudioContext(2, sr * secs, sr), S = buildSound(octx, octx.destination);
       var md = MODELS.filter(function (m) { return m.id === carId; })[0] || MODELS[0];
       var pl = { model: md, vf: 0, vl: 0, vx: 0, vz: 0, x: 0, z: 0, boosting: false, hand: false }, rv = { model: MODELS[1], vf: 90, vx: 0, vz: 90, x: 3, z: -120, th: 1 };
@@ -2000,7 +2411,7 @@ body.touchy #nitro { display: none; }
         var bytes = new Uint8Array(out.buffer), bin = ""; for (var j = 0; j < bytes.length; j += 32768) bin += String.fromCharCode.apply(null, bytes.subarray(j, j + 32768));
         return { wav: btoa(bin), peak: peak, events: events };
       });
-    }, info: function () { return { calls: renderer.info.render.calls, tris: renderer.info.render.triangles, geo: renderer.info.memory.geometries, tex: renderer.info.memory.textures, prog: renderer.info.programs.length }; }, setShowAng: function (v) { showAng = v; }, paused: function () { return paused; }, net: function () { return net; }, lapDone: lapDone, racersAll: function () { return racers; }, TRACKS: TRACKS, build: buildTrack, tr: function () { return TR; }, W: function () { return W; }, camp: function () { return camp; }, startCamp: startCampaign,  ai: ai, racers: function () { return racers; }, step: step, state: function () { return state; }, TOTAL: TOTAL, LENGTH: LENGTH, player: function () { return player; }, keys: keys, finish: function () { return finishOrder; }, raceT: function () { return raceT; } };
+    }, info: function () { return { calls: RINFO.calls, tris: RINFO.tris, post: POST.on, geo: renderer.info.memory.geometries, tex: renderer.info.memory.textures, prog: renderer.info.programs.length }; }, setShowAng: function (v) { showAng = v; }, paused: function () { return paused; }, net: function () { return net; }, lapDone: lapDone, racersAll: function () { return racers; }, TRACKS: TRACKS, build: buildTrack, tr: function () { return TR; }, W: function () { return W; }, camp: function () { return camp; }, startCamp: startCampaign,  ai: ai, racers: function () { return racers; }, step: step, state: function () { return state; }, TOTAL: TOTAL, LENGTH: LENGTH, player: function () { return player; }, keys: keys, finish: function () { return finishOrder; }, raceT: function () { return raceT; } };
   requestAnimationFrame(loop);
 });
 </script>
