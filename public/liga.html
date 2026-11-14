@@ -444,7 +444,7 @@ Claudix.ready(function () {
     { id: "sirius", name: TR("Сириус"), price: 0, roll: true, star: true, suit: 0x9fdcff, accent: 0x9fdcff, skin: 0x9fdcff, hp: 150, speed: 8.0, cd: 14, cd2: 12, atkCd: 0.55,
       role: TR("Звезда холодного света"), lore: TR("Звезда, которая пришла вместе с Солом. Светится холодным бело-голубым светом"), atk: TR("Звёздный луч пробивает всех на линии"), abil: TR("Лечение: возвращает почти половину здоровья и ослепляет врагов вокруг"), abilName: TR("Лечение"),
       abil2: TR("Прожигающая вспышка: раскалённый луч проходит веером и режет врагов, а добитых разрезает пополам"), abil2Name: TR("Вспышка") },
-    { id: "beta", name: TR("Бета"), price: 0, roll: true, star: true, suit: 0xff4a1a, accent: 0xff4a1a, skin: 0xff4a1a, hp: 145, speed: 8.6, cd: 10, cd2: 13, atkCd: 0.6,
+    { id: "beta", name: TR("Бет"), price: 0, roll: true, star: true, suit: 0xff4a1a, accent: 0xff4a1a, skin: 0xff4a1a, hp: 145, speed: 8.6, cd: 10, cd2: 13, atkCd: 0.6,
       role: TR("Звезда-лава"), lore: TR("Звезда, которая пришла вместе с Солом. Горит, как раскалённая лава"), atk: TR("Лавовый шар разрывается и поджигает"), abil: TR("Телепорт за спину: появляется сзади у ближайшего врага и бьёт лавой"), abilName: TR("Телепорт"),
       abil2: TR("Взрыв лавой: из земли вокруг бьют лавовые фонтаны и поджигают всех"), abil2Name: TR("Лава") }
   ];
@@ -3686,7 +3686,7 @@ Claudix.ready(function () {
     var vis = blackHoleFx(hx, hz, 11, { pos: { x: x, z: z }, face: f }, 3.5);
     addFx(3.5, function (k, dt) { vis.tick(k, dt); }, function () { vis.done(); });
   }
-  // ---------- звёзды: Сол, Сириус, Бета ----------
+  // ---------- звёзды: Сол, Сириус, Бет ----------
   function starDark(c, on) {
     if (!c || !c.starMats) return;
     c.starMats.forEach(function (m) { if (on) { m.color.copy(col(0x0a0612)); m.emissive.copy(glowCol(0x5a1a8a, 0.55)); } else { m.color.copy(m.userData.baseC); m.emissive.copy(m.userData.em); } });
@@ -3802,7 +3802,7 @@ Claudix.ready(function () {
       });
     }, function () { scene.remove(g); core.geometry.dispose(); halo.geometry.dispose(); core.material.dispose(); halo.material.dispose(); });
   }
-  // Взрыв лавой Беты: лавовые фонтаны из земли по кругу
+  // Взрыв лавой (Бет): лавовые фонтаны из земли по кругу
   function betaEruptFx(x, z, R) {
     shake = Math.max(shake, 0.5); flashFx(x, 0.8, z, 0xff5a1a, 7, 0.35);
     ringFx(x, z, R, 0.55, 0xff4a1a, 0.95); ringFx(x, z, R * 0.55, 0.45, 0xffb060, 0.8);
@@ -4432,7 +4432,7 @@ Claudix.ready(function () {
   function renderCards() {
     var host = $("cards"), html = "";
     var pool = STAR_POOL.filter(function (s) { return save.owned.indexOf(s.id) < 0; });
-    if (pool.length) html += '<article class="card gacha" data-id="__roll" style="--hc:#ffc23a"><div class="chead"><div><h3>' + TR("Звёздная крутка") + "</h3><p>" + TR("Выпадает одна из звёзд: Сол — 10%, Сириус — 45%, Бета — 45%. Выпадает только та, которой у тебя ещё нет.") + '</p></div></div><button class="act" data-do="roll" type="button"' + (save.money < ROLL_PRICE ? " disabled" : "") + ">" + (save.money < ROLL_PRICE ? TR("Нужно ") + fmt(ROLL_PRICE) : TR("Крутить за ") + fmt(ROLL_PRICE)) + "</button></article>";
+    if (pool.length) html += '<article class="card gacha" data-id="__roll" style="--hc:#ffc23a"><div class="chead"><div><h3>' + TR("Звёздная крутка") + "</h3><p>" + TR("Выпадает одна из звёзд: Сол — 10%, Сириус — 45%, Бет — 45%. Выпадает только та, которой у тебя ещё нет.") + '</p></div></div><button class="act" data-do="roll" type="button"' + (save.money < ROLL_PRICE ? " disabled" : "") + ">" + (save.money < ROLL_PRICE ? TR("Нужно ") + fmt(ROLL_PRICE) : TR("Крутить за ") + fmt(ROLL_PRICE)) + "</button></article>";
     HEROES.forEach(function (d) {
       var owned = save.owned.indexOf(d.id) >= 0, sel = save.sel === d.id, btn;
       if (owned) btn = '<button class="act' + (sel ? " sec" : "") + '" data-do="pick" type="button"' + (sel ? " disabled" : "") + ">" + (sel ? TR("Выбран") : TR("Выбрать")) + "</button>";
