@@ -2015,7 +2015,7 @@ body.touchy #nitro { display: none; }
     raceT += dt;
     racers.forEach(function (r) {
       if (r === player && state === "race") {
-        var th = (keys.KeyW || keys.ArrowUp || touch.g ? 1 : 0) - (keys.KeyS || keys.ArrowDown || touch.b ? 1 : 0);
+        var th = (keys.KeyW || keys.ArrowUp || touch.g || touch.n ? 1 : 0) - (keys.KeyS || keys.ArrowDown || touch.b ? 1 : 0); // кнопка нитро на экране сама жмёт газ
         var st = (keys.KeyA || keys.ArrowLeft || touch.l ? 1 : 0) - (keys.KeyD || keys.ArrowRight || touch.r ? 1 : 0);
         drive(r, th, st, keys.Space || touch.h, keys.ShiftLeft || keys.ShiftRight || touch.n, dt);
       } else if (r === player) drive(r, 0, 0, true, false, dt);
