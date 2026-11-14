@@ -1486,7 +1486,7 @@ Claudix.ready(function () {
     },
     sol: starKind(0xffc23a, 1.06, 1.25),
     sirius: starKind(0x9fdcff, 1.0, 0.95),
-    beta: starKind(0xff4a1a, 1.0, 1.05),
+    beta: Object.assign(starKind(0xff4a1a, 1.36, 1.05), { body: "big" }),  // красный великан: крупнее всех героев
     // ---------- улица ----------
     thug: {
       body: "hero", style: "thug", vars: 3, head: { jaw: 1.1 },
@@ -2364,10 +2364,23 @@ Claudix.ready(function () {
     if (player && !player.dead && mode === "play") return player.pos;
     return null;
   }
+  var BET_V = new THREE.Vector3();
+  function inMainScene(o) { while (o.parent) o = o.parent; return o === scene; }
+  // Бет дымится: тёмный дым и раскалённые искры поднимаются с плеч и головы
+  function betSmoke(c, dt) {
+    c.smT = (c.smT || 0) - dt; if (c.smT > 0) return;
+    c.smT = GFX.hi ? rnd(0.1, 0.18) : rnd(0.14, 0.26);
+    if (!inMainScene(c.root)) return;
+    var s = c.scale || 1, side = Math.random() < 0.5 ? -1 : 1; c.head.getWorldPosition(BET_V);
+    var x = BET_V.x + side * rnd(0.12, 0.36) * s, y = BET_V.y + rnd(-0.1, 0.22) * s, z = BET_V.z + rnd(-0.32, 0) * s;
+    emit(PS_SOFT, x, y, z, Math.random() < 0.6 ? 0x2a221e : 0x4a3e36, rnd(-0.15, 0.15), rnd(1.2, 1.8), rnd(-0.2, 0.05), rnd(1.2, 1.8), 0.9 * s, { grav: -0.3, drag: 0.8, grow: 1.6, a: 0.48 });
+    if (Math.random() < 0.55) emit(PS_GLOW, x, y, z, Math.random() < 0.5 ? 0xff7a2a : 0xffb04a, rnd(-0.4, 0.4), rnd(1, 2.2), rnd(-0.4, 0.4), rnd(0.6, 1.1), 0.22, { grav: -0.6, drag: 0.5, grow: -0.5, a: 1 });
+  }
   function animPost(dt) {
     for (var i = 0; i < CHARS.length; i++) {
       var c = CHARS[i]; if (!c.root.parent || c.dying) { c.walked = false; continue; }
       c.t += dt;
+      if (c.kind === "beta" && c.starFx) betSmoke(c, dt);
       if (c.spawnT) animSpawn(c, dt);
       // действие поверх походки
       if (c.act) { c.act.t += dt; if (c.act.t >= c.act.d) c.act = null; else actPose(c, c.act); }
@@ -2535,7 +2548,7 @@ Claudix.ready(function () {
     if (c.cape) clothTick(c, 0.016);
     var hy = (1.22 + c.info.headY) * c.scale, cy = hy - (id === "abyss" ? 0.06 : 0.16);
     portraitCam.aspect = W / H; portraitCam.updateProjectionMatrix();
-    portraitCam.position.set(0.0, cy + 0.12, 2.5); portraitCam.lookAt(0, cy, 0);
+    portraitCam.position.set(0.0, cy + 0.12, 2.5 * Math.max(1, c.scale / 1.18)); portraitCam.lookAt(0, cy, 0);
     var oldClear = renderer.getClearColor(new THREE.Color()), oldA = renderer.getClearAlpha();
     renderer.setRenderTarget(portraitRT); renderer.setClearColor(0x000000, 0); renderer.clear();
     renderer.render(portraitScene, portraitCam);
