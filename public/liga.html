@@ -371,7 +371,7 @@ html, body { touch-action: manipulation; -webkit-tap-highlight-color: transparen
 <button type="button" data-k="4">4</button><button type="button" data-k="5">5</button><button type="button" data-k="6">6</button>
 <button type="button" data-k="7">7</button><button type="button" data-k="8">8</button><button type="button" data-k="9">9</button>
 <button type="button" data-k="del" class="sm">Стереть</button><button type="button" data-k="0">0</button><button type="button" data-k="ok" class="ok">OK</button>
-<button type="button" data-k="note" class="sm">Записка</button><button type="button" data-k="close" class="sm" style="grid-column: span 2">Выйти</button></div></div>
+<button type="button" data-k="note" class="sm">Записка</button><button type="button" data-k="close" class="sm" style="grid-column: span 2">Закрыть</button></div></div>
 <div id="archive" hidden><header><span id="arHead"></span><span id="arTime">0.0 с</span></header><div class="bar"><i id="arBar"></i></div><pre id="arTxt"></pre></div>
 <div id="story" hidden><b id="stWho"></b><span id="stTxt"></span><small id="stHint">Нажми, чтобы дальше</small></div>
 
@@ -5888,7 +5888,7 @@ Claudix.ready(function () {
     [-1, 1].forEach(function (s) { M_(own(new THREE.BoxGeometry(0.06, 0.08, R * 2)), lineM, s * (R - 0.02), 3.6, 0).castShadow = false; M_(own(new THREE.BoxGeometry(0.06, 0.08, R * 2)), lineM, s * (R - 0.02), H - 0.4, 0).castShadow = false; });
     M_(own(new THREE.BoxGeometry(R * 2, 0.08, 0.06)), lineM, 0, H - 0.4, -R + 0.02).castShadow = false;
     // логотип «Тени» на дальней стене
-    var logo = canvasTex(512, 512, function (g, w, h) { g.clearRect(0, 0, w, h); g.fillStyle = "#050608"; g.beginPath(); g.arc(w / 2, h / 2, w * 0.46, 0, 7); g.fill(); g.strokeStyle = "#3ae8ff"; g.lineWidth = 10; g.stroke(); g.fillStyle = "#e8ecf2"; g.font = "bold " + Math.round(w * 0.42) + "px 'Russo One', Arial Black, sans-serif"; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText("Т", w / 2, h * 0.47); g.font = "bold " + Math.round(w * 0.09) + "px 'Russo One', Arial Black, sans-serif"; g.fillText("ТЕНЬ", w / 2, h * 0.8); });
+    var logo = canvasTex(512, 512, function (g, w, h) { g.clearRect(0, 0, w, h); g.fillStyle = "#050608"; g.beginPath(); g.arc(w / 2, h / 2, w * 0.46, 0, 7); g.fill(); g.strokeStyle = "#3ae8ff"; g.lineWidth = 10; g.stroke(); g.fillStyle = "#e8ecf2"; g.font = "bold " + Math.round(w * 0.42) + "px 'Russo One', Arial Black, sans-serif"; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText(window.CLX && CLX.lang === "en" ? "S" : "Т", w / 2, h * 0.47); g.font = "bold " + Math.round(w * 0.09) + "px 'Russo One', Arial Black, sans-serif"; g.fillText(TR("ТЕНЬ"), w / 2, h * 0.8); });
     logo.wrapS = logo.wrapT = THREE.ClampToEdgeWrapping;
     if (th === "shadow" || th === "lab") plane(4.2, 4.2, new THREE.MeshStandardMaterial({ map: logo, transparent: true, roughness: 0.3, metalness: 0.4, emissive: glowCol(0x3ae8ff, 0.25), emissiveMap: logo }), 0, H - 1.9, -R + 0.08, 0, 0);
     if (th === "shadow") {
@@ -5910,7 +5910,7 @@ Claudix.ready(function () {
       M_(own(new THREE.BoxGeometry(3.4, 4.4, 0.4)), frM, x, 2.2, -R + 0.05);
       [-0.6, 0.6].forEach(function (o) { doors.push(M_(own(new THREE.BoxGeometry(1.18, 3.6, 0.12)), dM, x + o, 1.8, -R + 0.3)); });
       M_(own(new THREE.BoxGeometry(2.6, 0.06, 0.06)), lineM, x, 3.85, -R + 0.3).castShadow = false;
-      var lt = new THREE.MeshBasicMaterial({ map: canvasTex(128, 48, function (g, w, h) { g.fillStyle = "#05070a"; g.fillRect(0, 0, w, h); g.fillStyle = "#3ae8ff"; g.font = "bold 28px 'Russo One', Arial Black, sans-serif"; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText("ЛИФТ", w / 2, h / 2 + 2); }), toneMapped: false });
+      var lt = new THREE.MeshBasicMaterial({ map: canvasTex(128, 48, function (g, w, h) { g.fillStyle = "#05070a"; g.fillRect(0, 0, w, h); g.fillStyle = "#3ae8ff"; var lw = TR("ЛИФТ"); g.font = "bold " + Math.min(28, Math.floor(118 / (lw.length * 0.66))) + "px 'Russo One', Arial Black, sans-serif"; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText(lw, w / 2, h / 2 + 2); }), toneMapped: false });
       M_(own(new THREE.PlaneGeometry(1.0, 0.38)), lt, x, 4.15, -R + 0.27).castShadow = false;
     })(adv.gx);
     // восемь капсул: по четыре у боковых стен
@@ -6492,7 +6492,7 @@ Claudix.ready(function () {
       if (s) {
         s.g.position.y = 1.2 + Math.sin(tAll * 3) * 0.15; s.g.rotation.y += dt * 1.6; s.pil.material.opacity = 0.16 + Math.sin(tAll * 4) * 0.06;
         if (!s.have) {
-          dbHud(TR("Шприцы: ") + db.inj + " / 3 · найди шприц (зелёный столб света)", null);
+          dbHud(TR("Шприцы: ") + db.inj + TR(" / 3 · найди шприц (зелёный столб света)"), null);
           if (p && !p.dead && Math.hypot(p.pos.x - s.x, p.pos.z - s.z) < 1.7) { s.have = true; s.g.visible = false; s.pil.visible = false; popText(p.pos.x, 3.4, p.pos.z, TR("Шприц у тебя"), "#7dff5a", true); }
         } else if (!s.drawn) {
           s.prog = holding && !p.dead && !(p.held > 0) ? s.prog + dt / 1.4 : Math.max(0, s.prog - dt * 1.5);
