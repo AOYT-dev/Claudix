@@ -303,6 +303,51 @@ button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 .sr-s { color: #ddd; min-height: 22px; margin-bottom: 18px; font-weight: 700; }
 .starRev.done .sr-n { animation: srp .6s; }
 @keyframes srp { 0% { transform: scale(.6); } 60% { transform: scale(1.18); } 100% { transform: scale(1); } }
+/* ---------- телефон боком ---------- */
+@media (orientation: landscape) and (max-height: 520px) {
+  /* лобби: заголовок не закрывает площадку */
+  .logo { font-size: 1.45rem; } .tag { display: none; } .back { margin-bottom: 4px; }
+  .mright { gap: 4px; } .money { padding: 4px 12px; font-size: 1rem; }
+  .lpanel { padding: 8px 12px 10px; gap: 4px; width: min(calc(100% - var(--gutter) - var(--gutter-r)), 300px); bottom: max(8px, env(safe-area-inset-bottom, 0px)); }
+  .lpanel h3 { font-size: 1.05rem; } .lpanel p { font-size: .78rem; } .lpanel .act { padding: 8px; }
+  /* карточки героев: портрет и кнопка слева, описание справа — карточка целиком влезает в экран */
+  #heroOv { padding-block: 6px; }
+  .hdlg { gap: 6px; }
+  .cards { gap: 10px; padding: 2px 2px 4px; touch-action: pan-x pan-y; }
+  .card { flex: 0 0 min(80vw, 480px); padding: 8px 10px; gap: 4px 12px; max-height: calc(100vh - 62px); max-height: calc(100dvh - 62px); overflow-y: auto; touch-action: pan-x pan-y; }
+  .card:has(> img.big) { display: grid; grid-template-columns: minmax(120px, 30%) minmax(0, 1fr); grid-template-rows: auto 1fr auto; align-content: start; }
+  .card:has(> img.big) > img.big { grid-column: 1; grid-row: 1 / span 2; width: 100%; height: 100%; min-height: 120px; max-height: 210px; aspect-ratio: auto; object-position: 50% 20%; align-self: start; }
+  .card:has(> img.big) > .chead { grid-column: 2; grid-row: 1; }
+  .card:has(> img.big) > dl { grid-column: 2; grid-row: 2; }
+  .card:has(> img.big) > .stats { grid-column: 2; grid-row: 3; align-self: center; }
+  .card:has(> img.big) > .act { grid-column: 1; grid-row: 3; margin-top: 0; align-self: end; }
+  .chead h3 { font-size: 1rem; } .chead p { font-size: .76rem; } .chead p.lore { font-size: .7rem; margin-top: 2px; }
+  .card dl { gap: 2px; font-size: .78rem; line-height: 1.25; } .card dt { font-size: .64rem; }
+  .stats { font-size: .72rem; }
+  .card .act { padding: 8px; font-size: .88rem; }
+  #heroClose { padding: 7px; }
+  /* реплики сюжета наверху, чтобы не закрывать джойстик и кнопки */
+  #story { top: calc(54px + env(safe-area-inset-top, 0px)); bottom: auto; padding: 8px 14px; font-size: .95rem; width: min(560px, calc(100% - 32px)); }
+  #story small { font-size: .7rem; }
+  #banner { top: 16%; } #banner b { font-size: clamp(1.6rem, 6vw, 2.6rem); }
+  /* кодовый замок: шесть кнопок в ряд */
+  #vkey { padding: 8px; }
+  #vkey .kp { width: min(520px, 100%); grid-template-columns: repeat(6, 1fr); padding: 10px; gap: 6px; }
+  #vkey #kpScr { padding: 8px; font-size: 1.5rem; } #vkey #kpMsg { font-size: .8rem; min-height: 1.1em; }
+  #vkey button { padding: 10px 0; font-size: 1.1rem; }
+  #vkey button[data-k="note"], #vkey button[data-k="close"] { grid-column: span 3 !important; }
+  #vnote { padding: 8px; } #vnote .paper { padding: 12px 18px; gap: 4px; font-size: .95rem; width: min(600px, 100%); }
+  #vnote .paper p.cph { font-size: 1.7rem; margin: 2px 0; }
+  #archive { padding: 10px 14px; transform: translate(-50%, -50%); } #arTxt { min-height: 6.5em; }
+  #bossHud { bottom: 8px; padding: 5px 12px; font-size: .85rem; }
+  /* кнопки боя чуть компактнее и ниже */
+  #btnAtk { width: 96px; height: 96px; bottom: 18px; }
+  #btnAbil { width: 74px; height: 74px; bottom: 26px; right: calc(var(--gutter-r) + 112px); }
+  #btnAbil2 { width: 64px; height: 64px; bottom: 112px; right: calc(var(--gutter-r) + 126px); }
+  #btnRapid { width: 58px; height: 58px; bottom: 124px; right: calc(var(--gutter-r) + 30px); }
+  #btnShield { width: 58px; height: 58px; bottom: 182px; right: calc(var(--gutter-r) + 86px); }
+  .sr-n { font-size: clamp(40px, 9vw, 80px); margin: 6px 0; }
+}
 </style>
 
 <style>

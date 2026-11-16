@@ -309,6 +309,26 @@ h2 { margin: 0; font-family: var(--font-display); font-weight: 600; font-size: 1
   text-align: center;
 }
 
+/* ---------- телефон боком: лимон слева и всегда под пальцем, магазин листается справа, шапка в одну строку ---------- */
+@media (orientation: landscape) and (max-height: 520px) {
+  .top { padding-block: 5px 6px; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 0 14px; }
+  .top-row { display: contents; }
+  .titlebox { grid-column: 1; grid-row: 1; gap: 8px; }
+  .xbadge { grid-column: 2; grid-row: 1 / span 2; font-size: .95rem; max-width: 40vw; }
+  .bank { grid-column: 1; grid-row: 2; gap: 10px; }
+  .count { font-size: 1.7rem; line-height: 1; }
+  .rate { font-size: .8rem; }
+  .grid { grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr); gap: 20px; padding-top: 8px; align-items: start; }
+  .stage { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 68px); padding-block: 4px 0; }
+  .lemon-wrap { width: min(34vw, calc(100vh - 178px)); width: min(34vw, calc(100dvh - 178px)); }
+  .ground { height: 10px; }
+  .click-info { margin-top: 4px; font-size: .9rem; } .click-info strong { font-size: 1.05rem; }
+  .hint { display: none; }
+  .skinbtn { margin-top: 4px; padding: 5px 12px; font-size: .8rem; }
+  .shop { gap: 18px; }
+  .tile { min-height: 58px; padding: 6px 4px; }
+  .item { min-height: 52px; padding: 8px 12px; }
+}
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }

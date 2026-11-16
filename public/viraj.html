@@ -133,6 +133,51 @@ body.touchy #speed { right: auto; left: 50%; transform: translateX(-50%); text-a
 body.touchy #nitro { display: none; }
 #fail { position: fixed; inset: 0; z-index: 9; display: grid; place-items: center; padding: 24px; text-align: center; background: var(--bg); font-size: 1.2rem; }
 @media (max-width: 640px) { .ups { grid-template-columns: 1fr; } .cars { grid-template-columns: repeat(2, minmax(0, 1fr)); } .box h1 { font-size: 2.4rem; } #big { font-size: 4.5rem; } #pos b { font-size: 3rem; } }
+/* телефон стоя: скорость наверху, чтобы её не закрывали педали; карта поменьше; названия машин в одну строку */
+@media (orientation: portrait) and (max-width: 520px) {
+  body.touchy #speed { bottom: auto; top: calc(46px + env(safe-area-inset-top, 0px)); } body.touchy #speed b { font-size: 2.6rem; }
+  #mapWrap, #map { width: 116px; height: 116px; }
+  .car h3 { font-size: .95rem; letter-spacing: 0; }
+}
+/* на сенсорном экране подсказки по клавишам не нужны */
+body.touchy .keys { display: none; }
+/* в меню и на финише педали и приборы не просвечивают и не перехватывают нажатия */
+body:has(#menu:not([hidden])) #touch, body:has(#result:not([hidden])) #touch, body:has(#menu:not([hidden])) .hud, body:has(#result:not([hidden])) .hud { display: none; }
+/* ---------- телефон боком: всё управление под большими пальцами, приборы наверху ---------- */
+@media (orientation: landscape) and (max-height: 500px) {
+  #pos b { font-size: 2.6rem; } #pos small { font-size: 1.1rem; }
+  #lap { font-size: .95rem; top: calc(6px + env(safe-area-inset-top, 0px)); } #lap b { font-size: 1.5rem; } #lap div { font-size: .85rem; }
+  #tName { font-size: .8rem !important; }
+  /* карта маленькая и наверху, рядом с местом в гонке */
+  #mapWrap { top: calc(8px + env(safe-area-inset-top, 0px)); bottom: auto; left: calc(max(16px, env(safe-area-inset-left, 0px)) + 118px); width: 88px; height: 88px; border-radius: 10px; }
+  #map { width: 88px; height: 88px; }
+  #pauseBtn { top: calc(54px + env(safe-area-inset-top, 0px)); }
+  #big { font-size: 4rem; top: 36%; }
+  #toast { font-size: 1.25rem; top: 24%; }
+  body.touchy #speed { bottom: calc(6px + env(safe-area-inset-bottom, 0px)); } body.touchy #speed b { font-size: 2.2rem; } #speed span { font-size: .7rem; }
+  /* руль: большие кнопки в левом нижнем углу */
+  .steer { width: 88px; height: 88px; font-size: 1.9rem; }
+  #tL { bottom: calc(22px + env(safe-area-inset-bottom, 0px)); }
+  #tR { left: calc(max(20px, env(safe-area-inset-left, 0px)) + 102px); bottom: calc(22px + env(safe-area-inset-bottom, 0px)); }
+  /* справа: газ у края, тормоз рядом, баллон нитро прямо над тормозом, дрифт левее */
+  #tN { right: calc(max(18px, env(safe-area-inset-right, 0px)) + 98px); bottom: calc(134px + env(safe-area-inset-bottom, 0px)); width: 48px; height: 100px; }
+  #tH { right: calc(max(18px, env(safe-area-inset-right, 0px)) + 182px); bottom: calc(30px + env(safe-area-inset-bottom, 0px)); }
+  /* окна компактнее */
+  .overlay { padding: 8px max(12px, env(safe-area-inset-right, 0px)) 8px max(12px, env(safe-area-inset-left, 0px)); place-items: start center; }
+  .box { width: min(860px, 100%); padding: 12px 14px; gap: 8px; }
+  .box h1 { font-size: 1.7rem; } .box h1 small { font-size: .9rem !important; }
+  .box h2 { font-size: 1.5rem; }
+  .box p { font-size: .92rem; line-height: 1.25; }
+  #menu .box > p:nth-of-type(1) { display: none; }
+  .cars { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+  .car { padding: 7px 8px; gap: 3px; border-radius: 10px; } .car h3 { font-size: .98rem; } .car .sw { height: 6px; } .car dl { font-size: .78rem; gap: 1px 6px; } .car .st, .car .top { font-size: .8rem; }
+  .btn { padding: 9px 16px; font-size: 1.05rem; border-radius: 8px; }
+  .row { gap: 6px; }
+  .ev { padding: 6px 10px; } .ev .n { font-size: 1.4rem; } .ev .nm { font-size: 1.05rem; }
+  .ups { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; } .up { padding: 6px 10px; } .up button { padding: 8px 10px; min-width: 76px; }
+  table { font-size: 1rem; } td { padding: 3px 4px; }
+  #pause .box, #sure .box { margin: auto; }
+}
 </style>
 </head>
 <body>
