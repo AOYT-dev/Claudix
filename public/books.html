@@ -6431,6 +6431,7 @@ var CATALOG = [
   { id: "l-chronos", shelf: "league", dossier: true, sub: "Досье · Лига Улиц", ann: ["Учёный, который сломал время и стал его хранителем."], title: "Хронос", cover: { kind: "chronos", lbl: "Лига Улиц", ttl: "ХРОНОС" } },
   { id: "l-versus", shelf: "league", title: "Лига Улиц: Противостояние", cover: { kind: "versus", lbl: "Лига Улиц", ttl: "ПРОТИВО­СТОЯНИЕ" }, sub: "Лига Улиц", ann: ["Однажды ночью двое врываются в башню корпорации «Тень». Каждый своим путём. И оба идут к Директору.", "Утром город узнаёт, что у него есть суперзлодеи. А через три дня — что есть и герои."] },
   { id: "w-sun", shelf: "league", title: "Лига Улиц: Тайна Солнца", cover: { kind: "sun", lbl: "Лига Улиц", ttl: "ТАЙНА СОЛНЦА" }, sub: "Лига Улиц · Часть 2", ann: ["У Меркурия когда-то был спутник, которого не видел ни один земной телескоп.", "Однажды с неба на центральную площадь падает воин в золотой броне. Ему нужно одно: найти Тень."] },
+  { id: "w-ice", shelf: "wip", soon: true, wip: true, title: "Лига Улиц: Да будет лёд", cover: { kind: "ice", lbl: "Лига Улиц", ttl: "ДА БУДЕТ ЛЁД" } },
   { id: "w-imp4", shelf: "wip", soon: true, wip: true, title: "Импульс 4", cover: { kind: "imp4", lbl: "Книга IV", ttl: "ИМПУЛЬС 4" } }
 ];
 var BYID = {}; CATALOG.forEach(function (b) { BYID[b.id] = b; });
@@ -6449,6 +6450,7 @@ var CATALOG_EN = {
   "l-chronos": { t: "Chronos", lbl: "Street League", ttl: "CHRONOS", sub: "File · Street League", ann: ["A scientist who broke time and became its keeper."] },
   "l-versus": { t: "Street League: Civil War", lbl: "Street League", ttl: "CIVIL WAR", sub: "Street League", ann: ["One night, two intruders break into the Shade corporation tower. Each in his own way. Both heading for the Director.", "In the morning the city learns it has supervillains. Three days later, it learns it has heroes too."] },
   "w-sun": { t: "Street League: Secret of the Sun", lbl: "Street League", ttl: "SECRET OF THE SUN", sub: "Street League · Part 2", ann: ["Mercury once had a moon that no telescope on Earth ever saw.", "One day a warrior in golden armor falls from the sky onto the central square. He wants just one thing: to find Shade."] },
+  "w-ice": { t: "Street League: Let There Be Ice", lbl: "Street League", ttl: "LET THERE BE ICE" },
   "w-imp4": { t: "Impulse 4", lbl: "Book IV", ttl: "IMPULSE 4" }
 };
 CATALOG.forEach(function (b) { var e = CATALOG_EN[b.id]; if (!e) return; b.title_en = e.t; if (e.sub) b.sub_en = e.sub; if (e.ann) b.ann_en = e.ann; b.cover.lbl_en = e.lbl; b.cover.ttl_en = e.ttl; if (e.small) b.cover.small_en = e.small; });
@@ -6527,6 +6529,12 @@ var ART = {
       if (motif === "clock") { g.strokeStyle = "rgba(255,215,120,.7)"; for (var t = 0; t < 3; t++) { g.lineWidth = 2; g.beginPath(); g.arc(cx, cy, w * (0.16 + t * 0.09), 0, 7); g.stroke(); } for (var n = 0; n < 12; n++) { var a = n / 12 * Math.PI * 2; g.beginPath(); g.moveTo(cx + Math.cos(a) * w * 0.3, cy + Math.sin(a) * w * 0.3); g.lineTo(cx + Math.cos(a) * w * 0.34, cy + Math.sin(a) * w * 0.34); g.stroke(); } g.lineWidth = 4; g.beginPath(); g.moveTo(cx, cy); g.lineTo(cx + w * 0.12, cy - w * 0.1); g.moveTo(cx, cy); g.lineTo(cx - w * 0.03, cy - w * 0.2); g.stroke(); }
       if (motif === "versus") { g.fillStyle = "rgba(230,40,40,.55)"; g.beginPath(); g.moveTo(0, 0); g.lineTo(w * 0.62, 0); g.lineTo(w * 0.38, h); g.lineTo(0, h); g.fill(); g.fillStyle = "rgba(40,90,230,.55)"; g.beginPath(); g.moveTo(w * 0.62, 0); g.lineTo(w, 0); g.lineTo(w, h); g.lineTo(w * 0.38, h); g.fill(); g.strokeStyle = "rgba(255,255,255,.85)"; g.lineWidth = 3; g.shadowColor = "#fff"; g.shadowBlur = 14; g.beginPath(); g.moveTo(w * 0.62, 0); g.lineTo(w * 0.38, h); g.stroke(); g.shadowBlur = 0; }
       if (motif === "sun") { var sg = g.createRadialGradient(cx, cy, 0, cx, cy, w * 0.5); sg.addColorStop(0, "rgba(255,250,210,1)"); sg.addColorStop(0.25, "rgba(255,190,60,.9)"); sg.addColorStop(0.6, "rgba(220,90,20,.35)"); sg.addColorStop(1, "rgba(0,0,0,0)"); g.fillStyle = sg; g.fillRect(0, 0, w, h); g.fillStyle = "rgba(60,20,0,.7)"; g.beginPath(); g.arc(w * 0.78, h * 0.3, w * 0.03, 0, 7); g.fill(); }
+      if (motif === "ice") {
+        for (var st = 0; st < 90; st++) { g.fillStyle = "rgba(220,240,255," + (0.3 + r() * 0.7) + ")"; g.fillRect(r() * w, r() * h * 0.7, 1.5, 1.5); }
+        var ig = g.createRadialGradient(cx, h * 0.34, 0, cx, h * 0.34, w * 0.42); ig.addColorStop(0, "rgba(240,250,255,1)"); ig.addColorStop(0.18, "rgba(160,220,255,.85)"); ig.addColorStop(0.55, "rgba(60,130,220,.25)"); ig.addColorStop(1, "rgba(0,0,0,0)"); g.fillStyle = ig; g.fillRect(0, 0, w, h);
+        g.strokeStyle = "rgba(220,245,255,.85)"; g.lineWidth = 2; for (var ray = 0; ray < 6; ray++) { var an = ray / 6 * Math.PI * 2; g.beginPath(); g.moveTo(cx, h * 0.34); g.lineTo(cx + Math.cos(an) * w * 0.22, h * 0.34 + Math.sin(an) * w * 0.22); g.stroke(); for (var br = 1; br < 3; br++) { var bx = cx + Math.cos(an) * w * 0.07 * br, by = h * 0.34 + Math.sin(an) * w * 0.07 * br; [-0.6, 0.6].forEach(function (d) { g.beginPath(); g.moveTo(bx, by); g.lineTo(bx + Math.cos(an + d) * w * 0.05, by + Math.sin(an + d) * w * 0.05); g.stroke(); }); } }
+        for (var q2 = 0; q2 < 16; q2++) { var x2 = w * (r() * 1.0), y2 = h * (0.62 + r() * 0.4), hh = 50 + r() * 140; var cg = g.createLinearGradient(x2, y2 - hh, x2, y2); cg.addColorStop(0, "rgba(230,248,255,.9)"); cg.addColorStop(1, "rgba(60,120,200,.35)"); g.fillStyle = cg; g.beginPath(); g.moveTo(x2 - 10 - r() * 14, y2 + 20); g.lineTo(x2 + (r() - 0.5) * 16, y2 - hh); g.lineTo(x2 + 10 + r() * 14, y2 + 20); g.fill(); }
+      }
       grain(g, w, h, 0.08, r); vignette(g, w, h, 0.6);
     };
   }
@@ -6534,7 +6542,7 @@ var ART = {
 ART.virus = ART.league("#03140a", "#0b2a12", "grid"); ART.duo = ART.league("#0c0d12", "#24093c", "duo"); ART.abyss = ART.league("#0a0414", "#22073a", "hole"); ART.phantom = ART.league("#1a1d26", "#3a4152", "mist");
 ART.titan = ART.league("#2a1a10", "#5a3418", "crystal"); ART.shadow = ART.league("#0c0d10", "#2a2d34", "steel"); ART.cobalt = ART.league("#08163a", "#1f4aa8", "metal");
 ART.storm = ART.league("#061226", "#123a6e", "bolt"); ART.grav = ART.league("#140a26", "#3a1f6a", "rings"); ART.flame = ART.league("#1a0602", "#5a1604", "fire");
-ART.chronos = ART.league("#1a1404", "#4a3606", "clock"); ART.versus = ART.league("#120808", "#08081a", "versus"); ART.sun = ART.league("#2a0e02", "#5a2a04", "sun");
+ART.chronos = ART.league("#1a1404", "#4a3606", "clock"); ART.versus = ART.league("#120808", "#08081a", "versus"); ART.sun = ART.league("#2a0e02", "#5a2a04", "sun"); ART.ice = ART.league("#02081a", "#0c2a5a", "ice");
 var COVERS = {};
 function coverURL(b) {
   if (COVERS[b.id]) return COVERS[b.id];
