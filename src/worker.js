@@ -138,11 +138,14 @@ async function giftTo(env, b) {
   // иксы Лимонного Икса: номера обычных иксов (0–8) и сколько раз добавить «Икс без конца»
   const tiers = Array.isArray(b.tiers) ? [...new Set(b.tiers.map((t) => Math.floor(+t)))] : [], inf = Math.floor(+b.inf || 0);
   if (tiers.some((t) => !(t >= 0 && t < LEMON_TIERS.length)) || inf < 0 || inf > 900) return fail("bad_amount", 400);
+  // скорость Лимонного Икса: лимонов в секунду без иксов, выдаётся заводами (170/с), плантациями (14/с) и деревьями (1/с)
+  const ps = Math.floor(+b.ps || 0);
+  if (ps < 0 || ps > 1e15) return fail("bad_amount", 400);
   if (game === "liga") {
     if (money < 0 || money > 1e7 || sp < 0 || sp > 100) return fail("bad_amount", 400);
     if (hero && !LIGA_HEROES.includes(hero)) return fail("bad_hero", 400);
     if (!money && !sp && !hero) return fail("empty", 400);
-  } else if (game === "lemon" && (tiers.length || inf)) {
+  } else if (game === "lemon" && (tiers.length || inf || ps)) {
     if (amount < 0 || amount > 1e100) return fail("bad_amount", 400);
   } else {
     if (!(amount > 0)) return fail("empty", 400);
@@ -164,6 +167,11 @@ async function giftTo(env, b) {
       if (amount > 0) o.lemons = Math.min(1e300, cur + amount);
       if (tiers.length) { const had = Array.isArray(o.tiers) ? o.tiers : []; o.tiers = LEMON_TIERS.map((_, i) => !!had[i] || tiers.includes(i)); }
       if (inf) o.inf = Math.min(900, Math.max(0, Math.floor(+o.inf || 0)) + inf);
+      if (ps) {
+        const g = [0, 1, 2].map((i) => (Array.isArray(o.gens) && Number.isFinite(+o.gens[i]) && +o.gens[i] > 0 ? Math.floor(+o.gens[i]) : 0));
+        const f = Math.floor(ps / 170), pl = Math.floor((ps - f * 170) / 14), t = ps - f * 170 - pl * 14;
+        o.gens = [g[0] + t, g[1] + pl, g[2] + f];
+      }
       total = o.lemons || 0;
     } else {
       o.coins = Math.min(1e9, Math.max(0, Math.floor(+o.coins || 0)) + amount); total = o.coins;
@@ -172,7 +180,7 @@ async function giftTo(env, b) {
     let changed;
     if (row) changed = (await env.DB.prepare("UPDATE saves SET data = ?3, updated = ?4, score = ?6 WHERE uid = ?1 AND game = ?2 AND updated = ?5").bind(uid, game, data, now, row.updated, scoreOf(game, data)).run()).meta.changes === 1;
     else changed = (await env.DB.prepare("INSERT OR IGNORE INTO saves (uid, game, data, updated, score) VALUES (?1, ?2, ?3, ?4, ?5)").bind(uid, game, data, now, scoreOf(game, data)).run()).meta.changes === 1;
-    if (changed) return json({ ok: true, name: u.name, game, money, sp, hero, amount, tiers, inf, total });
+    if (changed) return json({ ok: true, name: u.name, game, money, sp, hero, amount, tiers, inf, ps, total });
   }
   return fail("busy", 409);
 }

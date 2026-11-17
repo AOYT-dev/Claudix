@@ -449,7 +449,8 @@ html, body { touch-action: manipulation; -webkit-tap-highlight-color: transparen
           <div class="field"><label for="devNick">Ник игрока</label><input type="text" id="devNick" maxlength="16" autocomplete="off" autocapitalize="off" spellcheck="false"></div>
           <div class="field"><label for="devGame">Игра</label><select id="devGame"><option value="liga">Лига Улиц</option><option value="lemon">Лимонный Икс</option><option value="viraj">Вираж-9</option></select></div>
           <div class="field" id="devKindRow"><label for="devKind">Подарок</label><select id="devKind"><option value="money">Монеты</option><option value="hero">Герой</option><option value="sp">Скиллпойнты ★</option></select></div>
-          <div class="field" id="devLKindRow" hidden><label for="devLKind">Подарок</label><select id="devLKind"><option value="money">Лимоны</option><option value="x">Иксы</option></select></div>
+          <div class="field" id="devLKindRow" hidden><label for="devLKind">Подарок</label><select id="devLKind"><option value="money">Лимоны</option><option value="x">Иксы</option><option value="ps">Скорость в секунду</option></select></div>
+          <div class="field" id="devPsRow" hidden><label for="devPs">Сколько лимонов в секунду добавить</label><input type="number" id="devPs" min="1" value="1000" inputmode="numeric"><p class="hint">Это скорость без иксов: в игре она ещё умножится на иксы игрока. Выдаётся заводами, плантациями и деревьями.</p><div class="chips"><button type="button" class="uchip" data-ps="1000">1 000</button><button type="button" class="uchip" data-ps="1000000">Миллион</button><button type="button" class="uchip" data-ps="1000000000">Миллиард</button><button type="button" class="uchip" data-ps="1000000000000">Триллион</button></div></div>
           <div class="field" id="devXRow" hidden><label for="devX">Какой икс</label><select id="devX"></select></div>
           <div class="field" id="devInfRow" hidden><label for="devInf">Сколько раз ×2</label><input type="number" id="devInf" min="1" max="900" value="10" inputmode="numeric"></div>
           <div class="field" id="devAmtRow"><label for="devAmt" id="devAmtLbl">Сколько монет</label><input type="number" id="devAmt" min="1" value="5000" inputmode="numeric"><div class="quick" id="devQuick" hidden><button type="button" class="uchip" data-v="1e33">Дециллион</button><button type="button" class="uchip" data-v="1e50">10⁵⁰</button><button type="button" class="uchip" data-v="1e100">Гугол</button></div></div>
@@ -703,9 +704,10 @@ html, body { touch-action: manipulation; -webkit-tap-highlight-color: transparen
   var LX = [2, 3, 5, 10, 20, 50, 100, 300, 1000];
   $("devX").innerHTML = LX.map(function (x, i) { return '<option value="' + i + '">×' + x + "</option>"; }).join("") + '<option value="all">Все иксы сразу (×' + bigAmt(LX.reduce(function (a, b) { return a * b; }, 1)) + ')</option><option value="inf">Икс без конца (×2 за раз)</option>';
   $("devX").onchange = function () { layout(); };
+  [].forEach.call(document.querySelectorAll("[data-ps]"), function (b) { b.onclick = function () { $("devPs").value = b.getAttribute("data-ps"); }; });
   function layout() {
     var g = $("devGame").value, k = g === "liga" ? $("devKind").value : g === "lemon" ? $("devLKind").value : "money";
-    $("devKindRow").hidden = g !== "liga"; $("devLKindRow").hidden = g !== "lemon"; $("devXRow").hidden = k !== "x"; $("devInfRow").hidden = k !== "x" || $("devX").value !== "inf";
+    $("devKindRow").hidden = g !== "liga"; $("devLKindRow").hidden = g !== "lemon"; $("devXRow").hidden = k !== "x"; $("devPsRow").hidden = k !== "ps"; $("devInfRow").hidden = k !== "x" || $("devX").value !== "inf";
     $("devAmtRow").hidden = k !== "money"; $("devHeroRow").hidden = k !== "hero"; $("devSpRow").hidden = k !== "sp";
     $("devAmtLbl").textContent = g === "lemon" ? "Сколько лимонов" : "Сколько монет";
     $("devQuick").hidden = g !== "lemon";
@@ -727,7 +729,11 @@ html, body { touch-action: manipulation; -webkit-tap-highlight-color: transparen
   $("devSend").onclick = function () {
     var nick = $("devNick").value.trim(), g = $("devGame").value, k = g === "liga" ? $("devKind").value : g === "lemon" ? $("devLKind").value : "money", p = { name: nick, game: g }, what;
     if (!nick) { say($("devMsg"), "Впиши ник", false); return; }
-    if (k === "x") {
+    if (k === "ps") {
+      p.ps = Math.floor(+$("devPs").value || 0);
+      if (p.ps < 1 || p.ps > 1e15) { say($("devMsg"), "Впиши от 1 до 10¹⁵", false); return; }
+      what = "+" + bigAmt(p.ps) + " лимонов/сек (Лимонный Икс)";
+    } else if (k === "x") {
       var xv = $("devX").value;
       if (xv === "inf") { p.inf = Math.floor(+$("devInf").value || 0); if (p.inf < 1 || p.inf > 900) { say($("devMsg"), "Впиши от 1 до 900", false); return; } what = "«Икс без конца» ×2 " + p.inf + " раз (Лимонный Икс)"; }
       else if (xv === "all") { p.tiers = LX.map(function (_, i) { return i; }); what = "все иксы (Лимонный Икс)"; }
