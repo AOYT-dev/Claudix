@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /dev.html
+
+Sitemap: https://claudix.aoyt.workers.dev/sitemap.xml
