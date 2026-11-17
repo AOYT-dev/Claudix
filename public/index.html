@@ -151,6 +151,11 @@ input[type="text"], input[type="password"] {
   background: var(--bg); color: var(--fg); font: inherit; font-size: 1rem;
 }
 .hint { margin: 0; font-size: 0.82rem; color: var(--muted); }
+.xgrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.xgrid label { display: flex; align-items: center; justify-content: center; gap: 6px; padding: 8px 4px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); color: var(--fg); font-weight: 700; font-size: .95rem; cursor: pointer; }
+.xgrid label:has(input:checked) { background: #f7d81f; color: #14210f; border-color: #d4a800; }
+.xgrid input { width: 16px; height: 16px; accent-color: #d4a800; }
+.lbl2 { font-size: 0.85rem; color: var(--muted); }
 #devQuick { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
 #devBox select, #devBox input[type="number"] { width: 100%; padding: 12px 14px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); color: var(--fg); font: inherit; font-size: 1rem; }
 .devlink { justify-self: start; background: none; border: 0; padding: 2px 0; color: var(--muted); font: inherit; font-size: 0.8rem; text-decoration: underline dotted; cursor: pointer; }
@@ -449,6 +454,14 @@ html, body { touch-action: manipulation; -webkit-tap-highlight-color: transparen
           <div class="field"><label for="devNick">Ник игрока</label><input type="text" id="devNick" maxlength="16" autocomplete="off" autocapitalize="off" spellcheck="false"></div>
           <div class="field"><label for="devGame">Игра</label><select id="devGame"><option value="liga">Лига Улиц</option><option value="lemon">Лимонный Икс</option><option value="viraj">Вираж-9</option></select></div>
           <div class="field" id="devKindRow"><label for="devKind">Подарок</label><select id="devKind"><option value="money">Монеты</option><option value="hero">Герой</option><option value="sp">Скиллпойнты ★</option></select></div>
+          <div class="field" id="devLKindRow" hidden><label for="devLKind">Подарок</label><select id="devLKind"><option value="money">Лимоны</option><option value="x">Иксы</option></select></div>
+          <div class="field" id="devXRow" hidden><span class="lbl2">Какие иксы выдать (уже купленные останутся)</span>
+            <div class="xgrid" id="devXs"></div>
+            <div class="chips"><button type="button" class="uchip" id="devXAll">Все</button><button type="button" class="uchip" id="devXNone">Ни одного</button></div>
+            <label for="devInf">Икс без конца: сколько раз ×2 добавить</label><input type="number" id="devInf" min="0" max="900" value="0" inputmode="numeric">
+            <div class="chips"><button type="button" class="uchip" data-inf="10">+10</button><button type="button" class="uchip" data-inf="50">+50</button><button type="button" class="uchip" data-inf="100">+100</button><button type="button" class="uchip" data-inf="300">+300</button></div>
+            <p class="hint" id="devXSum"></p>
+          </div>
           <div class="field" id="devAmtRow"><label for="devAmt" id="devAmtLbl">Сколько монет</label><input type="number" id="devAmt" min="1" value="5000" inputmode="numeric"><div class="quick" id="devQuick" hidden><button type="button" class="uchip" data-v="1e33">Дециллион</button><button type="button" class="uchip" data-v="1e50">10⁵⁰</button><button type="button" class="uchip" data-v="1e100">Гугол</button></div></div>
           <div class="field" id="devHeroRow" hidden><label for="devHero">Какого героя</label><select id="devHero"><option value="storm">Шторм-Джей</option><option value="shade">Тень-9</option><option value="graviton">Гравитон</option><option value="flame">Пламень</option><option value="abyss">Бездна</option><option value="virus">Вирус</option><option value="phantom">Фантом</option><option value="titan">Титан</option><option value="chronos">Хронос</option><option value="sol">Сол</option><option value="sirius">Сириус</option><option value="beta">Бет</option></select></div>
           <div class="field" id="devSpRow" hidden><label for="devSp">Сколько скиллпойнтов</label><input type="number" id="devSp" min="1" max="100" value="2" inputmode="numeric"></div>
@@ -696,14 +709,29 @@ html, body { touch-action: manipulation; -webkit-tap-highlight-color: transparen
   function say(el, t, ok) { el.textContent = t; el.className = "msg" + (ok === true ? " ok" : ok === false ? " bad" : ""); }
   function open() { $("devBox").hidden = false; $("devOpen").hidden = true; (KEY ? $("devNick") : $("devKey")).focus(); }
   function close() { KEY = ""; $("devBox").hidden = true; $("devOpen").hidden = false; $("devPanel").hidden = true; $("devGate").hidden = false; }
+  // иксы Лимонного Икса — те же, что в игре
+  var LX = [2, 3, 5, 10, 20, 50, 100, 300, 1000];
+  $("devXs").innerHTML = LX.map(function (x, i) { return '<label><input type="checkbox" value="' + i + '">×' + x + "</label>"; }).join("");
+  function xPicked() { return [].map.call(document.querySelectorAll("#devXs input:checked"), function (c) { return +c.value; }); }
+  function xSum() {
+    var m = 1; xPicked().forEach(function (i) { m *= LX[i]; }); var inf = Math.max(0, Math.min(900, Math.floor(+$("devInf").value || 0)));
+    var tot = m * Math.pow(2, inf);
+    $("devXSum").textContent = "Выбранные иксы вместе: ×" + bigAmt(m) + (inf ? " и ещё ×2 " + inf + " раз = ×" + bigAmt(tot) : "");
+  }
+  $("devXs").addEventListener("change", xSum); $("devInf").addEventListener("input", xSum);
+  $("devXAll").onclick = function () { [].forEach.call(document.querySelectorAll("#devXs input"), function (c) { c.checked = true; }); xSum(); };
+  $("devXNone").onclick = function () { [].forEach.call(document.querySelectorAll("#devXs input"), function (c) { c.checked = false; }); xSum(); };
+  [].forEach.call(document.querySelectorAll("[data-inf]"), function (b) { b.onclick = function () { $("devInf").value = Math.min(900, Math.floor(+$("devInf").value || 0) + +b.getAttribute("data-inf")); xSum(); }; });
   function layout() {
-    var g = $("devGame").value, k = g === "liga" ? $("devKind").value : "money";
-    $("devKindRow").hidden = g !== "liga"; $("devAmtRow").hidden = k !== "money"; $("devHeroRow").hidden = k !== "hero"; $("devSpRow").hidden = k !== "sp";
+    var g = $("devGame").value, k = g === "liga" ? $("devKind").value : g === "lemon" ? $("devLKind").value : "money";
+    $("devKindRow").hidden = g !== "liga"; $("devLKindRow").hidden = g !== "lemon"; $("devXRow").hidden = k !== "x";
+    $("devAmtRow").hidden = k !== "money"; $("devHeroRow").hidden = k !== "hero"; $("devSpRow").hidden = k !== "sp";
+    if (k === "x") xSum();
     $("devAmtLbl").textContent = g === "lemon" ? "Сколько лимонов" : "Сколько монет";
     $("devQuick").hidden = g !== "lemon";
   }
   $("devOpen").onclick = open; $("devOut").onclick = close;
-  $("devGame").onchange = layout; $("devKind").onchange = layout;
+  $("devGame").onchange = layout; $("devKind").onchange = layout; $("devLKind").onchange = layout;
   $("devEnter").onclick = function () {
     KEY = $("devKey").value; say($("devGmsg"), "", null); if (!KEY) return;
     $("devEnter").disabled = true;
@@ -717,9 +745,13 @@ html, body { touch-action: manipulation; -webkit-tap-highlight-color: transparen
   function bigAmt(n) { if (n === 1e100) return "1 гугол"; if (n >= 1e21) return n.toExponential(2).replace("e+", " × 10^").replace(".", ","); return n.toLocaleString("ru-RU", { maximumFractionDigits: 0 }); }
   [].forEach.call(document.querySelectorAll("#devQuick button"), function (b) { b.onclick = function () { $("devAmt").value = b.getAttribute("data-v"); }; });
   $("devSend").onclick = function () {
-    var nick = $("devNick").value.trim(), g = $("devGame").value, k = g === "liga" ? $("devKind").value : "money", p = { name: nick, game: g }, what;
+    var nick = $("devNick").value.trim(), g = $("devGame").value, k = g === "liga" ? $("devKind").value : g === "lemon" ? $("devLKind").value : "money", p = { name: nick, game: g }, what;
     if (!nick) { say($("devMsg"), "Впиши ник", false); return; }
-    if (g !== "liga") { p.amount = Math.floor(+$("devAmt").value || 0); what = bigAmt(p.amount) + (g === "lemon" ? " лимонов" : " монет") + " (" + $("devGame").selectedOptions[0].text + ")"; }
+    if (k === "x") {
+      p.tiers = xPicked(); p.inf = Math.max(0, Math.min(900, Math.floor(+$("devInf").value || 0)));
+      if (!p.tiers.length && !p.inf) { say($("devMsg"), "Выбери хотя бы один икс", false); return; }
+      what = "иксы " + p.tiers.map(function (i) { return "×" + LX[i]; }).join(" ") + (p.inf ? (p.tiers.length ? " и " : "") + p.inf + " × «Икс без конца»" : "") + " (Лимонный Икс)";
+    } else if (g !== "liga") { p.amount = Math.floor(+$("devAmt").value || 0); what = bigAmt(p.amount) + (g === "lemon" ? " лимонов" : " монет") + " (" + $("devGame").selectedOptions[0].text + ")"; }
     else if (k === "money") { p.money = Math.floor(+$("devAmt").value || 0); what = p.money + " монет (Лига Улиц)"; }
     else if (k === "hero") { p.hero = $("devHero").value; what = "героя " + HEROES[p.hero]; }
     else { p.sp = Math.floor(+$("devSp").value || 0); what = p.sp + " скиллпойнт(ов) ★"; }
