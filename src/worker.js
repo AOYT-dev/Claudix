@@ -140,7 +140,7 @@ async function giftTo(env, b) {
   if (tiers.some((t) => !(t >= 0 && t < LEMON_TIERS.length)) || inf < 0 || inf > 900) return fail("bad_amount", 400);
   // скорость Лимонного Икса: лимонов в секунду без иксов, выдаётся заводами (170/с), плантациями (14/с) и деревьями (1/с)
   const ps = Math.floor(+b.ps || 0);
-  if (ps < 0 || ps > 1e15) return fail("bad_amount", 400);
+  if (!(ps >= 0) || ps > 1e100) return fail("bad_amount", 400); // до гугола
   if (game === "liga") {
     if (money < 0 || money > 1e7 || sp < 0 || sp > 100) return fail("bad_amount", 400);
     if (hero && !LIGA_HEROES.includes(hero)) return fail("bad_hero", 400);
@@ -169,8 +169,9 @@ async function giftTo(env, b) {
       if (inf) o.inf = Math.min(900, Math.max(0, Math.floor(+o.inf || 0)) + inf);
       if (ps) {
         const g = [0, 1, 2].map((i) => (Array.isArray(o.gens) && Number.isFinite(+o.gens[i]) && +o.gens[i] > 0 ? Math.floor(+o.gens[i]) : 0));
-        const f = Math.floor(ps / 170), pl = Math.floor((ps - f * 170) / 14), t = ps - f * 170 - pl * 14;
-        o.gens = [g[0] + t, g[1] + pl, g[2] + f];
+        // большие числа целиком заводами: дробная часть там всё равно теряется
+        const f = Math.floor(ps / 170), pl = ps > 1e15 ? 0 : Math.floor((ps - f * 170) / 14), t = ps > 1e15 ? 0 : ps - f * 170 - pl * 14;
+        o.gens = [g[0] + t, g[1] + pl, Math.min(1e300, g[2] + f)];
       }
       total = o.lemons || 0;
     } else {

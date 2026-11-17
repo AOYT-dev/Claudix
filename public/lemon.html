@@ -570,7 +570,7 @@ Claudix.ready(function () {
     return {
       name: g.name, desc: g.desc,
       price: function (lv) { return Math.floor(g.base * Math.pow(g.g, lv)); }, lv: function () { return s.gens[i]; },
-      own: function () { return s.gens[i] + TR(" шт"); },
+      own: function () { return fmt(s.gens[i]) + TR(" шт"); },
       buy: function (n) { s.gens[i] += n; }
     };
   }));

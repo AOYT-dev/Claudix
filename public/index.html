@@ -450,7 +450,7 @@ html, body { touch-action: manipulation; -webkit-tap-highlight-color: transparen
           <div class="field"><label for="devGame">Игра</label><select id="devGame"><option value="liga">Лига Улиц</option><option value="lemon">Лимонный Икс</option><option value="viraj">Вираж-9</option></select></div>
           <div class="field" id="devKindRow"><label for="devKind">Подарок</label><select id="devKind"><option value="money">Монеты</option><option value="hero">Герой</option><option value="sp">Скиллпойнты ★</option></select></div>
           <div class="field" id="devLKindRow" hidden><label for="devLKind">Подарок</label><select id="devLKind"><option value="money">Лимоны</option><option value="x">Иксы</option><option value="ps">Скорость в секунду</option></select></div>
-          <div class="field" id="devPsRow" hidden><label for="devPs">Сколько лимонов в секунду добавить</label><input type="number" id="devPs" min="1" value="1000" inputmode="numeric"><p class="hint">Это скорость без иксов: в игре она ещё умножится на иксы игрока. Выдаётся заводами, плантациями и деревьями.</p><div class="chips"><button type="button" class="uchip" data-ps="1000">1 000</button><button type="button" class="uchip" data-ps="1000000">Миллион</button><button type="button" class="uchip" data-ps="1000000000">Миллиард</button><button type="button" class="uchip" data-ps="1000000000000">Триллион</button></div></div>
+          <div class="field" id="devPsRow" hidden><label for="devPs">Сколько лимонов в секунду добавить</label><input type="number" id="devPs" min="1" value="1000" inputmode="numeric"><p class="hint">Это скорость без иксов: в игре она ещё умножится на иксы игрока. Выдаётся заводами, плантациями и деревьями.</p><div class="chips"><button type="button" class="uchip" data-ps="1000">1 000</button><button type="button" class="uchip" data-ps="1000000">Миллион</button><button type="button" class="uchip" data-ps="1000000000">Миллиард</button><button type="button" class="uchip" data-ps="1000000000000">Триллион</button><button type="button" class="uchip" data-ps="1e33">Дециллион</button><button type="button" class="uchip" data-ps="1e50">10⁵⁰</button><button type="button" class="uchip" data-ps="1e100">Гугол</button></div></div>
           <div class="field" id="devXRow" hidden><label for="devX">Какой икс</label><select id="devX"></select></div>
           <div class="field" id="devInfRow" hidden><label for="devInf">Сколько раз ×2</label><input type="number" id="devInf" min="1" max="900" value="10" inputmode="numeric"></div>
           <div class="field" id="devAmtRow"><label for="devAmt" id="devAmtLbl">Сколько монет</label><input type="number" id="devAmt" min="1" value="5000" inputmode="numeric"><div class="quick" id="devQuick" hidden><button type="button" class="uchip" data-v="1e33">Дециллион</button><button type="button" class="uchip" data-v="1e50">10⁵⁰</button><button type="button" class="uchip" data-v="1e100">Гугол</button></div></div>
@@ -731,7 +731,7 @@ html, body { touch-action: manipulation; -webkit-tap-highlight-color: transparen
     if (!nick) { say($("devMsg"), "Впиши ник", false); return; }
     if (k === "ps") {
       p.ps = Math.floor(+$("devPs").value || 0);
-      if (p.ps < 1 || p.ps > 1e15) { say($("devMsg"), "Впиши от 1 до 10¹⁵", false); return; }
+      if (p.ps < 1 || p.ps > 1e100) { say($("devMsg"), "Впиши от 1 до гугола (10¹⁰⁰)", false); return; }
       what = "+" + bigAmt(p.ps) + " лимонов/сек (Лимонный Икс)";
     } else if (k === "x") {
       var xv = $("devX").value;
