@@ -595,6 +595,8 @@ export class Room {
 export default {
   async fetch(req, env) {
     const url = new URL(req.url);
+    // подтверждение сайта для Google Search Console: отдаём ровно по этому адресу, без перенаправления на адрес без .html
+    if (url.pathname === "/google5897fb2d02140506.html") return new Response("google-site-verification: google5897fb2d02140506.html", { headers: { "content-type": "text/html; charset=utf-8" } });
     if (!url.pathname.startsWith("/api/")) return env.ASSETS.fetch(req);
     try {
       await init(env);

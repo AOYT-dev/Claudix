@@ -6,7 +6,7 @@ compatibility_date = "2026-10-01"
 [assets]
 directory = "./public"
 binding = "ASSETS"
-run_worker_first = ["/api/*"]
+run_worker_first = ["/api/*", "/google5897fb2d02140506.html"]
 
 # База аккаунтов и сохранений. Вставь сюда Database ID из Cloudflare (Storage & Databases -> D1 -> claudix-db).
 [[d1_databases]]
