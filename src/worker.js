@@ -12,7 +12,10 @@ const SCHEMA = [
   "CREATE TABLE IF NOT EXISTS sessions (th TEXT PRIMARY KEY, uid TEXT NOT NULL, exp INTEGER NOT NULL)",
   "CREATE TABLE IF NOT EXISTS saves (uid TEXT NOT NULL, game TEXT NOT NULL, data TEXT NOT NULL, updated INTEGER NOT NULL, score REAL NOT NULL DEFAULT 0, PRIMARY KEY (uid, game))",
   "CREATE TABLE IF NOT EXISTS fails (k TEXT PRIMARY KEY, n INTEGER NOT NULL, t INTEGER NOT NULL)",
+  "CREATE TABLE IF NOT EXISTS resets (th TEXT PRIMARY KEY, uid TEXT NOT NULL, exp INTEGER NOT NULL)",
 ];
+const EMAIL_RE = /^[^\s@<>"']{1,64}@[^\s@<>"']{1,190}\.[a-z]{2,24}$/i;
+const RESET_MS = 3600 * 1000;
 
 let ready = null;
 async function migrate(env) {
@@ -27,6 +30,10 @@ async function migrate(env) {
     }
   }
   await env.DB.prepare("CREATE INDEX IF NOT EXISTS saves_top ON saves (game, score DESC)").run();
+  // почта (необязательная) — только для восстановления пароля
+  const ucols = await env.DB.prepare("PRAGMA table_info(users)").all();
+  if (!(ucols.results || []).some((c) => c.name === "email")) await env.DB.prepare("ALTER TABLE users ADD COLUMN email TEXT").run();
+  await env.DB.prepare("CREATE INDEX IF NOT EXISTS users_email ON users (email)").run();
 }
 function init(env) {
   if (!ready) ready = migrate(env).catch((e) => { ready = null; throw e; });
@@ -76,6 +83,28 @@ async function bump(env, key, windowMs) {
   ).bind(key, now, windowMs).run();
 }
 const clearFails = (env, key) => env.DB.prepare("DELETE FROM fails WHERE k = ?1").bind(key).run();
+
+// ---- почта ----
+function cleanEmail(v) { const e = typeof v === "string" ? v.trim().toLowerCase() : ""; return e && EMAIL_RE.test(e) && e.length <= 254 ? e : null; }
+function maskEmail(e) { if (!e) return null; const [a, d] = e.split("@"); return (a.length <= 2 ? a[0] + "*" : a[0] + "***" + a[a.length - 1]) + "@" + d; }
+const mailOn = (env) => !!(env.RESEND_API_KEY && env.MAIL_FROM);
+// письмо через Resend (ключ RESEND_API_KEY и адрес отправителя MAIL_FROM задаются секретами в Cloudflare)
+async function sendMail(env, to, subject, text, html) {
+  if (!mailOn(env)) return false;
+  const r = await fetch("https://api.resend.com/emails", {
+    method: "POST", headers: { authorization: "Bearer " + env.RESEND_API_KEY, "content-type": "application/json" },
+    body: JSON.stringify({ from: env.MAIL_FROM, to: [to], subject, text, html }),
+  });
+  return r.ok;
+}
+async function setPassword(env, uid, pw) {
+  const salt = b64(crypto.getRandomValues(new Uint8Array(16)));
+  await env.DB.batch([
+    env.DB.prepare("UPDATE users SET salt = ?2, hash = ?3 WHERE uid = ?1").bind(uid, salt, await hashPw(pw, salt)),
+    env.DB.prepare("DELETE FROM sessions WHERE uid = ?1").bind(uid),
+    env.DB.prepare("DELETE FROM resets WHERE uid = ?1").bind(uid),
+  ]);
+}
 
 // ---- сессии ----
 async function startSession(env, uid) {
@@ -224,6 +253,8 @@ async function route(req, env) {
     const pw = typeof b.password === "string" ? b.password : "";
     if (!NAME_RE.test(name)) return fail("bad_name", 400);
     if (pw.length < 4 || pw.length > 64) return fail("bad_password", 400);
+    const email = b.email ? cleanEmail(b.email) : null;
+    if (b.email && !email) return fail("bad_email", 400);
     if (await blocked(env, "r:" + ip, 10, 3600e3)) return fail("slow_down", 429);
     const uid = name.toLowerCase();
     if (await env.DB.prepare("SELECT 1 AS x FROM users WHERE uid = ?1").bind(uid).first()) return fail("taken", 409);
@@ -231,7 +262,7 @@ async function route(req, env) {
     const hash = await hashPw(pw, salt);
     const now = Date.now();
     try {
-      await env.DB.prepare("INSERT INTO users (uid, name, salt, hash, created) VALUES (?1, ?2, ?3, ?4, ?5)").bind(uid, name, salt, hash, now).run();
+      await env.DB.prepare("INSERT INTO users (uid, name, salt, hash, created, email) VALUES (?1, ?2, ?3, ?4, ?5, ?6)").bind(uid, name, salt, hash, now, email).run();
     } catch (e) {
       if (/UNIQUE|constraint/i.test(String(e && e.message))) return fail("taken", 409);
       throw e;
@@ -262,6 +293,58 @@ async function route(req, env) {
     return json({ token: await startSession(env, uid), user: uid, name: u.name });
   }
 
+  // Забыли пароль: письмо со ссылкой на почту аккаунта. Ответ всегда одинаковый, чтобы не выдавать, у кого есть почта.
+  if (req.method === "POST" && path === "/api/forgot") {
+    if (!mailOn(env)) return fail("mail_off", 503);
+    const b = await body(req, 2000);
+    const who = typeof b.who === "string" ? b.who.trim() : "";
+    if (!who || who.length > 254) return fail("bad_name", 400);
+    if ((await blocked(env, "f:" + ip, 6, 3600e3)) || (await blocked(env, "fw:" + who.toLowerCase(), 3, 3600e3))) return fail("slow_down", 429);
+    await bump(env, "f:" + ip, 3600e3); await bump(env, "fw:" + who.toLowerCase(), 3600e3);
+    const em = cleanEmail(who);
+    const rows = em
+      ? (await env.DB.prepare("SELECT uid, name, email FROM users WHERE email = ?1 LIMIT 5").bind(em).all()).results || []
+      : [await env.DB.prepare("SELECT uid, name, email FROM users WHERE uid = ?1").bind(who.toLowerCase()).first()].filter(Boolean);
+    for (const u of rows) {
+      if (!u.email) continue;
+      const token = newToken();
+      await env.DB.prepare("INSERT INTO resets (th, uid, exp) VALUES (?1, ?2, ?3)").bind(await sha(token), u.uid, Date.now() + RESET_MS).run();
+      const link = url.origin + "/#reset=" + token;
+      await sendMail(env, u.email, "Claudix: новый пароль для " + u.name,
+        "Привет, " + u.name + "!\n\nКто-то (надеемся, ты) попросил новый пароль для аккаунта Claudix. Открой ссылку, она работает 1 час:\n" + link + "\n\nЕсли это был не ты, просто ничего не делай: пароль не изменится.",
+        "<p>Привет, <b>" + u.name + "</b>!</p><p>Кто-то (надеемся, ты) попросил новый пароль для аккаунта Claudix. Ссылка работает 1 час:</p><p><a href=\"" + link + "\">Придумать новый пароль</a></p><p style=\"color:#777\">Если это был не ты, просто ничего не делай: пароль не изменится.</p>");
+    }
+    return json({ ok: true });
+  }
+  if (req.method === "POST" && path === "/api/reset") {
+    const b = await body(req, 2000);
+    const token = typeof b.token === "string" ? b.token : "", pw = typeof b.password === "string" ? b.password : "";
+    if (pw.length < 4 || pw.length > 64) return fail("bad_password", 400);
+    if (!/^[\w-]{20,80}$/.test(token)) return fail("bad_token", 400);
+    if (await blocked(env, "rs:" + ip, 20, 3600e3)) return fail("slow_down", 429);
+    const th = await sha(token);
+    const row = await env.DB.prepare("SELECT r.uid AS uid, r.exp AS exp, u.name AS name FROM resets r JOIN users u ON u.uid = r.uid WHERE r.th = ?1").bind(th).first();
+    if (!row || row.exp < Date.now()) { await bump(env, "rs:" + ip, 3600e3); return fail("bad_token", 400); }
+    await setPassword(env, row.uid, pw);
+    return json({ ok: true, name: row.name });
+  }
+
+  // Окно разработчика: новый пароль игроку, который забыл свой (если почты нет)
+  if (req.method === "POST" && path === "/api/admin/password") {
+    if (!env.ADMIN_KEY || String(env.ADMIN_KEY).length < 8) return fail("off", 404);
+    if (await blocked(env, "a:" + ip, 8, 600e3)) return fail("slow_down", 429);
+    const key = req.headers.get("x-admin-key") || "";
+    if (!same(await sha(key), await sha(String(env.ADMIN_KEY)))) { await bump(env, "a:" + ip, 600e3); return fail("bad_key", 401); }
+    const b = await body(req, 2000);
+    const name = typeof b.name === "string" ? b.name.trim() : "", pw = typeof b.password === "string" ? b.password : "";
+    if (!NAME_RE.test(name)) return fail("bad_name", 400);
+    if (pw.length < 4 || pw.length > 64) return fail("bad_password", 400);
+    const u = await env.DB.prepare("SELECT name FROM users WHERE uid = ?1").bind(name.toLowerCase()).first();
+    if (!u) return fail("no_user", 404);
+    await setPassword(env, name.toLowerCase(), pw);
+    return json({ ok: true, name: u.name });
+  }
+
   // Окно разработчика: подарок игроку по нику. Работает только если в Cloudflare задан секрет ADMIN_KEY.
   if (req.method === "POST" && path === "/api/admin/gift") {
     if (!env.ADMIN_KEY || String(env.ADMIN_KEY).length < 8) return fail("off", 404);
@@ -287,7 +370,22 @@ async function route(req, env) {
   const me = await auth(env, req);
   if (!me) return fail("unauthorized", 401);
 
-  if (req.method === "GET" && path === "/api/me") return json({ user: me.uid, name: me.name });
+  if (req.method === "GET" && path === "/api/me") {
+    const u = await env.DB.prepare("SELECT email FROM users WHERE uid = ?1").bind(me.uid).first();
+    return json({ user: me.uid, name: me.name, email: u && u.email ? maskEmail(u.email) : null, mail: mailOn(env) });
+  }
+  // добавить, поменять или убрать почту (нужен пароль)
+  if (req.method === "POST" && path === "/api/email") {
+    const b = await body(req, 2000);
+    const pw = typeof b.password === "string" ? b.password : "";
+    const email = b.email ? cleanEmail(b.email) : null;
+    if (b.email && !email) return fail("bad_email", 400);
+    if (await blocked(env, "l:" + me.uid, 10, 600e3)) return fail("slow_down", 429);
+    const u = await env.DB.prepare("SELECT salt, hash FROM users WHERE uid = ?1").bind(me.uid).first();
+    if (!u || !same(await hashPw(pw, u.salt), u.hash)) { await bump(env, "l:" + me.uid, 600e3); return fail("bad_login", 401); }
+    await env.DB.prepare("UPDATE users SET email = ?2 WHERE uid = ?1").bind(me.uid, email).run();
+    return json({ ok: true, email: maskEmail(email) });
+  }
 
   if (req.method === "POST" && path === "/api/logout") {
     await env.DB.prepare("DELETE FROM sessions WHERE th = ?1").bind(me.th).run();
@@ -330,6 +428,7 @@ async function route(req, env) {
     await env.DB.batch([
       env.DB.prepare("DELETE FROM saves WHERE uid = ?1").bind(me.uid),
       env.DB.prepare("DELETE FROM sessions WHERE uid = ?1").bind(me.uid),
+      env.DB.prepare("DELETE FROM resets WHERE uid = ?1").bind(me.uid),
       env.DB.prepare("DELETE FROM users WHERE uid = ?1").bind(me.uid),
     ]);
     return json({ ok: true });

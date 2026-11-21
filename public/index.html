@@ -155,7 +155,7 @@ h2 { margin: 0; font-family: var(--font-display); font-weight: 600; font-size: 1
 .two { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 18px; }
 .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 18px; display: grid; gap: 12px; align-content: start; min-width: 0; }
 label { font-size: 0.85rem; color: var(--muted); }
-input[type="text"], input[type="password"] {
+input[type="text"], input[type="password"], input[type="email"] {
   width: 100%; padding: 12px 14px; border-radius: 10px; border: 1px solid var(--line);
   background: var(--bg); color: var(--fg); font: inherit; font-size: 1rem;
 }
@@ -425,16 +425,42 @@ html, body { touch-action: manipulation; -webkit-tap-highlight-color: transparen
           <p class="msg" id="uhint" aria-live="polite"></p>
           <div class="field"><label for="ap">Пароль</label><input type="password" id="ap" maxlength="64" autocomplete="current-password" placeholder="от 4 символов"></div>
           <div class="field" id="rowP2" hidden><label for="ap2">Пароль ещё раз</label><input type="password" id="ap2" maxlength="64" autocomplete="new-password"></div>
+          <div class="field" id="rowEmail" hidden><label for="aem">Почта (по желанию)</label><input type="email" id="aem" maxlength="254" autocomplete="email" autocapitalize="off" spellcheck="false" placeholder="чтобы восстановить пароль, если забудешь"></div>
           <label class="row" id="rowTransfer" for="atr" hidden><input type="checkbox" id="atr" checked><span>Забрать в аккаунт прогресс, который уже есть на этом устройстве</span></label>
           <p class="msg" id="aerr" role="alert"></p>
           <button class="go2" id="asubmit" type="submit">Войти</button>
         </form>
-        <p class="hint">Аккаунт общий: заходи с любого устройства, прогресс подтянется сам. Пароль хранится в зашифрованном виде и забытый не восстанавливается. Не используй пароль от почты или других сайтов.</p>
+        <button class="devlink" id="forgotOpen" type="button">Забыли пароль?</button>
+        <div class="stack" id="forgotBox" hidden>
+          <div class="field"><label for="fwho">Ник или почта</label><input type="text" id="fwho" maxlength="254" autocomplete="username" autocapitalize="off" spellcheck="false"></div>
+          <p class="msg" id="ferr" role="alert"></p>
+          <button class="go2" id="fsend" type="button">Прислать ссылку на почту</button>
+          <p class="hint" style="margin:0">Ссылка придёт на почту, указанную в аккаунте. Если почты в аккаунте нет, попроси разработчика: он поставит новый пароль.</p>
+          <button class="btn2" id="fcancel" type="button">Назад</button>
+        </div>
+        <div class="stack" id="resetBox" hidden>
+          <h3 style="margin:0">Новый пароль</h3>
+          <div class="field"><label for="rp1">Новый пароль</label><input type="password" id="rp1" maxlength="64" autocomplete="new-password" placeholder="от 4 символов"></div>
+          <div class="field"><label for="rp2">Ещё раз</label><input type="password" id="rp2" maxlength="64" autocomplete="new-password"></div>
+          <p class="msg" id="rerr" role="alert"></p>
+          <button class="go2" id="rgo" type="button">Сохранить пароль</button>
+        </div>
+        <p class="hint">Аккаунт общий: заходи с любого устройства, прогресс подтянется сам. Пароль хранится в зашифрованном виде. Если забудешь, восстановишь по почте, если добавишь её. Не используй пароль от почты или других сайтов.</p>
       </div>
 
       <div class="stack" id="viewIn" hidden>
         <div><p class="hint" style="margin:0">Ты вошёл как</p><div class="big-name" id="inName"></div></div>
         <p class="hint">Прогресс в играх сохраняется в этом аккаунте.</p>
+        <div class="row" style="justify-content:space-between;flex-wrap:wrap"><span>Почта: <b id="emShow">не указана</b></span><button class="devlink" id="emEdit" type="button">Добавить почту</button></div>
+        <div class="stack" id="emBox" hidden>
+          <div class="field"><label for="emNew">Почта</label><input type="email" id="emNew" maxlength="254" autocomplete="email" autocapitalize="off" spellcheck="false"></div>
+          <div class="field"><label for="emPw">Пароль от аккаунта</label><input type="password" id="emPw" maxlength="64" autocomplete="current-password"></div>
+          <p class="hint" style="margin:0">Почта нужна только чтобы восстановить пароль. Её никто не видит.</p>
+          <p class="msg" id="emErr" role="alert"></p>
+          <button class="go2" id="emSave" type="button">Сохранить почту</button>
+          <button class="btn2" id="emDel" type="button" hidden>Убрать почту</button>
+          <button class="btn2" id="emCancel" type="button">Отмена</button>
+        </div>
         <button class="btn2" id="logout" type="button">Выйти</button>
         <button class="btn2 danger" id="delStart" type="button">Удалить аккаунт</button>
         <div class="stack" id="delBox" hidden>
@@ -469,6 +495,12 @@ html, body { touch-action: manipulation; -webkit-tap-highlight-color: transparen
           <button class="go2" id="devSend" type="button">Отправить подарок</button>
           <p class="msg" id="devMsg" aria-live="polite"></p>
           <ul id="devLog"></ul>
+          <div class="stack" style="border-top:1px solid var(--line);padding-top:12px">
+            <label for="devNewPw">Новый пароль для игрока (ник сверху), если он забыл свой</label>
+            <input type="text" id="devNewPw" maxlength="64" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="от 4 символов">
+            <button class="btn2" id="devPwGo" type="button">Поставить новый пароль</button>
+            <p class="msg" id="devPwMsg" aria-live="polite"></p>
+          </div>
           <button class="btn2" id="devOut" type="button">Закрыть окно разработчика</button>
         </div>
       </div>
@@ -562,7 +594,10 @@ html, body { touch-action: manipulation; -webkit-tap-highlight-color: transparen
     bad_password: TR("Пароль: от 4 до 64 символов."),
     slow_down: TR("Слишком много попыток. Подожди несколько минут."),
     network: TR("Нет связи с сервером. Проверь интернет и попробуй ещё раз."),
-    server: TR("Сервер сейчас не отвечает. Попробуй чуть позже.")
+    server: TR("Сервер сейчас не отвечает. Попробуй чуть позже."),
+    bad_email: TR("Почта написана неправильно."),
+    mail_off: TR("Восстановление по почте пока не включено. Попроси разработчика поставить новый пароль."),
+    bad_token: TR("Ссылка устарела или уже использована. Попроси новую.")
   };
   function errText(res) { return ERR[res.code] || ERR.server; }
   function setMsg(el, text, kind) { el.textContent = text || ""; el.className = "msg" + (kind ? " " + kind : ""); }
@@ -574,7 +609,7 @@ html, body { touch-action: manipulation; -webkit-tap-highlight-color: transparen
   function paintView() {
     var s = session();
     $("viewGuest").hidden = !!s; $("viewIn").hidden = !s;
-    if (s) { $("inName").textContent = s.name; $("delBox").hidden = true; $("delStart").hidden = false; }
+    if (s) { $("inName").textContent = s.name; $("delBox").hidden = true; $("delStart").hidden = false; $("emBox").hidden = true; paintEmail(); }
     else setMode(mode);
     paintChip(); paintStats();
     if (window.__boardReady) paintBoard();
@@ -584,7 +619,7 @@ html, body { touch-action: manipulation; -webkit-tap-highlight-color: transparen
     var reg = m === "reg";
     $("tabLogin").setAttribute("aria-selected", reg ? "false" : "true");
     $("tabReg").setAttribute("aria-selected", reg ? "true" : "false");
-    $("rowP2").hidden = !reg;
+    $("rowP2").hidden = !reg; $("rowEmail").hidden = !reg; $("forgotOpen").hidden = reg; $("forgotBox").hidden = true; $("authForm").hidden = false;
     $("rowTransfer").hidden = !(reg && hasProgress(""));
     $("ap").setAttribute("autocomplete", reg ? "new-password" : "current-password");
     $("asubmit").textContent = reg ? TR("Создать аккаунт") : TR("Войти");
@@ -630,10 +665,12 @@ html, body { touch-action: manipulation; -webkit-tap-highlight-color: transparen
     var reg = mode === "reg";
     if (reg && pw !== $("ap2").value) { setMsg(err, TR("Пароли не совпадают."), "bad"); return; }
     busy = true; $("asubmit").disabled = true; setMsg(err, reg ? TR("Создаю аккаунт…") : TR("Вхожу…"));
-    var job = reg ? C.register(name, pw, $("atr").checked && !$("rowTransfer").hidden) : C.login(name, pw);
+    var em = reg ? $("aem").value.trim() : "";
+    if (em && !/^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(em)) { setMsg(err, ERR.bad_email, "bad"); return; }
+    var job = reg ? C.register(name, pw, $("atr").checked && !$("rowTransfer").hidden, em) : C.login(name, pw);
     job.then(function (res) {
       if (!res.ok) { setMsg(err, errText(res), "bad"); return; }
-      $("ap").value = ""; $("ap2").value = ""; $("au").value = "";
+      $("ap").value = ""; $("ap2").value = ""; $("au").value = ""; $("aem").value = "";
       setMsg(err, "");
       paintView();
     }).then(function () { busy = false; $("asubmit").disabled = false; });
@@ -650,6 +687,59 @@ html, body { touch-action: manipulation; -webkit-tap-highlight-color: transparen
       $("delGo").disabled = false;
       if (!res.ok) { setMsg($("derr"), res.code === "bad_login" ? TR("Пароль не подходит.") : errText(res), "bad"); return; }
       mode = "login"; paintView();
+    });
+  });
+
+  // ---------- почта и «забыли пароль» ----------
+  var curEmail = null;
+  function paintEmail() {
+    $("emShow").textContent = curEmail || TR("не указана"); $("emEdit").textContent = curEmail ? TR("Изменить") : TR("Добавить почту"); $("emDel").hidden = !curEmail;
+    if (C.me) C.me().then(function (r) { if (!r) return; curEmail = r.email; $("emShow").textContent = curEmail || TR("не указана"); $("emEdit").textContent = curEmail ? TR("Изменить") : TR("Добавить почту"); $("emDel").hidden = !curEmail; });
+  }
+  $("emEdit").addEventListener("click", function () { $("emBox").hidden = false; $("emEdit").hidden = true; $("emNew").value = ""; $("emPw").value = ""; setMsg($("emErr"), ""); $("emNew").focus(); });
+  $("emCancel").addEventListener("click", function () { $("emBox").hidden = true; $("emEdit").hidden = false; });
+  function emSend(email) {
+    var e = $("emErr");
+    if (email && !/^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(email)) { setMsg(e, ERR.bad_email, "bad"); return; }
+    if (!$("emPw").value) { setMsg(e, TR("Введи пароль от аккаунта."), "bad"); return; }
+    $("emSave").disabled = $("emDel").disabled = true; setMsg(e, TR("Сохраняю…"));
+    C.setEmail(email, $("emPw").value).then(function (r) {
+      $("emSave").disabled = $("emDel").disabled = false;
+      if (!r.ok) { setMsg(e, r.code === "bad_login" ? TR("Пароль не подходит.") : errText(r), "bad"); return; }
+      curEmail = r.email; $("emBox").hidden = true; $("emEdit").hidden = false; paintEmail();
+    });
+  }
+  $("emSave").addEventListener("click", function () { emSend($("emNew").value.trim()); });
+  $("emDel").addEventListener("click", function () { emSend(""); });
+  $("forgotOpen").addEventListener("click", function () { $("forgotBox").hidden = false; $("authForm").hidden = true; $("forgotOpen").hidden = true; $("fwho").value = $("au").value.trim(); setMsg($("ferr"), ""); $("fwho").focus(); });
+  $("fcancel").addEventListener("click", function () { setMode("login"); });
+  $("fsend").addEventListener("click", function () {
+    var who = $("fwho").value.trim(), e = $("ferr");
+    if (!who) { setMsg(e, TR("Впиши ник или почту."), "bad"); return; }
+    $("fsend").disabled = true; setMsg(e, TR("Отправляю…"));
+    C.forgot(who).then(function (r) {
+      $("fsend").disabled = false;
+      if (!r.ok) { setMsg(e, errText(r), "bad"); return; }
+      setMsg(e, TR("Если у этого аккаунта есть почта, письмо уже летит. Проверь «Входящие» и «Спам»: ссылка работает 1 час."), "ok");
+    });
+  });
+  // ссылка из письма: …/#reset=ТОКЕН
+  var resetToken = (/^#reset=([\w-]{20,80})$/.exec(location.hash) || [])[1];
+  if (resetToken && !session()) {
+    $("authForm").hidden = true; $("forgotOpen").hidden = true; $("resetBox").hidden = false;
+    setTimeout(function () { $("acctPanel").scrollIntoView({ block: "center" }); $("rp1").focus(); }, 300);
+  }
+  $("rgo").addEventListener("click", function () {
+    var e = $("rerr"), a = $("rp1").value;
+    if (a.length < 4) { setMsg(e, TR("Пароль слишком короткий, нужно хотя бы 4 символа."), "bad"); return; }
+    if (a !== $("rp2").value) { setMsg(e, TR("Пароли не совпадают."), "bad"); return; }
+    $("rgo").disabled = true; setMsg(e, TR("Сохраняю…"));
+    C.resetPassword(resetToken, a).then(function (r) {
+      $("rgo").disabled = false;
+      if (!r.ok) { setMsg(e, errText(r), "bad"); return; }
+      try { history.replaceState(null, "", location.pathname); } catch (x) { /* ничего */ }
+      $("resetBox").hidden = true; setMode("login"); $("au").value = r.name || ""; $("ap").focus();
+      setMsg($("aerr"), TR("Пароль изменён. Войди с новым паролем."), "ok");
     });
   });
 
@@ -760,6 +850,16 @@ html, body { touch-action: manipulation; -webkit-tap-highlight-color: transparen
         var li = document.createElement("li"); li.textContent = new Date().toLocaleTimeString("ru-RU") + " · " + r.j.name + " ← " + what; $("devLog").insertBefore(li, $("devLog").firstChild);
       } else say($("devMsg"), ERR[r.j.error] || "Ошибка " + r.status, false);
     }, function () { $("devSend").disabled = false; say($("devMsg"), "Нет связи с сервером", false); });
+  };
+  $("devPwGo").onclick = function () {
+    var nick = $("devNick").value.trim(), pw = $("devNewPw").value, m = $("devPwMsg");
+    if (!nick) { say(m, "Впиши ник сверху", false); return; }
+    if (pw.length < 4) { say(m, "Пароль от 4 символов", false); return; }
+    $("devPwGo").disabled = true; say(m, "Ставлю…", null);
+    fetch("/api/admin/password", { method: "POST", headers: { "content-type": "application/json", "x-admin-key": KEY }, body: JSON.stringify({ name: nick, password: pw }) })
+      .then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { return { status: r.status, j: j }; }); })
+      .then(function (r) { $("devPwGo").disabled = false; if (r.status === 200 && r.j.ok) { say(m, "Готово: у " + r.j.name + " новый пароль. Все его входы сброшены.", true); $("devNewPw").value = ""; } else say(m, ERR[r.j.error] || "Ошибка " + r.status, false); },
+        function () { $("devPwGo").disabled = false; say(m, "Нет связи с сервером", false); });
   };
   if (location.hash === "#dev") open();
 })();

@@ -215,7 +215,12 @@
   window.Claudix = {
     session: session, saveKey: saveKey, GAMES: GAMES,
     ready: ready, pullAll: pullAll, push: push, flushAll: flushAll,
-    register: function (name, pw, withGuest) { return authCall("/api/register", name, pw, withGuest ? { saves: guestSaves() } : null); },
+    register: function (name, pw, withGuest, email) { var x = withGuest ? { saves: guestSaves() } : {}; if (email) x.email = email; return authCall("/api/register", name, pw, x); },
+    // почта и восстановление пароля
+    me: function () { return api("/api/me").then(function (r) { return r.status === 200 ? r.data : null; }, function () { return null; }); },
+    setEmail: function (email, pw) { return api("/api/email", "POST", { email: email || "", password: pw }).then(function (r) { return r.status === 200 ? { ok: true, email: r.data.email } : { ok: false, code: (r.data && r.data.error) || "server" }; }, function () { return { ok: false, code: "network" }; }); },
+    forgot: function (who) { return api("/api/forgot", "POST", { who: who }).then(function (r) { return r.status === 200 ? { ok: true } : { ok: false, code: (r.data && r.data.error) || "server" }; }, function () { return { ok: false, code: "network" }; }); },
+    resetPassword: function (token, pw) { return api("/api/reset", "POST", { token: token, password: pw }).then(function (r) { return r.status === 200 ? { ok: true, name: r.data.name } : { ok: false, code: (r.data && r.data.error) || "server" }; }, function () { return { ok: false, code: "network" }; }); },
     login: function (name, pw) { return authCall("/api/login", name, pw); },
     top: top, logout: logout, deleteAccount: deleteAccount, nameFree: nameFree, validate: validate,
     onConflict: function (fn) { conflictCb = fn; }
