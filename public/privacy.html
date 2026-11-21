@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Политика конфиденциальности · Claudix</title>
+<meta name="description" content="Какие данные собирает Claudix, зачем и как удалить аккаунт. Privacy policy of the Claudix app and website.">
+<link rel="canonical" href="https://claudix.aoyt.workers.dev/privacy.html">
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@800&family=Onest:wght@400;500;700&display=swap">
+<style>
+/* Один столбец текста шириной ~65 знаков: шапка с логотипом, русская версия, затем английская */
+:root {
+  --font-display: "Unbounded", "Arial Black", system-ui, sans-serif;
+  --font-body: "Onest", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --bg: #f4f8fa; --surface: #ffffff; --line: rgba(10, 40, 52, 0.12); --fg: #0b1e24; --muted: #5a7078; --accent: #1683b8; --mark: #6fd0ff;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #07181d; --surface: #0e272e; --line: rgba(255, 255, 255, 0.11); --fg: #eef6f7; --muted: #94b0b6; --accent: #58d6ff; --mark: #ff5a8c; color-scheme: dark; } }
+:root[data-theme="dark"] { --bg: #07181d; --surface: #0e272e; --line: rgba(255, 255, 255, 0.11); --fg: #eef6f7; --muted: #94b0b6; --accent: #58d6ff; --mark: #ff5a8c; color-scheme: dark; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 400 1rem/1.6 var(--font-body); }
+.wrap { max-width: 720px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 22px 56px; display: grid; gap: 22px; }
+header { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.wm { font-family: var(--font-display); font-weight: 800; font-size: 1.35rem; color: var(--fg); text-decoration: none; }
+.wm b { color: var(--mark); }
+.back { color: var(--accent); font-weight: 700; text-decoration: none; }
+h1 { margin: 0; font-family: var(--font-display); font-weight: 800; font-size: clamp(1.5rem, 5vw, 2.1rem); line-height: 1.15; text-wrap: balance; }
+h2 { margin: 6px 0 0; font-size: 1.15rem; }
+p, li { margin: 0; max-width: 65ch; }
+ul { margin: 0; padding-left: 1.2em; display: grid; gap: 6px; }
+section { display: grid; gap: 10px; }
+.meta { color: var(--muted); font-size: .9rem; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; display: grid; gap: 8px; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 10px 0; }
+a { color: var(--accent); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header><a class="wm" href="./">Claudi<b>X</b></a><a class="back" href="./">← На главную</a></header>
+
+  <section>
+    <h1>Политика конфиденциальности</h1>
+    <p class="meta">Действует с 21 ноября 2026 года. Относится к сайту claudix.aoyt.workers.dev и приложению Claudix для iOS и Android.</p>
+    <p>Claudix — площадка с бесплатными играми: Лимонный Икс, Лига Улиц, Вираж-9 и книги вселенной AOYT. Мы собираем только то, без чего не работают аккаунты и сохранения.</p>
+  </section>
+
+  <section>
+    <h2>Что мы храним</h2>
+    <ul>
+      <li><b>Ник</b>, который ты придумал при регистрации. Его видят другие игроки в таблицах лидеров и в онлайн-лобби.</li>
+      <li><b>Пароль</b> — только в виде зашифрованного хеша (PBKDF2 с солью). Сам пароль мы не видим и не можем восстановить.</li>
+      <li><b>Прогресс в играх</b>: монеты, лимоны, героев, тюнинг, рекорды.</li>
+      <li><b>Сессию входа</b>: случайный ключ, чтобы не вводить пароль каждый раз. Он живёт 60 дней или до выхода из аккаунта.</li>
+      <li><b>IP-адрес</b> временно, до часа: чтобы защитить вход от подбора паролей и спама регистрациями.</li>
+    </ul>
+    <p>Мы <b>не</b> спрашиваем почту, телефон, настоящее имя, возраст и местоположение. В Claudix нет рекламы, нет сторонней аналитики и нет покупок за деньги.</p>
+  </section>
+
+  <section>
+    <h2>Без аккаунта</h2>
+    <p>Если играть как гость, прогресс хранится только на твоём устройстве (в памяти браузера или приложения) и на сервер не отправляется.</p>
+  </section>
+
+  <section>
+    <h2>Где хранятся данные и кто их видит</h2>
+    <p>Сайт и база работают на Cloudflare. Шрифты загружаются с Google Fonts, поэтому Google видит, что их запросили. Больше никому данные не передаются и не продаются.</p>
+  </section>
+
+  <div class="card">
+    <h2 style="margin:0">Как удалить аккаунт</h2>
+    <p>Открой <a href="./#acctPanel">главную страницу</a> (в приложении — первый экран), войди, нажми <b>«Удалить аккаунт»</b> и введи пароль. Ник, пароль, весь прогресс и все входы удаляются с сервера сразу и навсегда, ник пропадает из таблиц лидеров.</p>
+  </div>
+
+  <section>
+    <h2>Дети</h2>
+    <p>Claudix могут использовать дети. Мы не собираем данных, по которым можно узнать человека. Пожалуйста, не используй в нике настоящее имя и фамилию.</p>
+  </section>
+
+  <section>
+    <h2>Изменения</h2>
+    <p>Если политика изменится, новая версия появится на этой странице с новой датой.</p>
+  </section>
+
+  <hr>
+
+  <section lang="en">
+    <h1 style="font-size:clamp(1.3rem,4vw,1.7rem)">Privacy Policy (English)</h1>
+    <p class="meta">Effective November 21, 2026. Applies to claudix.aoyt.workers.dev and the Claudix app for iOS and Android.</p>
+    <p><b>What we store:</b> the nickname you choose (shown to other players on leaderboards and in the online lobby); your password only as a salted PBKDF2 hash; your game progress; a random sign-in session key (60 days or until you sign out); and your IP address for up to an hour to protect sign-in and registration from abuse.</p>
+    <p><b>What we don't collect:</b> email, phone number, real name, age or location. There are no ads, no third-party analytics and no in-app purchases. Guest progress stays on your device.</p>
+    <p><b>Where data lives:</b> Cloudflare hosts the site and database. Fonts load from Google Fonts. We don't sell or share data with anyone else.</p>
+    <p><b>Deleting your account:</b> open the home screen, sign in, tap <b>“Удалить аккаунт”</b> (Delete account) and enter your password. Your nickname, password hash, progress and sessions are removed from the server immediately and permanently.</p>
+    <p><b>Children:</b> Claudix may be used by children. We don't collect personally identifying information; please don't use your real name as a nickname.</p>
+  </section>
+</div>
+</body>
+</html>
