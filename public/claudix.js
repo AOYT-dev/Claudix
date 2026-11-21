@@ -204,7 +204,8 @@
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", function () { if (navigator.onLine === false) netState(); });
   else if (navigator.onLine === false) netState();
   // офлайн-режим: страницы и скрипты хранятся на устройстве (sw.js)
-  if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  // в приложении игры уже лежат внутри, сервис-воркер не нужен
+  if ("serviceWorker" in navigator && location.protocol !== "file:" && !window.CLAUDIX_APP) {
     window.addEventListener("load", function () { navigator.serviceWorker.register("/sw.js").catch(function () { /* без офлайна */ }); });
   }
 
