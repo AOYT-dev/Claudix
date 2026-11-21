@@ -68,6 +68,7 @@
 "Без интернета": "Offline",
 "Прогресс сохранён в облако": "Progress saved to the cloud",
 "Политика конфиденциальности": "Privacy policy",
+"Поддержка": "Support",
 "Подробнее": "Learn more",
 "Удаляются ник, пароль, прогресс во всех играх и место в таблицах лидеров. ": "This removes your nickname, password, progress in every game and your leaderboard entries. ",
 "Удалить навсегда": "Delete forever",

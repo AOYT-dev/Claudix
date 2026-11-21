@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/app-icons/icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Claudix">
+<meta name="theme-color" content="#11141b">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Поддержка · Claudix</title>
+<meta name="description" content="Помощь по Claudix: аккаунт, пароль, прогресс, игры без интернета, удаление аккаунта. Claudix support.">
+<link rel="canonical" href="https://claudix.aoyt.workers.dev/support.html">
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@800&family=Onest:wght@400;500;700&display=swap">
+<style>
+/* Один столбец текста шириной ~65 знаков: шапка с логотипом, русская версия, затем английская */
+:root {
+  --font-display: "Unbounded", "Arial Black", system-ui, sans-serif;
+  --font-body: "Onest", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --bg: #f4f8fa; --surface: #ffffff; --line: rgba(10, 40, 52, 0.12); --fg: #0b1e24; --muted: #5a7078; --accent: #1683b8; --mark: #6fd0ff;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #07181d; --surface: #0e272e; --line: rgba(255, 255, 255, 0.11); --fg: #eef6f7; --muted: #94b0b6; --accent: #58d6ff; --mark: #ff5a8c; color-scheme: dark; } }
+:root[data-theme="dark"] { --bg: #07181d; --surface: #0e272e; --line: rgba(255, 255, 255, 0.11); --fg: #eef6f7; --muted: #94b0b6; --accent: #58d6ff; --mark: #ff5a8c; color-scheme: dark; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 400 1rem/1.6 var(--font-body); }
+.wrap { max-width: 720px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 22px 56px; display: grid; gap: 22px; }
+header { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.wm { font-family: var(--font-display); font-weight: 800; font-size: 1.35rem; color: var(--fg); text-decoration: none; }
+.wm b { color: var(--mark); }
+.back { color: var(--accent); font-weight: 700; text-decoration: none; }
+h1 { margin: 0; font-family: var(--font-display); font-weight: 800; font-size: clamp(1.5rem, 5vw, 2.1rem); line-height: 1.15; text-wrap: balance; }
+h2 { margin: 6px 0 0; font-size: 1.15rem; }
+p, li { margin: 0; max-width: 65ch; }
+ul { margin: 0; padding-left: 1.2em; display: grid; gap: 6px; }
+section { display: grid; gap: 10px; }
+.meta { color: var(--muted); font-size: .9rem; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; display: grid; gap: 8px; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 10px 0; }
+a { color: var(--accent); }
+.mail{display:inline-block;padding:12px 16px;border-radius:12px;background:var(--surface);border:1px solid var(--line);font-weight:700;color:var(--accent);text-decoration:none;word-break:break-all}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header><a class="wm" href="./">Claudi<b>X</b></a><a class="back" href="./">← На главную</a></header>
+
+  <section>
+    <h1>Поддержка</h1>
+    <p>Что-то не работает, потерялся прогресс или есть идея? Напиши нам, ответим.</p>
+    <p><a class="mail" href="mailto:Claudix.studio@icloud.com">Claudix.studio@icloud.com</a></p>
+    <p class="meta">Укажи свой ник, устройство (iPhone, iPad, Android или компьютер) и что случилось. Скриншот очень помогает.</p>
+  </section>
+
+  <section>
+    <h2>Частые вопросы</h2>
+    <div class="card"><b>Забыл пароль</b><p>На главной под кнопкой «Войти» нажми «Забыли пароль?». Если в аккаунте есть почта, придёт ссылка. Если почты нет, напиши нам с ника, и мы поставим новый пароль.</p></div>
+    <div class="card"><b>Прогресс не появился на другом устройстве</b><p>Войди в тот же аккаунт на обоих устройствах. Прогресс уходит в облако, когда есть интернет. Если играл без сети, он отправится сам, как только интернет появится.</p></div>
+    <div class="card"><b>Игры без интернета</b><p>В приложении Claudix все игры работают без интернета. Без сети не работают только вход, таблица лидеров и онлайн-режимы.</p></div>
+    <div class="card"><b>Как удалить аккаунт</b><p>На главной войди в аккаунт, нажми «Удалить аккаунт» и введи пароль. Ник, пароль и весь прогресс удаляются сразу и навсегда. Подробнее — в <a href="privacy.html">политике конфиденциальности</a>.</p></div>
+    <div class="card"><b>Игра тормозит</b><p>В меню Лиги Улиц и Виража-9 есть кнопка «Графика»: она включает быстрый режим для слабых устройств.</p></div>
+  </section>
+
+  <hr>
+
+  <section lang="en">
+    <h1 style="font-size:clamp(1.3rem,4vw,1.7rem)">Support (English)</h1>
+    <p>Need help with Claudix? Email <a href="mailto:Claudix.studio@icloud.com">Claudix.studio@icloud.com</a> with your nickname, device and what happened.</p>
+    <p><b>Forgot password:</b> tap “Забыли пароль?” (Forgot password) under the sign-in button. If your account has an email, you'll get a reset link; otherwise email us and we'll set a new password.</p>
+    <p><b>Progress sync:</b> sign in to the same account on each device. Progress made offline uploads automatically once you're back online.</p>
+    <p><b>Offline:</b> all games in the Claudix app work without internet, except sign-in, leaderboards and online modes.</p>
+    <p><b>Delete account:</b> sign in on the home screen, tap “Удалить аккаунт” (Delete account) and enter your password. See the <a href="privacy.html">privacy policy</a>.</p>
+  </section>
+</div>
+</body>
+</html>

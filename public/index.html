@@ -435,7 +435,7 @@ html, body { touch-action: manipulation; -webkit-tap-highlight-color: transparen
           <div class="field"><label for="fwho">Ник или почта</label><input type="text" id="fwho" maxlength="254" autocomplete="username" autocapitalize="off" spellcheck="false"></div>
           <p class="msg" id="ferr" role="alert"></p>
           <button class="go2" id="fsend" type="button">Прислать ссылку на почту</button>
-          <p class="hint" style="margin:0">Ссылка придёт на почту, указанную в аккаунте. Если почты в аккаунте нет, попроси разработчика: он поставит новый пароль.</p>
+          <p class="hint" style="margin:0">Ссылка придёт на почту, указанную в аккаунте. Если почты в аккаунте нет, напиши на Claudix.studio@icloud.com: поставим новый пароль.</p>
           <button class="btn2" id="fcancel" type="button">Назад</button>
         </div>
         <div class="stack" id="resetBox" hidden>
@@ -515,7 +515,7 @@ html, body { touch-action: manipulation; -webkit-tap-highlight-color: transparen
     </div>
   </section>
 
-  <footer>Claudix · альфа 0.5 · приложение для iPhone, iPad и Android, игры работают без интернета, новые машины и графика в Вираже-9. · <a href="privacy.html" style="color:inherit">Политика конфиденциальности</a></footer>
+  <footer>Claudix · альфа 0.5 · приложение для iPhone, iPad и Android, игры работают без интернета, новые машины и графика в Вираже-9. · <a href="privacy.html" style="color:inherit">Политика конфиденциальности</a> · <a href="support.html" style="color:inherit">Поддержка</a></footer>
 </div>
 
 <script src="lang.js"></script>
@@ -596,7 +596,7 @@ html, body { touch-action: manipulation; -webkit-tap-highlight-color: transparen
     network: TR("Нет связи с сервером. Проверь интернет и попробуй ещё раз."),
     server: TR("Сервер сейчас не отвечает. Попробуй чуть позже."),
     bad_email: TR("Почта написана неправильно."),
-    mail_off: TR("Восстановление по почте пока не включено. Попроси разработчика поставить новый пароль."),
+    mail_off: TR("Восстановление по почте пока не включено. Напиши на Claudix.studio@icloud.com, и мы поставим новый пароль."),
     bad_token: TR("Ссылка устарела или уже использована. Попроси новую.")
   };
   function errText(res) { return ERR[res.code] || ERR.server; }

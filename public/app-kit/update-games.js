@@ -6,7 +6,7 @@ const fs = require("fs");
 const path = require("path");
 
 const SITE = process.env.CLAUDIX_SITE || "https://claudix.aoyt.workers.dev";
-const PAGES = { index: "/", liga: "/liga", lemon: "/lemon", viraj: "/viraj", books: "/books", privacy: "/privacy" };
+const PAGES = { index: "/", liga: "/liga", lemon: "/lemon", viraj: "/viraj", books: "/books", privacy: "/privacy", support: "/support" };
 const OUT = path.join(__dirname, "games");
 
 async function get(url) {
