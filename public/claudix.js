@@ -110,6 +110,8 @@
     var done = false;
     function go() { if (done) return; done = true; cb(); }
     if (!session()) { go(); return; }
+    // без интернета не ждём сервер: играем сразу, прогресс уйдёт в облако позже
+    if (navigator.onLine === false) { go(); return; }
     pullAll().then(go, go);
     setTimeout(function () { if (!done) { enabled = false; go(); } }, 6000);
   }
@@ -163,6 +165,47 @@
       }
       return { ok: false, code: (r.data && r.data.error) || "server" };
     }, function () { return { ok: false, code: "network" }; });
+  }
+
+  // ---------- офлайн: играем без сети, а когда сеть вернулась — досылаем прогресс ----------
+  var syncing = false;
+  function pill(text, ok) {
+    if (!document.body) return;
+    var d = document.getElementById("cx-net");
+    if (!text) { if (d) d.remove(); return; }
+    if (!d) {
+      d = document.createElement("div"); d.id = "cx-net"; d.setAttribute("role", "status");
+      d.style.cssText = "position:fixed;left:50%;top:calc(6px + env(safe-area-inset-top,0px));transform:translateX(-50%);z-index:99998;padding:5px 12px;border-radius:999px;font:600 12px/1.3 system-ui,sans-serif;pointer-events:none;box-shadow:0 4px 14px rgba(0,0,0,.35);max-width:calc(100vw - 32px);text-align:center";
+      document.body.appendChild(d);
+    }
+    d.style.background = ok ? "#18915a" : "#2a2f3d"; d.style.color = "#fff";
+    d.textContent = window.TR ? window.TR(text) : text;
+  }
+  function anyDirty() { var s = session(); return !!s && Object.keys(GAMES).some(function (g) { return lsGet(dirtyKey(g, s.user)) === "1"; }); }
+  function resync() {
+    var s = session();
+    if (!s || syncing || navigator.onLine === false) return;
+    var had = anyDirty();
+    if (enabled && !had) return;
+    syncing = true;
+    pullAll().then(function (okk) {
+      syncing = false;
+      if (okk && had && !anyDirty()) { pill("Прогресс сохранён в облако", true); setTimeout(function () { pill(""); }, 2500); }
+    });
+  }
+  function netState() {
+    var s = session();
+    if (navigator.onLine === false) pill(s ? "Без интернета · прогресс сохранится, когда сеть вернётся" : "Без интернета");
+    else { pill(""); resync(); }
+  }
+  window.addEventListener("online", netState);
+  window.addEventListener("offline", netState);
+  setInterval(function () { if (!enabled || anyDirty()) resync(); }, 20000);
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", function () { if (navigator.onLine === false) netState(); });
+  else if (navigator.onLine === false) netState();
+  // офлайн-режим: страницы и скрипты хранятся на устройстве (sw.js)
+  if ("serviceWorker" in navigator && location.protocol !== "file:") {
+    window.addEventListener("load", function () { navigator.serviceWorker.register("/sw.js").catch(function () { /* без офлайна */ }); });
   }
 
   document.addEventListener("visibilitychange", function () { if (document.hidden) flushAll(true); });
