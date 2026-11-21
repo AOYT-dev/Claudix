@@ -1,0 +1,29 @@
+{
+  "name": "Claudix",
+  "short_name": "Claudix",
+  "description": "Браузерные игры: Лимонный Икс, Лига Улиц, Вираж-9",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#11141b",
+  "theme_color": "#11141b",
+  "lang": "ru",
+  "icons": [
+    {
+      "src": "/app-icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/app-icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "/app-icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
