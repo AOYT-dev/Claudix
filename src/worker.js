@@ -2,7 +2,7 @@
 // Пароли хранятся только как PBKDF2-хеш с солью. Сессия живёт 60 дней.
 
 const NAME_RE = /^[A-Za-zА-Яа-яЁё0-9_-]{3,16}$/;
-const GAMES = ["lemon", "liga", "viraj"];
+const GAMES = ["lemon", "liga", "viraj", "books"]; // books — прогресс чтения и отметки «прочитано», в таблицу лидеров не идёт
 const MAX_SAVE = 200000;
 const SESSION_MS = 60 * 24 * 3600 * 1000;
 const PBKDF2_ITER = 100000; // максимум, который разрешает Workers

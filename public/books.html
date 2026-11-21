@@ -110,6 +110,10 @@ button{font:inherit;color:inherit}
 #rBack{font-weight:600;font-size:15px;color:var(--rfg)}
 .r-title{flex:1;min-width:0;text-align:center;font:600 14px/1.2 var(--ui);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #rAa{font-family:Georgia,serif;font-size:19px;font-weight:600}
+#rDone svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+#rDone[aria-pressed="true"]{background:#18915a;color:#fff}
+.book.read .cover::after{content:"✓";position:absolute;right:6%;top:4%;width:24px;height:24px;border-radius:50%;background:#18915a;color:#fff;font:700 14px/24px var(--ui);text-align:center;box-shadow:0 2px 6px rgba(0,0,0,.35)}
+.book.read .bp{color:#18915a;font-weight:600}
 #rLang{font-size:12px;font-weight:700;letter-spacing:.06em;border:1.5px solid currentColor;height:26px;min-width:34px;padding:0 6px;border-radius:7px;margin:0 7px;opacity:.85}
 .r-prog{display:flex;align-items:center;gap:10px;padding:0 6px}
 #rScrub{flex:1;accent-color:var(--rfg);height:28px}
@@ -208,6 +212,7 @@ button{font:inherit;color:inherit}
     <button class="ib" id="rLang" aria-label="Язык книги">EN</button>
     <button class="ib" id="rShare" aria-label="Поделиться"><svg viewBox="0 0 24 24"><path d="M12 15V3M7 8l5-5 5 5M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg></button>
     <button class="ib" id="rToc" aria-label="Оглавление"><svg viewBox="0 0 24 24"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/></svg></button>
+    <button class="ib" id="rDone" aria-pressed="false" aria-label="Отметить как прочитанное" title="Отметить как прочитанное"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></button>
     <button class="ib" id="rAa" aria-label="Шрифт и тема">Aa</button>
   </div>
   <div id="stage">
@@ -7473,6 +7478,7 @@ On his own. Just like he'd said.
 );
 
 </script>
+<script src="claudix.js"></script>
 <script>
 (function () {
 "use strict";
@@ -7626,9 +7632,17 @@ function coverHTML(b) {
 }
 
 // ================= ХРАНИЛИЩЕ (только для удобства этого читателя) =================
-var S = { ver: 3, set: { size: 17, theme: "auto", font: "times", lh: "tight" }, pos: {}, pct: {}, last: null };
-try { var saved = JSON.parse(localStorage.getItem("cxbooks1") || "null"); if (saved && typeof saved === "object") { if (saved.ver === 3 && saved.set) for (var k in saved.set) S.set[k] = saved.set[k]; S.pos = saved.pos || {}; S.pct = saved.pct || {}; S.last = saved.last || null; if (saved.ver !== 3) { delete S.pos.imp1; delete S.pct.imp1; } } } catch (e) {}
-function save() { try { localStorage.setItem("cxbooks1", JSON.stringify(S)); } catch (e) {} }
+var S = { ver: 3, set: { size: 17, theme: "auto", font: "times", lh: "tight" }, pos: {}, pct: {}, last: null, done: {} };
+// с аккаунтом прогресс книг хранится под ником и уходит в облако Claudix, без аккаунта — только на этом устройстве
+var SESS = window.Claudix ? Claudix.session() : null, BKEY = SESS ? Claudix.saveKey("books", SESS.user) : "cxbooks1";
+try { if (SESS && !localStorage.getItem(BKEY) && localStorage.getItem("cxbooks1")) localStorage.setItem(BKEY, localStorage.getItem("cxbooks1")); } catch (e) {}
+function loadS() { try { var saved = JSON.parse(localStorage.getItem(BKEY) || "null"); if (saved && typeof saved === "object") { if (saved.ver === 3 && saved.set) for (var k in saved.set) S.set[k] = saved.set[k]; S.pos = saved.pos || {}; S.pct = saved.pct || {}; S.last = saved.last || null; S.done = saved.done || {}; if (saved.ver !== 3) { delete S.pos.imp1; delete S.pct.imp1; } } } catch (e) {} }
+loadS();
+function save() { try { localStorage.setItem(BKEY, JSON.stringify(S)); } catch (e) {} if (SESS && window.Claudix) Claudix.push("books"); }
+// прочитана ли книга: ручная отметка важнее процентов
+function isRead(id) { var d = S.done[id]; if (d !== undefined) return !!d; return (S.pct[PK(id)] || 0) >= 100; }
+// облако: после входа подтягиваем прогресс книг с сервера и перерисовываем полку
+if (SESS && window.Claudix) Claudix.ready(function () { loadS(); renderLibrary(); if (R.id) syncDone(); });
 
 // ================= ЯЗЫК =================
 var UI = {
@@ -7678,13 +7692,13 @@ function setLang(l) {
 }
 
 // ================= БИБЛИОТЕКА =================
-function progLabel(b) { if (b.soon || noText(b)) return (b.wip ? L("wip") : L("soon")) + (b.dossier ? L("fileSfx") : ""); var p = S.pct[PK(b.id)]; if (p === undefined) return b.dossier ? L("file") : L("isNew"); if (p >= 100) return L("done"); return p + "%"; }
+function progLabel(b) { if (b.soon || noText(b)) return (b.wip ? L("wip") : L("soon")) + (b.dossier ? L("fileSfx") : ""); if (isRead(b.id)) return "✓ " + L("done"); var p = S.pct[PK(b.id)]; if (p === undefined) return b.dossier ? L("file") : L("isNew"); return p + "%"; }
 function renderLibrary() {
   ["imp", "league", "wip"].forEach(function (sh) {
     var el = sh === "league" ? null : $("g-" + sh); if (el) el.innerHTML = ""; else { $("g-league-full").innerHTML = ""; $("g-league-dos").innerHTML = ""; }
     CATALOG.filter(function (b) { return b.shelf === sh; }).forEach(function (b) {
       var box = el || $(b.dossier ? "g-league-dos" : "g-league-full");
-      var btn = document.createElement("button"); btn.className = "book" + (b.soon || noText(b) ? " soon" : ""); btn.setAttribute("data-id", b.id);
+      var btn = document.createElement("button"); btn.className = "book" + (b.soon || noText(b) ? " soon" : "") + (!b.soon && isRead(b.id) ? " read" : ""); btn.setAttribute("data-id", b.id);
       btn.innerHTML = coverHTML(b) + '<span class="meta"><span class="bt">' + esc(bT(b)) + '</span><span class="bp">' + progLabel(b) + "</span></span>";
       btn.addEventListener("click", function () { if (b.soon) toast(L(b.wip ? "tWip" : "tSoon", { t: bT(b) })); else if (noText(b)) toast(L("tTr", { t: bT(b) })); else tryOpen(b); });
       box.appendChild(btn);
@@ -7817,7 +7831,7 @@ function openBook(id) {
   TX(id).forEach(function (c, ci) { if (!c.post) num++; var li = document.createElement("li"); li.setAttribute("data-ch", ci); li.innerHTML = '<button><span class="n">' + (c.post ? "★" : num) + '</span><span class="t">' + esc(c.t) + '</span><span class="p"></span></button>'; li.querySelector("button").onclick = function () { closePanels(); go(R.chPage[ci] || 0); }; tl.appendChild(li); });
   $("lib").setAttribute("aria-hidden", "true"); reader.hidden = false; document.documentElement.style.overflow = "hidden";
   reader.classList.add("chrome");
-  relayout(S.pos[PK(id)]); syncLangBtn();
+  relayout(S.pos[PK(id)]); syncLangBtn(); syncDone();
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { if (R.id === id) relayout(); });
   setTimeout(function () { if (R.id === id && canFwd()) reader.classList.remove("chrome"); }, 1800);
 }
@@ -7845,6 +7859,8 @@ function tween(a0, a1, done) {
   function stepA(now) { var t = clamp((now - t0) / dur, 0, 1); setAngle(a0 + (a1 - a0) * ease(t)); if (t < 1) anim.raf = requestAnimationFrame(stepA); else { R.anim = null; done(); } }
   anim.raf = requestAnimationFrame(stepA);
 }
+function syncDone() { var on = !!R.id && isRead(R.id); $("rDone").setAttribute("aria-pressed", on ? "true" : "false"); $("rDone").title = on ? (LANG === "en" ? "Finished — tap to unmark" : "Прочитано — нажми, чтобы снять") : (LANG === "en" ? "Mark as finished" : "Отметить как прочитанное"); }
+$("rDone").addEventListener("click", function () { if (!R.id) return; var on = !isRead(R.id); S.done[R.id] = on; save(); syncDone(); renderLibrary(); toast(on ? (LANG === "en" ? "Marked as finished" : "Отмечено как прочитанное") : (LANG === "en" ? "Mark removed" : "Отметка снята"), 1600); });
 function finishAnim() { var a = R.anim; if (!a) return; cancelAnimationFrame(a.raf); R.anim = null; setAngle(a.a1); a.done(); }
 function next() { finishAnim(); if (!canFwd()) return; prepFwd(); setAngle(0); tween(0, 180, function () { R.page += step(); idle(); }); }
 function prev() { finishAnim(); if (!canBack()) return; prepBack(); setAngle(180); tween(180, 0, function () { R.page -= step(); idle(); }); }
@@ -7953,5 +7969,6 @@ renderLibrary();
 if (window.__TEST__) window.__BK = { R: R, S: S, openBook: openBook, next: next, prev: prev, go: go, closeBook: closeBook, relayout: relayout, bump: bump, setLang: setLang, lang: function () { return LANG; } };
 })();
   try { if (/\/books(\.html)?\/?$/.test(location.pathname)) { var hl = document.getElementById("homeLink"); hl.href = "/"; hl.removeAttribute("target"); } } catch (e) {}
+
 </script>
 </body></html>
