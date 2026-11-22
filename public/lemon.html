@@ -662,6 +662,7 @@ Claudix.ready(function () {
     if ((it.ok && !it.ok()) || n <= 0 || s.lemons < c) return;
     s.lemons -= c;
     it.buy(n);
+    buzz("medium");
     if (it === infItem) pop(xEl.parentNode);
     updateAll();
     save();
@@ -672,10 +673,13 @@ Claudix.ready(function () {
     if (s.lemons < c) return;
     s.lemons -= c;
     s.tiers[i] = true;
+    buzz("success");
     pop(xEl.parentNode);
     updateAll();
     save();
   }
+
+  function buzz(k) { if (window.Claudix && Claudix.buzz) Claudix.buzz(k); }
 
   // ---------- анимации ----------
   function pop(node) {
@@ -719,6 +723,7 @@ Claudix.ready(function () {
     s.lemons += v;
     floatNum(x, y, fmt(v));
     squish();
+    buzz("light");
   }
   lemon.addEventListener("pointerdown", function (e) {
     if (e.pointerType === "mouse" && e.button !== 0) return;

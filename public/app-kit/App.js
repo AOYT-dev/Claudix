@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { BackHandler, Linking, StatusBar } from 'react-native';
 import { WebView } from 'react-native-webview';
+import * as Haptics from 'expo-haptics';
 import GAMES from './games';
 
 const HOST = 'claudix.aoyt.workers.dev';
@@ -18,6 +19,16 @@ function pageOf(url) {
 }
 const urlOf = (page) => BASE + (page === 'index' ? '' : page);
 const noHash = (u) => (u || '').split('#')[0];
+
+// вибрация: игры шлют {type:"haptic", kind} через Claudix.buzz()
+const IMPACT = { light: 'Light', medium: 'Medium', heavy: 'Heavy' };
+function onMessage(e) {
+  let m; try { m = JSON.parse(e.nativeEvent.data); } catch (err) { return; }
+  if (!m || m.type !== 'haptic') return;
+  const k = m.kind;
+  if (IMPACT[k]) Haptics.impactAsync(Haptics.ImpactFeedbackStyle[IMPACT[k]]).catch(() => {});
+  else if (k === 'success' || k === 'warning') Haptics.notificationAsync(k === 'success' ? Haptics.NotificationFeedbackType.Success : Haptics.NotificationFeedbackType.Warning).catch(() => {});
+}
 
 export default function App() {
   const [page, setPage] = useState('index');
@@ -59,6 +70,7 @@ export default function App() {
         source={{ html: GAMES[page], baseUrl: urlOf(page) }}
         onShouldStartLoadWithRequest={onShouldStart}
         onLoadEnd={() => { loading.current = false; }}
+        onMessage={onMessage}
         style={{ flex: 1, backgroundColor: '#11141b' }}
         allowsInlineMediaPlayback
         mediaPlaybackRequiresUserAction={false}

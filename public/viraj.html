@@ -1990,7 +1990,7 @@ body:has(#menu:not([hidden])) #touch, body:has(#result:not([hidden])) #touch, bo
   function drive(r, th, st, hand, nit, dt) {
     var m = r.model, fx = Math.sin(r.h), fz = Math.cos(r.h), rx = -Math.cos(r.h), rz = Math.sin(r.h);
     var vf = r.vx * fx + r.vz * fz, vl = r.vx * rx + r.vz * rz;
-    var boosting = nit && r.nitro > 0.02 && vf > 5; r.boosting = boosting;
+    var boosting = nit && r.nitro > 0.02 && vf > 5; if (boosting && !r.boosting && r === player) buzz("medium"); r.boosting = boosting;
     if (boosting) r.nitro = Math.max(0, r.nitro - dt * (m.nDrain || 0.35)); else r.nitro = Math.min(1, r.nitro + dt * (m.nFill || 0.04));
     var pw = r.pow || 1, maxV = m.maxV * pw * (boosting ? m.nV || 1.3 : 1) * (r.rubber || 1), acc = m.accel * pw * (boosting ? m.nA || 1.8 : 1);
     if (th > 0) vf += acc * th * Math.max(0.05, 1 - vf / maxV) * dt;
@@ -2016,7 +2016,7 @@ body:has(#menu:not([hidden])) #touch, body:has(#result:not([hidden])) #touch, bo
       var sgn = Math.sign(r.lat), over = Math.abs(r.lat) - lim;
       r.x -= p.nx * sgn * over; r.z -= p.nz * sgn * over;
       var vn = r.vx * p.nx + r.vz * p.nz;
-      if (vn * sgn > 0) { var bo = r.model.bounce || 1.4, hk = r.model.hitKeep || 0.93; r.vx -= p.nx * vn * bo; r.vz -= p.nz * vn * bo; r.vx *= hk; r.vz *= hk; if (Math.abs(vn) > 9 && r === player) { shake = 0.5; toast("Удар!"); } if (Math.abs(vn) > 5 && r === player) sndHit(Math.abs(vn) / 22, true); if (Math.abs(vn) > 5 && player && Math.hypot(r.x - player.x, r.z - player.z) < 60) sparkBurst(r.x + p.nx * sgn * 1.1, r.z + p.nz * sgn * 1.1, -p.nx * sgn, -p.nz * sgn); }
+      if (vn * sgn > 0) { var bo = r.model.bounce || 1.4, hk = r.model.hitKeep || 0.93; r.vx -= p.nx * vn * bo; r.vz -= p.nz * vn * bo; r.vx *= hk; r.vz *= hk; if (Math.abs(vn) > 9 && r === player) { shake = 0.5; toast("Удар!"); } if (Math.abs(vn) > 5 && r === player) { sndHit(Math.abs(vn) / 22, true); buzz(Math.abs(vn) > 9 ? "heavy" : "medium"); } if (Math.abs(vn) > 5 && player && Math.hypot(r.x - player.x, r.z - player.z) < 60) sparkBurst(r.x + p.nx * sgn * 1.1, r.z + p.nz * sgn * 1.1, -p.nx * sgn, -p.nz * sgn); }
       var hd = Math.atan2(r.vx, r.vz), ad = angDiff(p.h, r.h); r.h += ad * Math.min(1, dt * 1.5);
     } else if (Math.abs(r.lat) > W / 2) { r.vx *= 1 - 0.4 * dt; r.vz *= 1 - 0.4 * dt; }
     // круги
@@ -2032,10 +2032,12 @@ body:has(#menu:not([hidden])) #touch, body:has(#result:not([hidden])) #touch, bo
     r.lapStart = raceT;
     if (r.lap > LAPS && !r.finished) {
       r.finished = true; r.finishT = raceT; finishOrder.push(r);
-      if (r === player) endRace();
+      if (r === player) { buzz("success"); endRace(); }
     }
   }
-  var finishOrder = [], shake = 0;
+  var finishOrder = [], shake = 0, hapN = null;
+  // вибрация (в приложении — родной отклик айфона), общая функция из claudix.js
+  function buzz(k) { if (window.Claudix && Claudix.buzz) Claudix.buzz(k); }
   function ai(r, dt) {
     var look = 7 + Math.floor(Math.abs(r.vf || 0) * 0.16), ti = wrapI(r.idx + look), tp = TR[ti], off = clamp(r.lane, -WALL + 5, WALL - 5);
     var tx = tp.x + tp.nx * off, tz = tp.z + tp.nz * off, want = Math.atan2(tx - r.x, tz - r.z);
@@ -2053,14 +2055,14 @@ body:has(#menu:not([hidden])) #touch, body:has(#result:not([hidden])) #touch, bo
         var ma = a.model.mass || 1, mb = b.model.mass || 1, ta = mb / (ma + mb), tb = ma / (ma + mb);
         var nx = dx / d, nz = dz / d, push = 3.6 - d; a.x -= nx * push * ta; a.z -= nz * push * ta; b.x += nx * push * tb; b.z += nz * push * tb;
         var rv = (b.vx - a.vx) * nx + (b.vz - a.vz) * nz;
-        if (rv < 0) { a.vx += nx * rv * ta; a.vz += nz * rv * ta; b.vx -= nx * rv * tb; b.vz -= nz * rv * tb; if (-rv > 8 && (a === player || b === player)) shake = 0.35; if (-rv > 3 && (a === player || b === player)) sndHit(-rv / 20, false); }
+        if (rv < 0) { a.vx += nx * rv * ta; a.vz += nz * rv * ta; b.vx -= nx * rv * tb; b.vz -= nz * rv * tb; if (-rv > 8 && (a === player || b === player)) shake = 0.35; if (-rv > 3 && (a === player || b === player)) { sndHit(-rv / 20, false); buzz(-rv > 8 ? "heavy" : "medium"); } }
       }
     }
   }
   function step(dt) {
     if (mode === "online") netTick(dt);
     if (state === "count") {
-      countdown -= dt; var n = Math.ceil(countdown - 0.6);
+      countdown -= dt; var n = Math.ceil(countdown - 0.6); if (n !== hapN) { hapN = n; buzz(n > 0 ? "light" : "heavy"); }
       var big = $("big"); big.hidden = false; big.textContent = n > 0 ? n : "ГО!"; if (countdown <= 0.6) { state = "race"; setTimeout(function () { big.hidden = true; }, 700); }
       racers.forEach(function (r) { if (!r.net) track(r, dt); });
       return;

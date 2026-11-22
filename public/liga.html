@@ -3362,6 +3362,7 @@ Claudix.ready(function () {
   }
   function killEnemy(e) {
     if (e.dead) return;
+    buzz("medium");
     e.dead = true; run.kills++;
     var rew = Math.round(e.reward * (1 + 0.12 * (run.wave - 1)));
     run.earn += rew;
@@ -3370,9 +3371,12 @@ Claudix.ready(function () {
     if (e.sliceDir && sliceChar(e.c, e.sliceDir)) disposeChar(e.c);
     else deathAnim(e.c);
   }
+  // вибрация (в приложении — родной отклик айфона), общая функция из claudix.js
+  function buzz(k) { if (window.Claudix && Claudix.buzz) Claudix.buzz(k); }
   function hurtEnemy(e, dmg, o) {
     if (e.dead) return;
     o = o || {};
+    if (!o.silent && !o.burn) buzz("light");
     if (!o.raw) dmg *= pwrMul() * (player && player.dark > 0 ? 2.5 : 1);
     if (e.phased) { if (!o.silent) popText(e.pos.x, e.pos.y + 2.8, e.pos.z, TR("мимо"), "#9fb3ff", false); return; }
     if (e.shield) { if (!o.silent && Math.random() < 0.35) popText(e.pos.x, e.pos.y + 4.4, e.pos.z, TR("щит"), "#9fd8ff", false); return; }
@@ -3586,7 +3590,7 @@ Claudix.ready(function () {
     var p = player;
     if (!p || p.dead || p.iframes > 0 || p.dash) return;
     if (p.rsT > 0 && !duel) { rwRicochet(p, d, fx == null ? p.pos.x : fx, fz == null ? p.pos.z : fz); return; }
-    p.hp -= d; p.iframes = 0.25;
+    p.hp -= d; p.iframes = 0.25; buzz(p.hp <= 0 ? "warning" : "heavy");
     popText(p.pos.x, 3.2, p.pos.z, "-" + Math.round(d), "#ff6b7a", false);
     burst(p.pos.x, 1.6, p.pos.z, 0xff4a5c, 6, 5, 0.35, 0.18, 0.8);
     shake = Math.max(shake, 0.3);

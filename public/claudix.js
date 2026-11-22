@@ -212,7 +212,21 @@
   document.addEventListener("visibilitychange", function () { if (document.hidden) flushAll(true); });
   window.addEventListener("pagehide", function () { flushAll(true); });
 
+  // Вибрация: в приложении — родной отклик айфона (expo-haptics), на Android-сайте — navigator.vibrate.
+  // kind: light | medium | heavy | success | warning. Выключается: localStorage "claudix-haptics" = "off".
+  var buzzAt = {};
+  function buzz(kind) {
+    kind = kind || "light";
+    try { if (localStorage.getItem("claudix-haptics") === "off") return; } catch (e) {}
+    var now = Date.now(); if (now - (buzzAt[kind] || 0) < 45) return; buzzAt[kind] = now;
+    try {
+      if (window.ReactNativeWebView) { window.ReactNativeWebView.postMessage(JSON.stringify({ type: "haptic", kind: kind })); return; }
+      if (navigator.vibrate) navigator.vibrate({ light: 8, medium: 15, heavy: 30, success: [12, 60, 12], warning: [25, 50, 25] }[kind] || 10);
+    } catch (e) { /* без вибрации */ }
+  }
+
   window.Claudix = {
+    buzz: buzz,
     session: session, saveKey: saveKey, GAMES: GAMES,
     ready: ready, pullAll: pullAll, push: push, flushAll: flushAll,
     register: function (name, pw, withGuest, email) { var x = withGuest ? { saves: guestSaves() } : {}; if (email) x.email = email; return authCall("/api/register", name, pw, x); },
