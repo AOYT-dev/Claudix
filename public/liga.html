@@ -997,18 +997,18 @@ Claudix.ready(function () {
   }
   // рельеф лица: спинка и кончик носа, крылья ноздрей, губы с ложбинкой над верхней, складки у носа, ямка подбородка
   function sculpt(lon, lat, P) {
-    var nk = P.nose, nw = P.noseW, r = 0, a, b, s, t, h, w, E = Math.exp;
+    var nk = P.nose, nw = P.noseW, r = 0, a, b, s, t, h, w, E = Math.exp, ag = P.age || 0;
     // перед лица плоский и широкий: лоб вертикальнее, челюстная дуга и подбородок выдвинуты вперёд, как у живого человека
     var front = E(-Math.pow(lon / 0.72, 4));
     b = (lat - 0.42) / 0.16; r += 0.035 * front * E(-b * b);                                   // лоб
-    b = (lat + 0.46) / 0.2; r += 0.05 * E(-Math.pow(lon / 0.42, 4) - b * b);                    // челюстная дуга под губами
+    b = (lat + 0.46) / 0.2; r += 0.032 * E(-Math.pow(lon / 0.46, 4) - b * b);                    // челюстная дуга под губами
     a = lon / 0.36; b = (lat + 0.8) / 0.13; r += 0.15 * P.chin * E(-a * a - b * b);              // подбородок стоит под нижней губой
     for (s = -1; s <= 1; s += 2) {
       a = (lon - s * 0.4) / 0.17; b = (lat - 0.06) / 0.1; r -= 0.035 * E(-a * a - b * b);       // глазницы глубже
       a = (lon - s * 0.36) / 0.2; b = (lat - 0.2) / 0.05; r += 0.025 * E(-a * a - b * b);       // надбровные дуги
       a = (lon - s * 0.72) / 0.22; b = (lat + 0.07) / 0.08; r += 0.035 * E(-a * a - b * b);     // скулы
-      a = (lon - s * 0.66) / 0.2; b = (lat + 0.36) / 0.13; r -= 0.03 * E(-a * a - b * b);       // впадины щёк под скулами
-      a = (lon - s * 1.08) / 0.17; b = (lat - 0.28) / 0.14; r -= 0.025 * E(-a * a - b * b);     // виски
+      a = (lon - s * 0.66) / 0.2; b = (lat + 0.36) / 0.13; r -= (0.01 + 0.025 * ag) * E(-a * a - b * b); // впадины щёк: у молодых едва заметны
+      a = (lon - s * 1.08) / 0.17; b = (lat - 0.28) / 0.14; r -= (0.008 + 0.02 * ag) * E(-a * a - b * b); // виски
       a = (lon - s * 1.12) / 0.16; b = (lat + 0.62) / 0.11; r += 0.03 * E(-a * a - b * b);      // углы нижней челюсти
     }
     a = lon / 0.08; b = (lat - 0.12) / 0.05; r -= 0.015 * E(-a * a - b * b);                    // переносица
@@ -1024,14 +1024,14 @@ Claudix.ready(function () {
       a = (lon - s * 0.1 * nw) / 0.05; b = (lat + 0.22 * nk) / 0.045; r += 0.07 * nk * E(-a * a - b * b);        // крылья носа
       a = (lon - s * 0.155 * nw) / 0.022; b = (lat + 0.2 * nk) / 0.06; r -= 0.03 * E(-a * a - b * b);           // складка у крыла
       a = (lon - s * 0.07 * nw) / 0.03; b = (lat + 0.265 * nk) / 0.018; r -= 0.04 * E(-a * a - b * b);          // ноздри
-      a = (lon - s * (0.19 + (-0.24 - lat) * 0.3)) / 0.03; b = (lat + 0.36) / 0.12; r -= 0.009 * E(-a * a - b * b); // носогубные складки (мягкие, лицо молодое)
-      a = (lon - s * 0.2) / 0.03; b = (lat + 0.475) / 0.03; r -= 0.01 * E(-a * a - b * b);                       // уголки рта
+      a = (lon - s * (0.19 + (-0.24 - lat) * 0.3)) / 0.03; b = (lat + 0.36) / 0.12; r -= 0.018 * ag * E(-a * a - b * b); // носогубные складки — только с возрастом
+      a = (lon - s * 0.245) / 0.03; b = (lat + 0.475) / 0.03; r -= (0.003 + 0.012 * ag) * E(-a * a - b * b);     // уголки рта
     }
     // губы: ложбинка над верхней, верхняя губа с бугорком, нижняя полнее, линия рта, ямка под губой
-    a = lon / 0.03; b = (lat + 0.37) / 0.05; r -= 0.01 * E(-a * a - b * b);
-    var lw = 0.17;
-    b = (lat + 0.44) / 0.026; r += 0.034 * E(-Math.pow(lon / lw, 4) - b * b) * (1 + 0.1 * E(-Math.pow(lon / 0.05, 2)));
-    b = (lat + 0.508) / 0.03; r += 0.046 * E(-Math.pow(lon / (lw * 0.85), 4) - b * b);
+    a = lon / 0.03; b = (lat + 0.37) / 0.05; r -= 0.006 * E(-a * a - b * b);
+    var lw = 0.235;
+    b = (lat + 0.44) / 0.026; r += 0.024 * E(-Math.pow(lon / lw, 4) - b * b) * (1 + 0.1 * E(-Math.pow(lon / 0.05, 2)));
+    b = (lat + 0.508) / 0.032; r += 0.032 * E(-Math.pow(lon / (lw * 0.85), 4) - b * b);
     b = (lat + 0.474) / 0.014; r -= 0.014 * E(-Math.pow(lon / lw, 4) - b * b);
     b = (lat + 0.6) / 0.04; r -= 0.016 * E(-Math.pow(lon / 0.15, 2) - b * b);
     return r;
@@ -1109,7 +1109,7 @@ Claudix.ready(function () {
     if (F.P) {
       // живой цвет: кончик и крылья носа краснее, под глазами чуть сиреневая тень, губы-ободок
       blob(0, -0.21, 0.14, 0.07, red, 0.3);
-      [-1, 1].forEach(function (s) { blob(s * 0.4, -0.03, 0.15, 0.045, 0x7a5868, 0.16); blob(s * 0.1, -0.23, 0.05, 0.04, red, 0.3); });
+      [-1, 1].forEach(function (s) { blob(s * 0.4, -0.03, 0.15, 0.045, 0x7a5868, 0.05 + 0.12 * (F.age || 0)); blob(s * 0.1, -0.23, 0.05, 0.04, red, 0.3); });
       bakeCavity(g, F.P, W, H);
     }
     // морщины
@@ -1240,8 +1240,8 @@ Claudix.ready(function () {
       for (var x = 0; x < w; x++) {
         var lo = (x + 0.5) / w * Math.PI * 2 - Math.PI; if (Math.abs(lo) > 1.7) continue;
         var d0 = D(lo, la), lap = D(lo + e, la) + D(lo - e, la) + D(lo, la + e) + D(lo, la - e) - 4 * d0;
-        var k = Math.max(0, Math.min(1, (lap - 0.0004) * 260)), o = (y * w + x) * 4;
-        d[o] = 58; d[o + 1] = 22; d[o + 2] = 18; d[o + 3] = Math.round(k * 0.5 * 255);
+        var k = Math.max(0, Math.min(1, (lap - 0.0008) * 240)), o = (y * w + x) * 4;
+        d[o] = 58; d[o + 1] = 22; d[o + 2] = 18; d[o + 3] = Math.round(k * (0.32 + 0.25 * (P.age || 0)) * 255);
       }
     }
     cg.putImageData(im, 0, 0); g.save(); g.imageSmoothingEnabled = true; g.drawImage(c, 0, 0, W, H); g.restore();
@@ -1308,7 +1308,7 @@ Claudix.ready(function () {
     var o = { map: face ? face.map : null, color: face ? 0xffffff : col(0xd8b090), roughness: face && face.rough ? 1 : 0.56, roughnessMap: face && face.rough ? face.rough : null, metalness: 0,
       emissiveMap: em || null, emissive: em ? new THREE.Color(1, 1, 1) : new THREE.Color(0, 0, 0) };
     if (!hero) return new THREE.MeshStandardMaterial(o);
-    o.normalMap = poreNormals(); o.normalScale = new THREE.Vector2(0.14, 0.14);
+    o.normalMap = poreNormals(); o.normalScale = new THREE.Vector2(0.07, 0.07);
     o.sheen = new THREE.Color(0.16, 0.12, 0.11);       // пушок: мягкий светлый ореол по краю лица
     o.envMapIntensity = 0.9;
     var m = new THREE.MeshPhysicalMaterial(o); m.userData.sss = true; m.onBeforeCompile = sssHook; m.customProgramCacheKey = sssKey;
@@ -2197,7 +2197,7 @@ Claudix.ready(function () {
       info.jaw = [0, -0.09, 0.0];
       for (var nv2 = 0; nv2 < 3; nv2++) tb.add("head", "cloth", cyl(0.035, 0.04, 0.06, 8), M4(0, -0.2 - nv2 * 0.075, -0.04), 0xd8d2c0);
     } else {
-      if (P.sc) F.P = P;
+      if (P.sc) { F.P = P; P.age = F.age || 0; if (F.lipW == null) F.lipW = 0.225; }
       face = paintFace(F);
       var hopt = { noNose: K.noNose, noEars: K.noEars, lidDrop: K.style === "zombie" ? 0.25 : 0, noseSw: F.maskNose ? SW.mask : null, low: !big };
       if (K.style === "abyss") { hopt.noLids = true; hopt.neckSw = SW.skin; }
