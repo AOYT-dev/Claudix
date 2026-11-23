@@ -1024,8 +1024,8 @@ Claudix.ready(function () {
       a = (lon - s * 0.1 * nw) / 0.05; b = (lat + 0.22 * nk) / 0.045; r += 0.07 * nk * E(-a * a - b * b);        // крылья носа
       a = (lon - s * 0.155 * nw) / 0.022; b = (lat + 0.2 * nk) / 0.06; r -= 0.03 * E(-a * a - b * b);           // складка у крыла
       a = (lon - s * 0.07 * nw) / 0.03; b = (lat + 0.265 * nk) / 0.018; r -= 0.04 * E(-a * a - b * b);          // ноздри
-      a = (lon - s * (0.19 + (-0.24 - lat) * 0.3)) / 0.03; b = (lat + 0.36) / 0.12; r -= 0.018 * E(-a * a - b * b); // носогубные складки
-      a = (lon - s * 0.2) / 0.03; b = (lat + 0.475) / 0.03; r -= 0.016 * E(-a * a - b * b);                      // уголки рта
+      a = (lon - s * (0.19 + (-0.24 - lat) * 0.3)) / 0.03; b = (lat + 0.36) / 0.12; r -= 0.009 * E(-a * a - b * b); // носогубные складки (мягкие, лицо молодое)
+      a = (lon - s * 0.2) / 0.03; b = (lat + 0.475) / 0.03; r -= 0.01 * E(-a * a - b * b);                       // уголки рта
     }
     // губы: ложбинка над верхней, верхняя губа с бугорком, нижняя полнее, линия рта, ямка под губой
     a = lon / 0.03; b = (lat + 0.37) / 0.05; r -= 0.01 * E(-a * a - b * b);
@@ -1241,7 +1241,7 @@ Claudix.ready(function () {
         var lo = (x + 0.5) / w * Math.PI * 2 - Math.PI; if (Math.abs(lo) > 1.7) continue;
         var d0 = D(lo, la), lap = D(lo + e, la) + D(lo - e, la) + D(lo, la + e) + D(lo, la - e) - 4 * d0;
         var k = Math.max(0, Math.min(1, (lap - 0.0004) * 260)), o = (y * w + x) * 4;
-        d[o] = 58; d[o + 1] = 22; d[o + 2] = 18; d[o + 3] = Math.round(k * 0.62 * 255);
+        d[o] = 58; d[o + 1] = 22; d[o + 2] = 18; d[o + 3] = Math.round(k * 0.5 * 255);
       }
     }
     cg.putImageData(im, 0, 0); g.save(); g.imageSmoothingEnabled = true; g.drawImage(c, 0, 0, W, H); g.restore();
@@ -1708,7 +1708,7 @@ Claudix.ready(function () {
     },
     virus: {
       body: "slim", style: "hero", head: { jaw: 1.05, chin: 1.1, cheek: 1.2, w: 0.98 },
-      face: { skin: 0xd6a47c, brow: 0x101010, iris: 0x39ff88, irisGlow: true, hair: 0x0b0d0c, hairFront: 0.5, stubble: 0.35, angry: 0.75, smile: 0.35, socket: 0x0a1410, socketA: 0.45, scars: [[-0.3, 0.42, -0.42, 0.12, true]],
+      face: { skin: 0xd6a47c, brow: 0x101010, iris: 0x39ff88, irisGlow: true, hair: 0x0b0d0c, hairFront: 0.5, angry: 0.75, smile: 0.35, socket: 0x0a1410, socketA: 0.45, scars: [[-0.3, 0.42, -0.42, 0.12, true]],
         paint: function (g, X, Y, R, sc) { g.strokeStyle = "rgba(20,60,40,0.55)"; g.lineWidth = 3 * sc; [[0.56, 0.42, 0.56, 0.25, 0.7, 0.25], [0.6, 0.06, 0.72, 0.06, 0.72, -0.2], [0.52, -0.16, 0.6, -0.16, 0.6, -0.4, 0.7, -0.4]].forEach(function (c) { g.beginPath(); g.moveTo(X(c[0]), Y(c[1])); for (var i = 2; i < c.length; i += 2) g.lineTo(X(c[i]), Y(c[i + 1])); g.stroke(); }); },
         glowPaint: function (g, X, Y, R, sc) { g.strokeStyle = "rgba(57,255,136,1)"; g.fillStyle = "rgba(57,255,136,1)"; g.lineWidth = 1.8 * sc; [[0.56, 0.42, 0.56, 0.25, 0.7, 0.25], [0.6, 0.06, 0.72, 0.06, 0.72, -0.2], [0.52, -0.16, 0.6, -0.16, 0.6, -0.4, 0.7, -0.4]].forEach(function (c) { g.beginPath(); g.moveTo(X(c[0]), Y(c[1])); for (var i = 2; i < c.length; i += 2) g.lineTo(X(c[i]), Y(c[i + 1])); g.stroke(); g.beginPath(); g.arc(X(c[c.length - 2]), Y(c[c.length - 1]), 2.6 * sc, 0, 7); g.fill(); g.beginPath(); g.arc(X(c[0]), Y(c[1]), 2 * sc, 0, 7); g.fill(); }); } },
       hair: "spiky", hairC: 0x0b0d0c, hairTip: 0x39ff88,
