@@ -593,7 +593,7 @@ Claudix.ready(function () {
       }
     } catch (e) { /* хранилище недоступно */ }
   }
-  function persist() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); } catch (e) { /* ничего */ } if (SESSION) Claudix.push("liga"); }
+  function persist() { save.nh = HEROES.length; try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); } catch (e) { /* ничего */ } if (SESSION) Claudix.push("liga"); }
   function pwrMul() { return duel ? 1 : 1 + 0.1 * save.pwr; }
   function spdMul() { return duel ? 1 : 1 + 0.03 * (save.spd || 0); }
   function rm() { return duel ? 1 : 1 + 0.04 * save.rad; }

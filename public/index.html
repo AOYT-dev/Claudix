@@ -311,7 +311,7 @@ html, body { touch-action: manipulation; -webkit-tap-highlight-color: transparen
         <div class="gbody">
           <div class="tags"><span class="tag">3D-экшен</span><span class="tag">Герои</span></div>
           <h3>Лига Улиц</h3>
-          <p>Бей волны преступников, качай силу и радиус в 3D-лобби и покупай шесть героев с разными способностями. Управление пальцами.</p>
+          <p>Бей волны преступников, качай силу и радиус в 3D-лобби и открывай 13 героев с разными способностями. Управление пальцами.</p>
           <div class="stat" id="statLiga">Ты ещё не играл. Первый герой уже ждёт.</div>
           <a class="play" href="liga.html">Играть</a>
         </div>
@@ -580,8 +580,9 @@ html, body { touch-action: manipulation; -webkit-tap-highlight-color: transparen
     }
     var G = read(saveKey(LIGA, u));
     if (G && (G.best > 0 || G.money > 0 || (G.owned && G.owned.length > 1))) {
-      var owned = Array.isArray(G.owned) ? G.owned.length : 1;
-      $("statLiga").innerHTML = TR("Монет: <b>") + big(+G.money || 0) + TR("</b> · героев <b>") + owned + TR(" из 6</b> · лучшая волна <b>") + Math.floor(+G.best || 0) + "</b>";
+      // всего героев Лига сама пишет в сохранение (nh); у старых сохранений его нет — тогда берём нынешние 13
+      var total = +G.nh || 13, owned = Math.min(total, Array.isArray(G.owned) ? G.owned.length : 1);
+      $("statLiga").innerHTML = TR("Монет: <b>") + big(+G.money || 0) + TR("</b> · героев <b>") + owned + TR(" из ") + total + TR("</b> · лучшая волна <b>") + Math.floor(+G.best || 0) + "</b>";
     }
   }
 
