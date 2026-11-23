@@ -515,7 +515,8 @@ Claudix.ready(function () {
   }
   var s = fresh();
 
-  function num(v) { return typeof v === "number" && isFinite(v) && v > 0 ? v : 0; }
+  var LEMON_CAP = 1e300; // выше браузер считать не умеет: дальше только «бесконечность»
+  function num(v) { return typeof v === "number" && v > 0 ? (isFinite(v) ? Math.min(v, LEMON_CAP) : LEMON_CAP) : 0; }
   function int(v) { return Math.floor(num(v)); }
 
   function load() {
@@ -720,7 +721,7 @@ Claudix.ready(function () {
   // ---------- клик ----------
   function tap(x, y) {
     var v = perClick();
-    s.lemons += v;
+    s.lemons = Math.min(LEMON_CAP, s.lemons + v);
     floatNum(x, y, fmt(v));
     squish();
     buzz("light");
@@ -789,7 +790,7 @@ Claudix.ready(function () {
       var p = perSec();
       var eff = Math.min(dt, 1800);
       if (p > 0) {
-        s.lemons += p * eff;
+        s.lemons = Math.min(LEMON_CAP, s.lemons + p * eff);
         if (dt > 5) toast(TR("Пока тебя не было: +") + fmt(p * eff) + TR(" лимонов"));
       }
     }
@@ -828,7 +829,7 @@ Claudix.ready(function () {
   var away = Math.min((Date.now() - s.t) / 1000, 1800);
   var p0 = perSec();
   if (away > 5 && p0 > 0) {
-    s.lemons += p0 * away;
+    s.lemons = Math.min(LEMON_CAP, s.lemons + p0 * away);
     toast(TR("Пока тебя не было: +") + fmt(p0 * away) + TR(" лимонов"));
   }
   updateAll();

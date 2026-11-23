@@ -169,7 +169,7 @@ async function giftTo(env, b) {
   if (tiers.some((t) => !(t >= 0 && t < LEMON_TIERS.length)) || inf < 0 || inf > 900) return fail("bad_amount", 400);
   // скорость Лимонного Икса: лимонов в секунду без иксов, выдаётся заводами (170/с), плантациями (14/с) и деревьями (1/с)
   const ps = Math.floor(+b.ps || 0);
-  if (!(ps >= 0) || ps > 1e100) return fail("bad_amount", 400); // до гугола
+  if (!(ps >= 0) || ps > 1e200) return fail("bad_amount", 400); // до гугола в квадрате
   if (game === "liga") {
     if (money < 0 || money > 1e7 || sp < 0 || sp > 100) return fail("bad_amount", 400);
     if (hero && !LIGA_HEROES.includes(hero)) return fail("bad_hero", 400);
