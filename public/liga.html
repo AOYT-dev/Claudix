@@ -988,7 +988,7 @@ Claudix.ready(function () {
     a = lon / 0.36; b = (lat + 0.83) / 0.16; r += 0.035 * P.chin * Math.exp(-(a * a + b * b));
     if (P.sc && Math.abs(lon) < 1.65 && lat < 0.75 && lat > -1.2) r += sculpt(lon, lat, P) * P.sc;
     x *= r; y *= r; z *= r;
-    if (y < 0.12) { var t = Math.min(1, (0.12 - y) / 1.1); x *= 1 - ((P.sc ? 0.36 : 0.3) - 0.28 * (P.jaw - 1)) * Math.pow(t, 1.35); z *= 1 - (z < 0 ? 0.2 : 0.04) * Math.pow(t, 1.5); y *= 1 - 0.06 * t; }
+    if (y < 0.12) { var t = Math.min(1, (0.12 - y) / 1.1); x *= 1 - ((P.sc ? 0.27 : 0.3) - 0.28 * (P.jaw - 1)) * Math.pow(t, 1.35); z *= 1 - (z < 0 ? 0.2 : 0.04) * Math.pow(t, 1.5); y *= 1 - 0.06 * t; }
     if (z < 0 && y > -0.35) z *= 1 + 0.12 * P.skull;
     if (P.sc) { var fl = -0.86 + 0.32 * sstep(0.5, -0.4, z); if (y < fl) y = fl + (y - fl) * 0.22; }
     if (z > 0.52) z = 0.52 + (z - 0.52) * 0.72;
@@ -1002,7 +1002,7 @@ Claudix.ready(function () {
     var front = E(-Math.pow(lon / 0.72, 4));
     b = (lat - 0.42) / 0.16; r += 0.035 * front * E(-b * b);                                   // лоб
     b = (lat + 0.46) / 0.2; r += 0.032 * E(-Math.pow(lon / 0.46, 4) - b * b);                    // челюстная дуга под губами
-    a = lon / 0.36; b = (lat + 0.8) / 0.13; r += 0.15 * P.chin * E(-a * a - b * b);              // подбородок стоит под нижней губой
+    a = lon / 0.46; b = (lat + 0.8) / 0.13; r += 0.13 * P.chin * E(-a * a - b * b);              // подбородок стоит под нижней губой
     for (s = -1; s <= 1; s += 2) {
       a = (lon - s * 0.4) / 0.17; b = (lat - 0.06) / 0.1; r -= 0.035 * E(-a * a - b * b);       // глазницы глубже
       a = (lon - s * 0.36) / 0.2; b = (lat - 0.2) / 0.05; r += 0.025 * E(-a * a - b * b);       // надбровные дуги
@@ -1023,7 +1023,7 @@ Claudix.ready(function () {
     for (s = -1; s <= 1; s += 2) {
       a = (lon - s * 0.1 * nw) / 0.05; b = (lat + 0.22 * nk) / 0.045; r += 0.07 * nk * E(-a * a - b * b);        // крылья носа
       a = (lon - s * 0.155 * nw) / 0.022; b = (lat + 0.2 * nk) / 0.06; r -= 0.03 * E(-a * a - b * b);           // складка у крыла
-      a = (lon - s * 0.07 * nw) / 0.03; b = (lat + 0.265 * nk) / 0.018; r -= 0.04 * E(-a * a - b * b);          // ноздри
+      a = (lon - s * 0.07 * nw) / 0.03; b = (lat + 0.265 * nk) / 0.018; r -= 0.022 * E(-a * a - b * b);         // ноздри
       a = (lon - s * (0.19 + (-0.24 - lat) * 0.3)) / 0.03; b = (lat + 0.36) / 0.12; r -= 0.018 * ag * E(-a * a - b * b); // носогубные складки — только с возрастом
       a = (lon - s * 0.245) / 0.03; b = (lat + 0.475) / 0.03; r -= (0.003 + 0.012 * ag) * E(-a * a - b * b);     // уголки рта
     }
@@ -1069,7 +1069,7 @@ Claudix.ready(function () {
 
   // ---------- текстура лица ----------
   // развёртка сферы: x — долгота (перед в середине), y — широта; внизу под подбородком спрятаны «образцы» цвета для носа, ушей, век
-  var SW = { skin: 0, nose: 1, ear: 2, neck: 3, lid: 4, lash: 5, knit: 6, mask: 7, lip: 8, scalp: 9, dark: 10, hood: 11 };
+  var SW = { skin: 0, nose: 1, ear: 2, neck: 3, lid: 4, lash: 5, knit: 6, mask: 7, lip: 8, scalp: 9, dark: 10, hood: 11, wet: 12, lidc: 13 };
   function swUV(k) { return [(k + 0.5) / 16, 0.022]; }
   function paintFace(F) {
     // лица героев крупно видны в карточках — им чёткая текстура; врагам хватит половины
@@ -1111,6 +1111,12 @@ Claudix.ready(function () {
       var bl = F.blush == null ? 1 : F.blush;
       blob(0, -0.21, 0.14, 0.07, red, 0.3 * bl);
       [-1, 1].forEach(function (s) { blob(s * 0.4, -0.03, 0.15, 0.045, 0x7a5868, 0.05 + 0.12 * (F.age || 0)); blob(s * 0.1, -0.23, 0.05, 0.04, red, 0.3 * bl); });
+      if (bl > 0 && F.knit == null) {
+        // живая кожа: лоб чуть желтее, уши и кончик носа розовее, у мужчин сизая тень выбритой щетины на челюсти и над губой
+        blob(0, 0.45, 0.6, 0.2, 0xd8b47a, 0.08);
+        [-1, 1].forEach(function (s) { blob(s * 1.45, -0.05, 0.2, 0.25, red, 0.18); blob(s * 0.55, -0.62, 0.32, 0.22, 0x50606e, F.stubble ? 0.04 : 0.07); });
+        blob(0, -0.76, 0.32, 0.12, 0x50606e, F.stubble ? 0.04 : 0.07); blob(0, -0.37, 0.17, 0.045, 0x50606e, F.stubble ? 0.03 : 0.06);
+      }
       bakeCavity(g, F.P, W, H);
     }
     // морщины
@@ -1167,14 +1173,14 @@ Claudix.ready(function () {
     if (F.brow != null && !F.noBrow) {
       var bc = F.brow, thick = F.browT || 1, ang = F.angry || 0, bcs = [0, 1, 2, 3, 4, 5].map(function (q) { return rgbStr(bc, 0.8 + (q % 3) * 0.2, 0.55 + Math.floor(q / 3) * 0.3); });
       [-1, 1].forEach(function (s) {
-        var nB = F.P ? 420 : 90;
+        var nB = F.P ? 160 : 90;
         for (var k = 0; k < nB * thick; k++) {
           var t = Math.random(), lo = s * (0.17 + t * 0.47), arch = Math.sin(t * Math.PI) * 0.03, la = 0.235 + arch - ang * (1 - t) * 0.06 + (Math.random() - 0.5) * 0.035 * thick * (F.P ? 1.1 - t * 0.5 : 1);
           if (F.P) {
             // волоски растут от переносицы вверх, к хвосту брови ложатся вбок; у начала брови реже
             if (t < 0.12 && Math.random() > t / 0.12) continue;
             var ang2 = t < 0.2 ? 1.25 : 0.35 + Math.random() * 0.25, ln = (0.022 + Math.random() * 0.02);
-            g.strokeStyle = bcs[k % 6]; g.globalAlpha = 0.55 + Math.random() * 0.4; g.lineWidth = (0.7 + Math.random() * 0.6) * sc;
+            g.strokeStyle = bcs[k % 6]; g.globalAlpha = 0.12 + Math.random() * 0.14; g.lineWidth = (0.7 + Math.random() * 0.6) * sc;
             g.beginPath(); g.moveTo(X(lo), Y(la)); g.lineTo(X(lo + s * Math.cos(ang2) * ln), Y(la + Math.sin(ang2) * ln * 0.55)); g.stroke(); g.globalAlpha = 1;
             continue;
           }
@@ -1193,10 +1199,14 @@ Claudix.ready(function () {
     if (F.paint) F.paint(g, X, Y, R, sc);
     // кожа головы под волосами — цвета волос, чтобы в просветах не было лысины
     if (F.hair != null) {
-      g.save(); g.fillStyle = rgbStr(F.hair, 0.8, 1);
-      g.beginPath(); g.moveTo(0, Y(F.hairBack == null ? -0.5 : F.hairBack));
-      for (var hl = -Math.PI; hl <= Math.PI + 0.001; hl += 0.05) { var la2 = hairline(hl, F); g.lineTo(X(hl), Y(la2)); }
-      g.lineTo(W, 0); g.lineTo(0, 0); g.closePath(); g.fill(); g.restore();
+      // у героев крупным планом край размыт: волосы у лба редеют постепенно
+      var hsteps = F.P ? [[0.06, 0.16], [0.04, 0.16], [0.02, 0.18], [0, 0.2], [-0.015, 0.14], [-0.03, 0.1]] : [[0, 1]];
+      hsteps.forEach(function (hs) {
+        g.save(); g.fillStyle = rgbStr(F.hair, 0.8, hs[1]);
+        g.beginPath(); g.moveTo(0, Y(F.hairBack == null ? -0.5 : F.hairBack));
+        for (var hl = -Math.PI; hl <= Math.PI + 0.001; hl += 0.05) { var la2 = hairline(hl, F) + hs[0]; g.lineTo(X(hl), Y(la2)); }
+        g.lineTo(W, 0); g.lineTo(0, 0); g.closePath(); g.fill(); g.restore();
+      });
     }
     // балаклава: всё вязаное, кроме прорези для глаз
     if (F.knit != null) {
@@ -1217,6 +1227,8 @@ Claudix.ready(function () {
     sw(SW.skin, skinS); sw(SW.nose, rgbStr(noseC)); sw(SW.ear, rgbStr(new THREE.Color(F.skin).lerp(new THREE.Color(0xd05a50), 0.18).getHex()));
     sw(SW.neck, rgbStr(F.skin, 0.88)); sw(SW.lid, rgbStr(F.skin, 0.93)); sw(SW.lash, rgbStr(F.brow || 0x1a1410, 0.5)); sw(SW.knit, rgbStr(F.knit != null ? F.knit : 0x202024));
     sw(SW.mask, rgbStr(F.mask != null ? F.mask : 0x1a1622)); sw(SW.lip, rgbStr(F.lip || 0xb05a50)); sw(SW.scalp, rgbStr(F.hair != null ? F.hair : F.skin, 0.8)); sw(SW.dark, "#0a0808"); sw(SW.hood, rgbStr(F.hood != null ? F.hood : 0x222));
+    if (F.P) sw(SW.lid, rgbStr(new THREE.Color(F.skin).lerp(new THREE.Color(0x9a5a50), 0.12).getHex(), 0.86));
+    sw(SW.wet, rgbStr(new THREE.Color(F.skin).lerp(new THREE.Color(0xd8706a), 0.5).getHex(), 1.02)); sw(SW.lidc, rgbStr(new THREE.Color(F.skin).lerp(new THREE.Color(0x9a4a40), 0.18).getHex(), 0.78));
     if (F.knit != null) { sw(SW.nose, rgbStr(F.knit)); sw(SW.ear, rgbStr(F.knit)); sw(SW.neck, rgbStr(F.knit)); }
     if (F.maskNose) sw(SW.nose, rgbStr(F.mask));
     var t = new THREE.CanvasTexture(canvas); t.encoding = THREE.sRGBEncoding; t.anisotropy = MAX_ANI; t.wrapS = THREE.RepeatWrapping;
@@ -1241,7 +1253,7 @@ Claudix.ready(function () {
       for (var x = 0; x < w; x++) {
         var lo = (x + 0.5) / w * Math.PI * 2 - Math.PI; if (Math.abs(lo) > 1.7) continue;
         var d0 = D(lo, la), lap = D(lo + e, la) + D(lo - e, la) + D(lo, la + e) + D(lo, la - e) - 4 * d0;
-        var k = Math.max(0, Math.min(1, (lap - 0.0008) * 240)), o = (y * w + x) * 4;
+        var k = Math.max(0, Math.min(1, (lap - 0.0008) * 240)) * (1 - 0.65 * Math.exp(-Math.pow(lo / 0.16, 2) - Math.pow((la + 0.25) / 0.07, 2))), o = (y * w + x) * 4;
         d[o] = 58; d[o + 1] = 22; d[o + 2] = 18; d[o + 3] = Math.round(k * (0.32 + 0.25 * (P.age || 0)) * 255);
       }
     }
@@ -1266,7 +1278,7 @@ Claudix.ready(function () {
     } else blob(0, 0.075, 0.72, 0.12, 0.5, 1);
     if (F.hair != null) { g.fillStyle = v(0.82); g.beginPath(); g.moveTo(0, Y(F.hairBack == null ? -0.5 : F.hairBack)); for (var hl = -Math.PI; hl <= Math.PI + 0.001; hl += 0.05) g.lineTo(X(hl), Y(hairline(hl, F))); g.lineTo(W, 0); g.lineTo(0, 0); g.closePath(); g.fill(); }
     // образцы внизу развёртки: нос, уши, веки, губы и маска со своим блеском
-    var RS = [0.6, 0.42, 0.6, 0.66, 0.4, 0.8, 0.95, 0.45, 0.28, 0.82, 0.9, 0.85];
+    var RS = [0.6, 0.42, 0.6, 0.66, 0.4, 0.8, 0.95, 0.45, 0.28, 0.82, 0.9, 0.85, 0.2, 0.62];
     RS.forEach(function (r, k) { g.fillStyle = v(r); g.fillRect(k * W / 16, H * 0.955, W / 16 + 1, H * 0.045 + 1); });
     if (F.knit != null) [SW.nose, SW.ear, SW.neck].forEach(function (k) { g.fillStyle = v(0.95); g.fillRect(k * W / 16, H * 0.955, W / 16 + 1, H * 0.045 + 1); });
     var t = new THREE.CanvasTexture(c); t.wrapS = THREE.RepeatWrapping; return t;
@@ -1309,8 +1321,8 @@ Claudix.ready(function () {
     var o = { map: face ? face.map : null, color: face ? 0xffffff : col(0xd8b090), roughness: face && face.rough ? 1 : 0.56, roughnessMap: face && face.rough ? face.rough : null, metalness: 0,
       emissiveMap: em || null, emissive: em ? new THREE.Color(1, 1, 1) : new THREE.Color(0, 0, 0) };
     if (!hero) return new THREE.MeshStandardMaterial(o);
-    o.normalMap = poreNormals(); o.normalScale = new THREE.Vector2(0.07, 0.07);
-    o.sheen = new THREE.Color(0.16, 0.12, 0.11);       // пушок: мягкий светлый ореол по краю лица
+    o.normalMap = poreNormals(); o.normalScale = new THREE.Vector2(0.09, 0.09); o.clearcoat = 0.14; o.clearcoatRoughness = 0.36;
+    o.sheen = new THREE.Color(0.1, 0.075, 0.07);       // пушок: мягкий светлый ореол по краю лица
     o.envMapIntensity = 0.9;
     var m = new THREE.MeshPhysicalMaterial(o); m.userData.sss = true; m.onBeforeCompile = sssHook; m.customProgramCacheKey = sssKey;
     return m;
@@ -1353,17 +1365,351 @@ Claudix.ready(function () {
     EYE_TEX[key] = { map: t, em: e }; return EYE_TEX[key];
   }
 
+  // ================= Реализм крупным планом: веки, ресницы, брови, глаз с роговицей, уши, шея =================
+  // Строится только для героев с вылепленным лицом (P.sc). Размеры глаза — в долях его радиуса re.
+  // Угловые координаты вокруг центра глаза: th — вбок (к виску +), ph — вверх, «вперёд» — ось +z.
+  var LID = { thc: 0.07, thw: 1.08, ht: 0.37, hb: 0.45 };
+  // контур разреза: a — угол по контуру (0 — наружный угол, π/2 — верх, π — внутренний угол), d — отступ ряда наружу
+  function lidAng(a, d) {
+    var t = Math.cos(a), sn = Math.sin(a), up = sn >= 0, q = Math.max(0, 1 - t * t);
+    var ph0 = 0.01 + 0.055 * t;   // наружный угол чуть выше внутреннего
+    var h = up ? LID.ht * Math.pow(q, 0.55) * (1 - 0.18 * t) : LID.hb * Math.pow(q, 0.8) * (1 + 0.12 * t);
+    return [LID.thc + (LID.thw + d) * t, ph0 + (up ? 1 : -1) * (h + d * Math.abs(sn))];
+  }
+  function eyeDir(th, ph, s, out) { var cp = Math.cos(ph); return (out || new THREE.Vector3()).set(s * Math.sin(th) * cp, Math.sin(ph), Math.cos(th) * cp); }
+  // треугольники лицевой стороной наружу от точки c
+  function orientOut(g, c) {
+    var p = g.attributes.position, ix = g.index.array, A = new THREE.Vector3(), B = new THREE.Vector3(), C = new THREE.Vector3(), n = new THREE.Vector3(), m = new THREE.Vector3(), score = 0, t;
+    for (t = 0; t < ix.length; t += 3) {
+      A.fromBufferAttribute(p, ix[t]); B.fromBufferAttribute(p, ix[t + 1]); C.fromBufferAttribute(p, ix[t + 2]);
+      n.subVectors(B, A).cross(m.subVectors(C, A)); m.copy(A).add(B).add(C).multiplyScalar(1 / 3).sub(c); score += n.dot(m);
+    }
+    if (score < 0) for (t = 0; t < ix.length; t += 3) { var tmp = ix[t + 1]; ix[t + 1] = ix[t + 2]; ix[t + 2] = tmp; }
+  }
+  function flipWinding(g) { var ix = g.index.array; for (var t = 0; t < ix.length; t += 3) { var tmp = ix[t + 1]; ix[t + 1] = ix[t + 2]; ix[t + 2] = tmp; } }
+  function gridGeo(pos, uv, cols, rows, A, closed) {
+    var idx = [];
+    for (var k = 0; k < rows - 1; k++) for (var j = 0; j < (closed ? A : A - 1); j++) {
+      var a0 = k * A + j, a1 = k * A + (j + 1) % A, b0 = a0 + A, b1 = a1 + A;
+      idx.push(a0, b0, a1, a1, b0, b1);
+    }
+    var g = new THREE.BufferGeometry(); g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+    if (uv) g.setAttribute("uv", new THREE.Float32BufferAttribute(uv, 2));
+    if (cols) g.setAttribute("color", new THREE.Float32BufferAttribute(cols, 3));
+    g.setIndex(idx); return g;
+  }
+  // веки: кожа вокруг глаза с миндалевидным разрезом. Край века толстый и влажный, внутренний ряд прячется за глазное яблоко,
+  // дальние ряды уходят под кожу лица — шва не видно
+  var LID_D = [-0.07, -0.025, 0, 0.05, 0.13, 0.25, 0.42, 0.66, 0.98], LID_R = [0.995, 1.025, 1.058, 1.085, 1.1, 1.1, 1.08, 1.02, 0.9], LID_RL = [0.995, 1.015, 1.03, 1.036, 1.03, 1.0, 0.95, 0.9, 0.85];
+  function lidGeo(c, s, re) {
+    var A = 96, K = LID_D.length, pos = [], uv = [], v = new THREE.Vector3();
+    for (var k = 0; k < K; k++) for (var j = 0; j < A; j++) {
+      var a = j / A * Math.PI * 2, an = lidAng(a, LID_D[k]), up = Math.sin(a) >= 0, t = Math.cos(a);
+      eyeDir(an[0], an[1], s, v).multiplyScalar(re * (up ? LID_R[k] : LID_RL[k])).add(c); pos.push(v.x, v.y, v.z);
+      var sw = SW.lid;
+      if (k <= 1) sw = up ? SW.lash : SW.wet; else if (k === 2) sw = up ? SW.lash : SW.lid;
+      if (k <= 1 && t < -0.82) sw = SW.wet;   // слёзное мясцо во внутреннем углу
+      var q = swUV(sw); uv.push(q[0], q[1]);
+    }
+    var g = gridGeo(pos, uv, null, K, A, true); orientOut(g, c); g.computeVertexNormals(); return g;
+  }
+  // ресницы: отдельные изогнутые волоски по краю век — сверху длинные и загнуты вверх, снизу короткие и редкие
+  function lashGeo(c, s, re, color) {
+    var pos = [], cols = [], idx = [], cc = col(color), b = new THREE.Vector3(), b2 = new THREE.Vector3(), n = new THREE.Vector3(), p = new THREE.Vector3(), Y = new THREE.Vector3(0, 1, 0), Z = new THREE.Vector3(0, 0, 1);
+    function strand(a, len, lift, fwd, wid, curl, down) {
+      var an = lidAng(a, 0.004), an2 = lidAng(a + 0.02, 0.004);
+      eyeDir(an[0], an[1], s, b).multiplyScalar(re * 1.06).add(c); eyeDir(an2[0], an2[1], s, b2).multiplyScalar(re * 1.06).add(c);
+      n.copy(b).sub(c).normalize();
+      var vy = down ? -1 : 1, dir = n.clone().multiplyScalar(0.55).addScaledVector(Y, lift * vy).addScaledVector(Z, fwd).normalize();
+      var side = b2.sub(b).normalize(), base = pos.length / 3, S = 4, br = 0.55 + Math.random() * 0.55;
+      for (var i = 0; i <= S; i++) {
+        var u = i / S, w = wid * (1 - u * 0.9);
+        p.copy(b).addScaledVector(dir, len * u).addScaledVector(Y, vy * curl * len * u * u);
+        pos.push(p.x + side.x * w, p.y + side.y * w, p.z + side.z * w, p.x - side.x * w, p.y - side.y * w, p.z - side.z * w);
+        for (var m = 0; m < 2; m++) cols.push(cc.r * br, cc.g * br, cc.b * br);
+        if (i < S) { var q = base + i * 2; idx.push(q, q + 1, q + 2, q + 1, q + 3, q + 2); }
+      }
+    }
+    var NU = 78, NL = 24;
+    for (var i = 0; i < NU; i++) { var a = 0.1 + (i + Math.random() * 0.8) / NU * (Math.PI - 0.38), t = Math.cos(a); strand(a, re * (0.19 + 0.11 * Math.sin(a) + 0.05 * t) * (0.75 + Math.random() * 0.45), 0.22 + Math.random() * 0.12, 0.55, re * 0.0085, 0.45, false); }
+    for (i = 0; i < NL; i++) { var a2 = Math.PI + 0.32 + (i + Math.random() * 0.7) / NL * (Math.PI - 0.55); strand(a2, re * (0.06 + 0.05 * Math.random()), 0.2, 0.55, re * 0.006, 0.12, true); }
+    var g = new THREE.BufferGeometry(); g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute("color", new THREE.Float32BufferAttribute(cols, 3)); g.setIndex(idx); g.computeVertexNormals(); return g;
+  }
+  // брови: сотни коротких волосков, лежащих на коже; у переносицы растут вверх, дальше — к виску
+  function browGeo(P, F, s) {
+    var pos = [], cols = [], idx = [], pv = new THREE.Vector3(), nv = new THREE.Vector3(), q1 = new THREE.Vector3(), q2 = new THREE.Vector3(), tl = new THREE.Vector3(), tu = new THREE.Vector3(), d = new THREE.Vector3(), side = new THREE.Vector3(), p = new THREE.Vector3();
+    var thick = F.browT || 1, ang = F.angry || 0, base = col(new THREE.Color(F.brow).lerp(new THREE.Color(0x3a3028), 0.18).getHex()), n = Math.round(230 * thick);
+    for (var k = 0; k < n; k++) {
+      var t = Math.random(); if (t < 0.12 && Math.random() > t / 0.12 + 0.15) continue;
+      var lo = s * (0.17 + t * 0.47), arch = Math.sin(t * Math.PI) * 0.03, la = 0.235 + arch - ang * (1 - t) * 0.06 + (Math.random() - 0.5) * 0.042 * thick * (1.15 - t * 0.6);
+      headPt(lo, la, P, pv); headNormal(lo, la, P, nv);
+      headPt(lo + s * 0.01, la, P, q1); tl.subVectors(q1, pv).normalize(); headPt(lo, la + 0.01, P, q2); tu.subVectors(q2, pv).normalize();
+      var a2 = t < 0.2 ? 0.95 - t * 2.6 : t > 0.82 ? -0.15 : 0.28 + Math.random() * 0.2 - ang * 0.25;
+      d.copy(tl).multiplyScalar(Math.cos(a2)).addScaledVector(tu, Math.sin(a2)).addScaledVector(nv, 0.07).normalize();
+      side.crossVectors(d, nv).normalize();
+      var len = (0.008 + Math.random() * 0.01) * (t < 0.2 ? 0.7 : 1), wid = 0.00038 + Math.random() * 0.0003, b0 = pos.length / 3, br = 0.7 + Math.random() * 0.55;
+      for (var i = 0; i <= 2; i++) {
+        var u = i / 2, w = wid * (1 - u * 0.85);
+        p.copy(pv).addScaledVector(nv, 0.0011).addScaledVector(d, len * u).addScaledVector(nv, -len * 0.14 * u * u);
+        pos.push(p.x + side.x * w, p.y + side.y * w, p.z + side.z * w, p.x - side.x * w, p.y - side.y * w, p.z - side.z * w);
+        for (var m = 0; m < 2; m++) cols.push(base.r * br, base.g * br, base.b * br);
+        if (i < 2) { var q = b0 + i * 2; idx.push(q, q + 1, q + 2, q + 1, q + 3, q + 2); }
+      }
+    }
+    var g = new THREE.BufferGeometry(); g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute("color", new THREE.Float32BufferAttribute(cols, 3)); g.setIndex(idx); g.computeVertexNormals(); return g;
+  }
+  function tearGeo(c, s, re) {
+    var pts = [], v = new THREE.Vector3();
+    for (var i = 0; i <= 24; i++) { var a = Math.PI + 0.12 + i / 24 * (Math.PI - 0.24), an = lidAng(a, -0.012); pts.push(eyeDir(an[0], an[1], s, v).multiplyScalar(re * 1.022).add(c).clone()); }
+    return new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 48, re * 0.014, 5, false);
+  }
+  // роговица: прозрачный купол над радужкой. Рисует только блики и отражения — глаз становится «живым» и влажным
+  function corneaGeo(re) {
+    var rc = 0.62 * re, d = 0.484 * re, g = new THREE.SphereGeometry(rc, 40, 14, 0, Math.PI * 2, 0, 0.9);
+    g.rotateX(Math.PI / 2); g.translate(0, 0, d); return g;
+  }
+  // текстура глаза: белок с прожилками и тенью от века, радужка из волокон с тёмным ободком, зрачок; блик не рисуем — его даёт роговица
+  var EYE_REAL = {};
+  function eyeTexReal(iris, glow) {
+    var key = iris + ":" + (glow ? 1 : 0); if (EYE_REAL[key]) return EYE_REAL[key];
+    var W = 1024, H = 512, X = function (lon) { return (lon + Math.PI) / (Math.PI * 2) * W; }, Y = function (lat) { return (0.5 - lat / Math.PI) * H; }, R = function (r) { return r * W / (Math.PI * 2); };
+    var ic = new THREE.Color(iris), seed = 1;
+    var rnd = function () { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; };
+    var draw = function (emit) {
+      seed = 7;
+      return canvasTex(W, H, function (g) {
+        var cx = X(0), cy = Y(0), rr = R(0.5), k;
+        g.fillStyle = emit ? "#000" : "#d2c6b8"; g.fillRect(0, 0, W, H);
+        if (!emit) {
+          radial(g, cx, cy, R(1.55), "rgba(255,250,244,0.6)", "rgba(150,92,82,0.6)");
+          var gr = g.createLinearGradient(0, Y(0.8), 0, Y(0.12)); gr.addColorStop(0, "rgba(60,30,26,0.8)"); gr.addColorStop(1, "rgba(70,36,30,0)"); g.fillStyle = gr; g.fillRect(0, Y(0.8), W, Y(0.18) - Y(0.8));
+          var gb = g.createLinearGradient(0, Y(-0.75), 0, Y(-0.3)); gb.addColorStop(0, "rgba(90,50,45,0.35)"); gb.addColorStop(1, "rgba(90,50,45,0)"); g.fillStyle = gb; g.fillRect(0, Y(-0.3), W, Y(-0.75) - Y(-0.3));
+          // тонкие сосудики от уголков к радужке
+          for (k = 0; k < 34; k++) {
+            var sd = k % 2 ? 1 : -1, la0 = (rnd() - 0.5) * 0.7, lo = sd * (1.25 + rnd() * 0.3), x = X(lo), y = Y(la0);
+            g.strokeStyle = "rgba(178," + (50 + rnd() * 30 | 0) + ",50," + (0.12 + rnd() * 0.22) + ")"; g.lineWidth = 0.6 + rnd() * 1.1; g.beginPath(); g.moveTo(x, y);
+            for (var st = 0; st < 6; st++) { lo -= sd * (0.08 + rnd() * 0.06); la0 += (rnd() - 0.5) * 0.08; g.lineTo(X(lo), Y(la0)); if (Math.abs(lo) < 0.62) break; }
+            g.stroke();
+          }
+        }
+        // радужка
+        var dark = ic.clone().multiplyScalar(0.42), light = ic.clone().lerp(new THREE.Color(0xffffff), 0.35);
+        var gi = g.createRadialGradient(cx, cy, rr * 0.3, cx, cy, rr);
+        gi.addColorStop(0, rgbStr(light.getHex(), emit ? 1.4 : 1)); gi.addColorStop(0.45, rgbStr(iris, emit ? 1.25 : 1)); gi.addColorStop(0.85, rgbStr(ic.clone().multiplyScalar(0.75).getHex(), emit ? 1 : 1)); gi.addColorStop(1, rgbStr(dark.getHex(), emit ? 0.5 : 1));
+        g.fillStyle = gi; g.beginPath(); g.arc(cx, cy, rr, 0, Math.PI * 2); g.fill();
+        for (k = 0; k < 520; k++) {
+          var an = rnd() * Math.PI * 2, r0 = rr * (0.33 + rnd() * 0.12), r1 = rr * (0.55 + rnd() * 0.42), tone = rnd();
+          g.strokeStyle = tone < 0.5 ? rgbStr(light.getHex(), emit ? 1.5 : 1.08, 0.18 + rnd() * 0.25) : rgbStr(dark.getHex(), 1, 0.15 + rnd() * 0.3);
+          g.lineWidth = 0.7 + rnd() * 1.4; g.beginPath(); g.moveTo(cx + Math.cos(an) * r0, cy + Math.sin(an) * r0);
+          var bend = (rnd() - 0.5) * 0.12; g.quadraticCurveTo(cx + Math.cos(an + bend) * (r0 + r1) / 2, cy + Math.sin(an + bend) * (r0 + r1) / 2, cx + Math.cos(an) * r1, cy + Math.sin(an) * r1); g.stroke();
+        }
+        // воротничок радужки: светлое неровное кольцо вокруг зрачка
+        g.strokeStyle = rgbStr(light.getHex(), emit ? 1.6 : 1.15, 0.45); g.lineWidth = rr * 0.05; g.beginPath();
+        for (k = 0; k <= 60; k++) { var a3 = k / 60 * Math.PI * 2, r3 = rr * (0.42 + 0.035 * Math.sin(k * 7.3) + 0.02 * Math.sin(k * 2.1)); g.lineTo(cx + Math.cos(a3) * r3, cy + Math.sin(a3) * r3); }
+        g.stroke();
+        // крипты — тёмные ямки
+        if (!emit) for (k = 0; k < 24; k++) { var a4 = rnd() * Math.PI * 2, r4 = rr * (0.5 + rnd() * 0.32); g.fillStyle = rgbStr(dark.getHex(), 0.8, 0.35); g.beginPath(); g.ellipse(cx + Math.cos(a4) * r4, cy + Math.sin(a4) * r4, rr * 0.05, rr * 0.022, a4, 0, Math.PI * 2); g.fill(); }
+        // тёмный ободок по краю радужки
+        var gl = g.createRadialGradient(cx, cy, rr * 0.82, cx, cy, rr * 1.06); gl.addColorStop(0, "rgba(10,8,6,0)"); gl.addColorStop(0.55, emit ? "rgba(0,0,0,0.5)" : "rgba(14,10,8,0.75)"); gl.addColorStop(1, "rgba(10,8,6,0)");
+        g.fillStyle = gl; g.beginPath(); g.arc(cx, cy, rr * 1.06, 0, Math.PI * 2); g.fill();
+        // зрачок
+        var gp = g.createRadialGradient(cx, cy, rr * 0.28, cx, cy, rr * 0.36); gp.addColorStop(0, "rgba(4,3,3,1)"); gp.addColorStop(1, "rgba(4,3,3,0)");
+        g.fillStyle = gp; g.beginPath(); g.arc(cx, cy, rr * 0.36, 0, Math.PI * 2); g.fill();
+      });
+    };
+    var t = draw(false); t.wrapT = THREE.ClampToEdgeWrapping;
+    var e = glow ? draw(true) : null; if (e) e.wrapT = THREE.ClampToEdgeWrapping;
+    EYE_REAL[key] = { map: t, em: e }; return EYE_REAL[key];
+  }
+  // ухо: завиток по краю, противозавиток, глубокая чаша, козелок и мочка. Строим в плоскости (u — вперёд, v — вверх), высота — наружу
+  var EAR_PTS = [[0.06, 0.28], [-0.02, 0.43], [-0.14, 0.5], [-0.26, 0.48], [-0.36, 0.38], [-0.41, 0.22], [-0.42, 0.05], [-0.39, -0.12], [-0.33, -0.26], [-0.25, -0.38], [-0.15, -0.48], [-0.05, -0.47], [0.02, -0.38], [0.05, -0.24], [0.1, -0.12], [0.09, 0.05], [0.08, 0.17]];
+  var EAR_HELIX = [1, 1, 1, 1, 1, 1, 1, 1, 0.85, 0.4, 0.05, 0, 0, 0, 0, 0, 0.3], EAR_ANTI = [0, 0, 0.3, 0.7, 1, 1, 1, 1, 0.6, 0.1, 0, 0, 0, 0, 0, 0, 0];
+  function earGeo(s, Hs) {
+    var N = EAR_PTS.length, SM = 5, B = N * SM, RN = 14, cu = -0.15, cv = 0.0, O = [], HW = [], AW = [], E = Math.exp;
+    var cr = function (p0, p1, p2, p3, t) { var t2 = t * t, t3 = t2 * t; return 0.5 * (2 * p1 + (-p0 + p2) * t + (2 * p0 - 5 * p1 + 4 * p2 - p3) * t2 + (-p0 + 3 * p1 - 3 * p2 + p3) * t3); };
+    for (var i = 0; i < N; i++) for (var k = 0; k < SM; k++) {
+      var P0 = EAR_PTS[(i + N - 1) % N], P1 = EAR_PTS[i], P2 = EAR_PTS[(i + 1) % N], P3 = EAR_PTS[(i + 2) % N], t = k / SM;
+      O.push([cr(P0[0], P1[0], P2[0], P3[0], t), cr(P0[1], P1[1], P2[1], P3[1], t)]);
+      HW.push(EAR_HELIX[i] * (1 - t) + EAR_HELIX[(i + 1) % N] * t); AW.push(EAR_ANTI[i] * (1 - t) + EAR_ANTI[(i + 1) % N] * t);
+    }
+    var segD = function (u, v, a, b) { var dx = b[0] - a[0], dy = b[1] - a[1], q = Math.max(0, Math.min(1, ((u - a[0]) * dx + (v - a[1]) * dy) / (dx * dx + dy * dy))); return Math.hypot(u - a[0] - dx * q, v - a[1] - dy * q); };
+    var base = function (u, v) { return 0.05 + 0.5 * Math.max(0, -u - 0.05) + 0.06 * Math.max(0, v - 0.1); };
+    var front = function (j, rho, u, v) {
+      var hw = HW[j], aw = AW[j], h = base(u, v);
+      h += 0.075 * hw * E(-Math.pow((rho - 0.92) / 0.055, 2)) - 0.03 * hw * E(-Math.pow((rho - 0.77) / 0.06, 2)) + 0.055 * aw * E(-Math.pow((rho - 0.58) / 0.08, 2));
+      h -= 0.09 * E(-(Math.pow((u + 0.09) / 0.14, 2) + Math.pow((v + 0.04) / 0.17, 2)));
+      var dl = segD(u, v, [0.05, 0.2], [-0.1, 0.06]); h += 0.035 * E(-Math.pow(dl / 0.035, 2));
+      h += 0.05 * E(-(Math.pow((u - 0.075) / 0.045, 2) + Math.pow((v + 0.1) / 0.06, 2))) + 0.035 * E(-(Math.pow((u + 0.16) / 0.05, 2) + Math.pow((v + 0.22) / 0.045, 2)));
+      return h;
+    };
+    var backT = function (j, rho, v) { return 0.035 + 0.05 * HW[j] * E(-Math.pow((rho - 0.92) / 0.07, 2)) + 0.06 * Math.max(0, -v - 0.3); };
+    var pos = [], uv = [], rows = 0;
+    var push = function (u, v, h, sw) { pos.push(s * h * Hs, v * Hs, u * Hs); var q = swUV(sw); uv.push(q[0], q[1]); };
+    var ring = function (fn) { for (var j = 0; j < B; j++) fn(j); rows++; };
+    for (var r = 0; r <= RN; r++) ring(function (j) { var rho = r / RN, u = cu + (O[j][0] - cu) * rho, v = cv + (O[j][1] - cv) * rho; push(u, v, front(j, rho, u, v), Math.hypot((u + 0.09) / 0.14, (v + 0.04) / 0.17) < 0.8 ? SW.lidc : SW.ear); });
+    ring(function (j) { var u = cu + (O[j][0] - cu) * 1.03, v = cv + (O[j][1] - cv) * 1.03; push(u, v, base(u, v) + 0.02 * HW[j] - 0.012, SW.ear); });
+    for (r = RN; r >= 0; r--) ring(function (j) { var rho = r / RN, u = cu + (O[j][0] - cu) * rho, v = cv + (O[j][1] - cv) * rho; push(u, v, base(u, v) - backT(j, rho, v), SW.ear); });
+    var g = gridGeo(pos, uv, null, rows, B, true);
+    // лицевая сторона должна смотреть наружу (+x у правого уха)
+    var p = g.attributes.position, ix = g.index.array, A = new THREE.Vector3(), Bv = new THREE.Vector3(), C = new THREE.Vector3(), nn = new THREE.Vector3(), m = new THREE.Vector3(), sc2 = 0;
+    for (var tq = 0; tq < B * 6 * 6; tq += 3) { A.fromBufferAttribute(p, ix[tq]); Bv.fromBufferAttribute(p, ix[tq + 1]); C.fromBufferAttribute(p, ix[tq + 2]); nn.subVectors(Bv, A).cross(m.subVectors(C, A)); sc2 += nn.x * s; }
+    if (sc2 < 0) flipWinding(g);
+    g.computeVertexNormals(); return g;
+  }
+  function earMatrix(s, P) {
+    var lon = s * 1.53, lat = 0.02, E0 = headPt(lon, lat, P), N0 = headNormal(lon, lat, P), o = E0.clone().addScaledVector(N0, -0.012);
+    var yaw = s > 0 ? Math.atan2(-N0.z, N0.x) : Math.atan2(N0.z, -N0.x);
+    return new THREE.Matrix4().makeRotationY(yaw).multiply(new THREE.Matrix4().makeRotationX(-0.26)).setPosition(o);
+  }
+  // шея: шире к плечам (трапеции), кивательные мышцы от ушей к ямке между ключицами, кадык
+  function neckGeoReal(k) {
+    var g = new THREE.CylinderGeometry(1, 1, 0.3, 48, 18, true), a = g.attributes.position, E = Math.exp;
+    for (var i = 0; i < a.count; i++) {
+      var x = a.getX(i), y = a.getY(i), z = a.getZ(i), th = Math.atan2(x, z), at = Math.abs(th), v = (y + 0.15) / 0.3;
+      var r = (0.108 - 0.016 * v) * k;
+      r += 0.026 * sstep(0.28, 0, v) * sstep(1.2, 2.4, at);
+      var thc = 0.35 + 1.45 * v; r += 0.007 * E(-Math.pow((at - thc) / 0.22, 2)) * sstep(0, 0.15, v) * sstep(1, 0.8, v);
+      r += 0.011 * E(-Math.pow(th / 0.28, 2) - Math.pow((v - 0.62) / 0.09, 2));
+      r -= 0.01 * E(-Math.pow(th / 0.35, 2) - Math.pow((v - 0.04) / 0.1, 2));
+      a.setXYZ(i, Math.sin(th) * r * 1.06, y, Math.cos(th) * r * 0.95);
+    }
+    g.computeVertexNormals(); return g;
+  }
+
+  // ---------- настоящие волосы: тысячи тонких прядей поверх тёмной подложки ----------
+  // Нормали прядей смотрят наружу от центра головы — причёска освещается как объём, а сами пряди дают фактуру и неровный край.
+  function hairStrands(P, F, K) {
+    var style = K.hair, pos = [], nor = [], cols = [], idx = [], seed = 3;
+    var rnd = function () { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; };
+    var cBase = col(K.hairC != null ? K.hairC : F.hair), cTip = K.hairTip != null ? col(K.hairTip) : null, cRoot = cBase.clone().multiplyScalar(0.55);
+    var SXs = 1 / (HW * P.w), SYs = 1 / (HH * P.h), SZs = 1 / (HD * P.d), tmp = new THREE.Vector3(), tmpN = new THREE.Vector3(), side = new THREE.Vector3(), dir = new THREE.Vector3(), out = new THREE.Vector3();
+    // точка на коже головы под p и нормаль там
+    function project(p, off) { var x = p.x * SXs, y = p.y * SYs, z = p.z * SZs, l = Math.sqrt(x * x + y * y + z * z) || 1, lo = Math.atan2(x, z), la = Math.asin(Math.max(-1, Math.min(1, y / l))); headPt(lo, la, P, tmp); headNormal(lo, la, P, tmpN); p.copy(tmp).addScaledVector(tmpN, off); return la; }
+    function addStrand(pts, w0, tipFrom, bright) {
+      var b0 = pos.length / 3, S = pts.length - 1;
+      for (var i = 0; i <= S; i++) {
+        var p = pts[i], t = i / S, w = w0 * (1 - t * 0.88);
+        if (i < S) dir.subVectors(pts[i + 1], p); else dir.subVectors(p, pts[i - 1]);
+        dir.normalize(); out.copy(p).normalize(); side.crossVectors(dir, out); if (side.lengthSq() < 1e-8) side.set(1, 0, 0); side.normalize();
+        pos.push(p.x + side.x * w, p.y + side.y * w, p.z + side.z * w, p.x - side.x * w, p.y - side.y * w, p.z - side.z * w);
+        nor.push(out.x, out.y, out.z, out.x, out.y, out.z);
+        var k = cTip && t > tipFrom ? sstep(tipFrom, 1, t) : 0, rt = sstep(0.25, 0, t) * 0.6;
+        var r = (cBase.r + (cTip ? (cTip.r - cBase.r) * k : 0)) * bright, g = (cBase.g + (cTip ? (cTip.g - cBase.g) * k : 0)) * bright, b = (cBase.b + (cTip ? (cTip.b - cBase.b) * k : 0)) * bright;
+        r += (cRoot.r - r) * rt; g += (cRoot.g - g) * rt; b += (cRoot.b - b) * rt;
+        cols.push(r, g, b, r, g, b);
+        if (i < S) { var q = b0 + i * 2; idx.push(q, q + 1, q + 2, q + 1, q + 3, q + 2); }
+      }
+    }
+    // случайная точка на волосистой части головы (не на лице и не на шее)
+    function rootAt(minAbove) {
+      for (var tries = 0; tries < 40; tries++) {
+        var lo = (rnd() * 2 - 1) * Math.PI, la = Math.asin(rnd() * 1.6 - 0.6);
+        if (la > hairline(lo, F) + (minAbove || 0.04)) return [lo, la];
+      }
+      return [0, 1.2];
+    }
+    var V = function () { return new THREE.Vector3(); };
+    if (style === "spiky") {
+      // торчащие пучки: корни собраны в круг, кончики сходятся в острие и загибаются назад
+      var NC = 64;
+      for (var ci = 0; ci < NC; ci++) {
+        var rt = rootAt(0.06), lo = rt[0], la = rt[1], root = headPt(lo, la, P), nn = headNormal(lo, la, P);
+        // спереди и на макушке пучки стоят торчком, на затылке ложатся вниз и короче
+        var back = sstep(0.1, -0.7, Math.cos(lo)) * sstep(1.0, 0.3, la), gd = nn.clone(); gd.y += 0.35 - 1.2 * back; gd.z -= 0.7 * (1 - 0.6 * back); gd.normalize();
+        var L = (0.09 + rnd() * 0.08) * (la > 1.0 ? 1.15 : 1) * (1 - 0.5 * back);
+        var t1 = V().crossVectors(nn, gd).normalize(), t2 = V().crossVectors(gd, t1).normalize(), NS = 72;
+        for (var si = 0; si < NS; si++) {
+          var a = rnd() * Math.PI * 2, rr = 0.034 * Math.sqrt(rnd()), ox = Math.cos(a) * rr, oy = Math.sin(a) * rr, lk = 0.72 + rnd() * 0.3, pts = [], wb = (rnd() - 0.5) * 0.008, wb2 = (rnd() - 0.5) * 0.008;
+          for (var j = 0; j <= 5; j++) {
+            var u = j / 5, conv = Math.pow(1 - u, 1.3) * 0.92 + 0.08, p = root.clone().addScaledVector(nn, -0.004);
+            p.addScaledVector(t1, ox * conv).addScaledVector(t2, oy * conv);
+            p.addScaledVector(gd, L * lk * u).addScaledVector(V().set(0, -0.15, -1), 0.35 * L * lk * u * u).addScaledVector(t1, wb * Math.sin(u * Math.PI)).addScaledVector(t2, wb2 * Math.sin(u * Math.PI));
+            pts.push(p);
+          }
+          addStrand(pts, 0.0014 + rnd() * 0.0007, 0.5, 0.7 + rnd() * 0.5);
+        }
+      }
+      // короткий подшёрсток между пучками — кожа головы не просвечивает
+      for (var fi = 0; fi < 1600; fi++) {
+        var r2 = rootAt(0.02), p0 = headPt(r2[0], r2[1], P), n0 = headNormal(r2[0], r2[1], P), d0 = n0.clone(); d0.y += 0.5; d0.z -= 1.2; d0.normalize();
+        var l0 = 0.02 + rnd() * 0.025, pts2 = [];
+        for (var j2 = 0; j2 <= 3; j2++) { var u2 = j2 / 3; pts2.push(p0.clone().addScaledVector(n0, 0.002 + 0.004 * u2).addScaledVector(d0, l0 * u2)); }
+        addStrand(pts2, 0.0009, 0.8, 0.6 + rnd() * 0.4);
+      }
+    } else if (style === "slick") {
+      // зачёсанные назад: каждая прядь ползёт по коже головы от линии роста к затылку, слои лежат друг на друге
+      var NSL = 3400;
+      for (var k = 0; k < NSL; k++) {
+        var r3 = rootAt(0.005), p1 = headPt(r3[0], r3[1], P), n1 = headNormal(r3[0], r3[1], P), off = 0.004 + rnd() * 0.02 + 0.012 * sstep(0.3, 1.2, r3[1]);
+        var pts3 = [], cur = p1.clone().addScaledVector(n1, off), d = V().set((rnd() - 0.5) * 0.15, 0.25, -1);
+        d.addScaledVector(n1, -d.dot(n1)).normalize();
+        var steps = 9, stepL = 0.032 + rnd() * 0.012, la3 = r3[1];
+        pts3.push(cur.clone());
+        for (var st = 0; st < steps; st++) {
+          cur.addScaledVector(d, stepL); la3 = project(cur, off + 0.006 * (st / steps));
+          d.subVectors(cur, pts3[pts3.length - 1]).normalize(); d.z -= 0.25; d.y -= 0.12 * sstep(0.6, -0.2, la3); tmpN.copy(cur).normalize(); d.addScaledVector(tmpN, -d.dot(tmpN)).normalize();
+          pts3.push(cur.clone());
+          if (la3 < (F.hairBack == null ? -0.5 : F.hairBack) + 0.05) break;
+        }
+        if (pts3.length >= 3) addStrand(pts3, 0.0014 + rnd() * 0.0006, 2, 0.62 + rnd() * 0.5);
+      }
+    }
+    // пушок у линии роста волос: короткие тонкие волоски растут от края вверх-назад, край не выглядит как шлем
+    for (var hi = 0; hi < 900; hi++) {
+      var hlo = (rnd() * 2 - 1) * 1.45, hla = hairline(hlo, F) + 0.01 + rnd() * rnd() * 0.08, hp = headPt(hlo, hla, P), hn = headNormal(hlo, hla, P), hd = V().set(0, 1, style === "slick" ? -1.4 : -0.6);
+      hd.addScaledVector(hn, -hd.dot(hn)).normalize(); var hlen = 0.012 + rnd() * 0.02, hpts = [];
+      for (var hj = 0; hj <= 3; hj++) { var hu = hj / 3; hpts.push(hp.clone().addScaledVector(hn, 0.0015 + 0.003 * hu).addScaledVector(hd, hlen * hu)); }
+      addStrand(hpts, 0.0008, 2, 0.8 + rnd() * 0.35);
+    }
+    if (!pos.length) return null;
+    var g = new THREE.BufferGeometry(); g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute("normal", new THREE.Float32BufferAttribute(nor, 3)); g.setAttribute("color", new THREE.Float32BufferAttribute(cols, 3)); g.setIndex(idx);
+    return g;
+  }
+
+  // борода из волосков: растут вниз по коже лица, усы — вниз и в стороны от середины губы, слои лежат друг на друге
+  function beardStrands(P, cover, color) {
+    var pos = [], nor = [], cols = [], idx = [], seed = 11, cb = col(color);
+    var rnd = function () { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; };
+    var SXs = 1 / (HW * P.w), SYs = 1 / (HH * P.h), SZs = 1 / (HD * P.d), tp = new THREE.Vector3(), tn = new THREE.Vector3(), d = new THREE.Vector3(), side = new THREE.Vector3(), out = new THREE.Vector3();
+    function project(p, off) { var x = p.x * SXs, y = p.y * SYs, z = p.z * SZs, l = Math.sqrt(x * x + y * y + z * z) || 1, lo = Math.atan2(x, z), la = Math.asin(Math.max(-1, Math.min(1, y / l))); headPt(lo, la, P, tp); headNormal(lo, la, P, tn); p.copy(tp).addScaledVector(tn, off); }
+    for (var k = 0; k < 2600; k++) {
+      var lo = (rnd() * 2 - 1) * 1.5, la = -0.2 - rnd() * 1.1; if (cover(lo, la) < 0.5 + rnd() * 0.4) continue;
+      var root = headPt(lo, la, P), n0 = headNormal(lo, la, P), stache = la > -0.42, off0 = 0.0015 + rnd() * 0.012;
+      var cur = root.clone().addScaledVector(n0, off0), pts = [cur.clone()];
+      d.set(stache ? Math.sign(lo || 1) * 0.45 : (rnd() - 0.5) * 0.3, -1, stache ? 0.15 : 0.05); d.addScaledVector(n0, -d.dot(n0)).normalize();
+      var steps = stache ? 3 : 4 + Math.round(rnd() * 2), stepL = stache ? 0.006 : 0.008 + rnd() * 0.004;
+      for (var st = 0; st < steps; st++) {
+        cur.addScaledVector(d, stepL); project(cur, off0 + 0.003 * (st + 1));
+        d.subVectors(cur, pts[pts.length - 1]).normalize(); d.y -= 0.3; out.copy(cur).normalize(); d.addScaledVector(out, -d.dot(out) * 0.7).normalize();
+        pts.push(cur.clone());
+      }
+      var b0 = pos.length / 3, S = pts.length - 1, br = 0.7 + rnd() * 0.5, w0 = 0.0011 + rnd() * 0.0005;
+      for (var i = 0; i <= S; i++) {
+        var p = pts[i], t = i / S, w = w0 * (1 - t * 0.85);
+        if (i < S) d.subVectors(pts[i + 1], p); else d.subVectors(p, pts[i - 1]);
+        d.normalize(); out.copy(p).normalize(); side.crossVectors(d, out).normalize();
+        pos.push(p.x + side.x * w, p.y + side.y * w, p.z + side.z * w, p.x - side.x * w, p.y - side.y * w, p.z - side.z * w);
+        nor.push(out.x, out.y, out.z, out.x, out.y, out.z);
+        var kk = br * (0.6 + 0.4 * t); cols.push(cb.r * kk, cb.g * kk, cb.b * kk, cb.r * kk, cb.g * kk, cb.b * kk);
+        if (i < S) { var q = b0 + i * 2; idx.push(q, q + 1, q + 2, q + 1, q + 3, q + 2); }
+      }
+    }
+    var g = new THREE.BufferGeometry(); g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute("normal", new THREE.Float32BufferAttribute(nor, 3)); g.setAttribute("color", new THREE.Float32BufferAttribute(cols, 3)); g.setIndex(idx);
+    return g;
+  }
+
   // ---------- голова в сборе: сфера + веки + нос + уши + шея одной геометрией ----------
   function buildHead(P, opt) {
     opt = opt || {};
     var parts = [{ g: headSphere(P, opt.low ? 32 : P.sc ? 120 : 48, opt.low ? 24 : P.sc ? 110 : 36) }], rEye = 0.031 * (P.eyeS || 1) * (P.sc ? 0.94 : 1), eyes = [];
-    var nv = new THREE.Vector3(), pv = new THREE.Vector3();
+    var nv = new THREE.Vector3(), pv = new THREE.Vector3(), hairs = [], tears = [];
     [-1, 1].forEach(function (s) {
       var lon = s * 0.4 * (P.eyeSp || 1), lat = 0.068;
       headPt(lon, lat, P, pv); headNormal(lon, lat, P, nv);
       var c = pv.clone().addScaledVector(nv, -rEye * 0.5 * P.eyeD);
       eyes.push(c);
       if (opt.noLids) return;
+      if (P.sc) { parts.push({ g: lidGeo(c, s, rEye) }); hairs.push(lashGeo(c, s, rEye, opt.lashC != null ? opt.lashC : 0x1a1410)); if (opt.browF) hairs.push(browGeo(P, opt.browF, s)); tears.push(tearGeo(c, s, rEye)); return; }
       // верхнее веко: колпачок над глазом, кромка — тёмная линия ресниц
       var lid = new THREE.SphereGeometry(rEye * 1.12, 20, 9, 0, Math.PI * 2, 0, Math.PI * 0.53), la = lid.attributes.position, lu = lid.attributes.uv;
       for (var i = 0; i < la.count; i++) { var yy = la.getY(i) / (rEye * 1.12); var sw = yy < 0.0 ? SW.lash : SW.lid; var q = swUV(sw); lu.setXY(i, q[0], q[1]); }
@@ -1381,7 +1727,8 @@ Claudix.ready(function () {
       [-1, 1].forEach(function (s) { parts.push({ g: sph(0.0125 * nw, 10, 8), m: M4(nb.x + s * 0.0165 * nw, nb.y - 0.019 * nk, nb.z + 0.014 * nk, 0, 0, 0, 1, 0.78, 1), uv: ns }); });
     }
     // уши
-    if (!opt.noEars) {
+    if (!opt.noEars && P.sc) [-1, 1].forEach(function (s) { parts.push({ g: earGeo(s, 0.112), m: earMatrix(s, P) }); });
+    else if (!opt.noEars) {
       [-1, 1].forEach(function (s) {
         var lon = s * 1.47, lat = -0.06; headPt(lon, lat, P, pv);
         var es = swUV(opt.earSw != null ? opt.earSw : SW.ear), m = M4(pv.x + s * 0.006, pv.y, pv.z - 0.006, 0, s * 0.42, 0);
@@ -1392,9 +1739,9 @@ Claudix.ready(function () {
       });
     }
     // шея
-    if (!opt.noNeck) parts.push({ g: P.sc ? cyl(0.092 * (P.neck || 1), 0.108 * (P.neck || 1), 0.3, 24) : cyl(0.074 * (P.neck || 1), 0.088 * (P.neck || 1), 0.26, 12), m: M4(0, P.sc ? -0.25 : -0.24, P.sc ? -0.045 : -0.012, P.sc ? 0.14 : 0, 0, 0), uv: swUV(opt.neckSw != null ? opt.neckSw : SW.neck) });
+    if (!opt.noNeck) parts.push({ g: P.sc ? neckGeoReal(P.neck || 1) : cyl(0.074 * (P.neck || 1), 0.088 * (P.neck || 1), 0.26, 12), m: M4(0, P.sc ? -0.25 : -0.24, P.sc ? -0.045 : -0.012, P.sc ? 0.14 : 0, 0, 0), uv: swUV(opt.neckSw != null ? opt.neckSw : SW.neck) });
     var geo = mergeParts(parts);
-    return { geo: geo, eyes: eyes, rEye: rEye };
+    return { geo: geo, eyes: eyes, rEye: rEye, hairs: hairs.length ? hairs : null, tears: tears.length ? tears : null };
   }
   function buildEyes(H, slant, shape) {
     var parts = [];
@@ -1900,6 +2247,8 @@ Claudix.ready(function () {
     M.armor = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.26, metalness: 0.82, skinning: true, side: THREE.DoubleSide,
       emissive: K && K.armor ? col(K.armor.c).multiplyScalar(0.14) : new THREE.Color(0, 0, 0) });
     M.armor.userData.armor = true;
+    M.strand = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.6, metalness: 0, side: THREE.DoubleSide, envMapIntensity: 0.3 });
+    M.lash = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.6, metalness: 0, side: THREE.DoubleSide, envMapIntensity: 0.5 });
     M.hoodIn = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.95, metalness: 0, side: THREE.BackSide, envMapIntensity: 0.15 });
     M.hoodOut = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.8, metalness: 0.02, map: T("fabric") });
     M.hair = REAL && GFX.hi && K && K.big ? new THREE.MeshPhysicalMaterial({ vertexColors: true, roughness: 0.42, metalness: 0.02, side: THREE.DoubleSide, sheen: new THREE.Color(0.22, 0.2, 0.18) })
@@ -2205,11 +2554,19 @@ Claudix.ready(function () {
     } else {
       if (P.sc) { F.P = P; P.age = F.age || 0; if (F.lipW == null) F.lipW = 0.225; }
       face = paintFace(F);
-      var hopt = { noNose: K.noNose, noEars: K.noEars, lidDrop: K.style === "zombie" ? 0.25 : 0, noseSw: F.maskNose ? SW.mask : null, low: !big };
+      var hopt = { noNose: K.noNose, noEars: K.noEars, lidDrop: K.style === "zombie" ? 0.25 : 0, noseSw: F.maskNose ? SW.mask : null, low: !big,
+        lashC: new THREE.Color(F.brow != null ? F.brow : 0x1a1410).multiplyScalar(0.55).getHex(), browF: F.brow != null && !F.noBrow ? F : null };
       if (K.style === "abyss") { hopt.noLids = true; hopt.neckSw = SW.skin; }
       var HB = buildHead(P, hopt);
       tb.add("head", "skin", HB.geo);
-      info.eyes = buildEyes(HB, K.eyeSlant, K.eyeScale);
+      if (HB.hairs) HB.hairs.forEach(function (hg) { tb.add("head", "lash", hg); });
+      if (P.sc && !K.eyeScale) {
+        // глаза на шарнирах: смотрят по сторонам всем яблоком, роговица поворачивается вместе с радужкой
+        info.eyes = { y: HB.eyes[0].y, geo: null }; info.eyePiv = HB.eyes.map(function (e) { return [e.x, e.z]; }); info.rEye = HB.rEye;
+        var eb = new THREE.SphereGeometry(HB.rEye, 48, 32, -Math.PI / 2, Math.PI * 2), co = corneaGeo(HB.rEye);
+        tb.add("eyeL", "eye", eb); tb.add("eyeR", "eye", eb.clone()); tb.add("eyeL", "cornea", co); tb.add("eyeR", "cornea", co.clone());
+        if (HB.tears) HB.tears.forEach(function (tg) { tb.add("head", "cornea", tg); });
+      } else info.eyes = buildEyes(HB, K.eyeSlant, K.eyeScale);
       info.eyeGlow = K.eyeGlow || null; info.irisGlow = F.irisGlow ? F.iris : null; info.iris = F.iris;
 
       // волосы
@@ -2232,9 +2589,16 @@ Claudix.ready(function () {
           if (K.hair === "patchy") return 0.006 + 0.01 * top + n * 0.01;
           return 0.012 + 0.024 * top + n * 0.012;
         });
+        if (P.sc && (K.hair === "spiky" || K.hair === "slick")) {
+          cap = shell(P, function (lon, lat) { return sstep(hairline(lon, hf) + 0.01, hairline(lon, hf) + 0.09, lat); }, function (lon, lat) { return 0.003 + 0.004 * Math.max(0, Math.sin(lat)); });
+          hairColorize(cap, new THREE.Color(hc).multiplyScalar(K.hair === "slick" ? 0.78 : 0.6).getHex(), null, P, 1);
+          tb.add("head", "hair", cap);
+          var strands = hairStrands(P, F, K); if (strands) tb.add("head", "strand", strands);
+        } else {
         hairColorize(cap, hc, null, P, K.hair === "slick" ? 3 : 1);
         tb.add("head", "hair", cap);
-        if (K.hair === "spiky") {
+        }
+        if (K.hair === "spiky" && !P.sc) {
           for (var k = 0; k < 17; k++) {
             var lo = (k / 17 - 0.5) * 4.7 + Math.sin(k * 7.3) * 0.12, la = 0.5 + (k % 3) * 0.3 + Math.cos(k * 3.1) * 0.08; if (la < hairline(lo, F) + 0.08) la = hairline(lo, F) + 0.1;
             var pp = headPt(lo, la, P), nn = headNormal(lo, la, P); nn.y += 0.25; nn.z -= 0.75;
@@ -2250,14 +2614,21 @@ Claudix.ready(function () {
         }
       }
       if (K.beard != null) {
-        var beard = shell(P, function (lon, lat) {
+        var bcov = function (lon, lat) {
           var a = Math.abs(lon), mouth = sstep(0.25, 0.19, a) * sstep(-0.6, -0.55, lat) * sstep(-0.37, -0.42, lat);
           if (K.goatee) return sstep(0.36, 0.28, a) * sstep(-0.52, -0.58, lat) * sstep(-1.15, -1.07, lat) * (1 - mouth);
           var low = sstep(-0.22, -0.32, lat) * sstep(-1.3, -1.2, lat) * sstep(1.46, 1.36, a), stache = sstep(0.36, 0.3, a) * sstep(-0.31, -0.35, lat);
           return Math.max(low, stache) * (1 - mouth);
-        }, function (lon, lat) { return 0.009 + 0.02 * sstep(-0.5, -1.0, lat) + (NZ((lon + 4) / 8, (lat + 2) / 4, 32, 2) - 0.5) * 0.006; }, 64, 48);
-        hairColorize(beard, K.beard, null, P, 2);
-        tb.add("head", "hair", beard);
+        };
+        if (P.sc) {
+          // у героя крупным планом — тонкая подложка цвета кожи с бородой и волоски поверх
+          var bsh = shell(P, bcov, 0.002, 64, 48); hairColorize(bsh, new THREE.Color(K.beard).multiplyScalar(0.7).getHex(), null, P, 2); tb.add("head", "hair", bsh);
+          tb.add("head", "strand", beardStrands(P, bcov, K.beard));
+        } else {
+          var beard = shell(P, bcov, function (lon, lat) { return 0.009 + 0.02 * sstep(-0.5, -1.0, lat) + (NZ((lon + 4) / 8, (lat + 2) / 4, 32, 2) - 0.5) * 0.006; }, 64, 48);
+          hairColorize(beard, K.beard, null, P, 2);
+          tb.add("head", "hair", beard);
+        }
       }
       if (K.helmet) {
         var hl = function (lon) { return 0.36 - 0.98 * sstep(0.9, 1.28, Math.abs(lon)); };
@@ -2424,12 +2795,14 @@ Claudix.ready(function () {
       var pe = canvasTex(GFX.hi ? 512 : 256, GFX.hi ? 256 : 128, function (g, w, h) { var X = function (lon) { return (lon + Math.PI) / (Math.PI * 2) * w; }, Y = function (lat) { return (0.5 - lat / Math.PI) * h; }; g.fillStyle = "#000"; g.fillRect(0, 0, w, h); g.fillStyle = "#ffd24a"; carve(g, X, Y); });
       mats.pumpkin = new THREE.MeshStandardMaterial({ map: pt, emissiveMap: pe, emissive: new THREE.Color(1.6, 1.1, 0.5), roughness: 0.55, metalness: 0 });
     }
-    var eyeT = info.eyes ? eyeTex(info.eyeGlow || info.iris || 0x4a3a2a, info.irisGlow ? 1 : 0) : null;
+    var eyeT = info.eyes ? (info.eyePiv && !info.eyeGlow ? eyeTexReal(info.iris || 0x4a3a2a, !!info.irisGlow) : eyeTex(info.eyeGlow || info.iris || 0x4a3a2a, info.irisGlow ? 1 : 0)) : null;
+    if (info.eyePiv) mats.cornea = new THREE.MeshPhysicalMaterial({ color: 0x000000, roughness: 0.05, metalness: 0, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, envMapIntensity: 1.8 });
     if (info.eyes) {
       if (info.eyeGlow) mats.eye = new THREE.MeshBasicMaterial({ color: glowCol(info.eyeGlow, 1.8) });
+      else if (info.eyePiv) mats.eye = new THREE.MeshStandardMaterial({ map: eyeT.map, roughness: 0.3, metalness: 0, emissiveMap: eyeT.em, emissive: eyeT.em ? new THREE.Color(0.75, 0.75, 0.75) : new THREE.Color(0, 0, 0) });
       else if (REAL && GFX.hi && K.big) mats.eye = new THREE.MeshPhysicalMaterial({ map: eyeT.map, roughness: 0.38, metalness: 0, clearcoat: 1, clearcoatRoughness: 0.02, envMapIntensity: 1.6, emissiveMap: eyeT.em, emissive: eyeT.em ? new THREE.Color(1.6, 1.6, 1.6) : new THREE.Color(0, 0, 0) });
       else mats.eye = new THREE.MeshStandardMaterial({ map: eyeT.map, roughness: 0.1, metalness: 0, emissiveMap: eyeT.em, emissive: eyeT.em ? new THREE.Color(1.6, 1.6, 1.6) : new THREE.Color(0, 0, 0) });
-      tb.add("eyes", "eye", info.eyes.geo);
+      if (info.eyes.geo) tb.add("eyes", "eye", info.eyes.geo);
     }
     var meshes = tb.build(B, info);
     // плащ строим у каждого экземпляра свой (ткань колышется)
@@ -2500,6 +2873,7 @@ Claudix.ready(function () {
     });
     G.head = new THREE.Group(); G.head.position.set(0, info.headY, 0.01); G.torso.add(G.head);
     if (info.eyes) { G.eyes = new THREE.Group(); G.eyes.position.y = info.eyes.y; G.head.add(G.eyes); }
+    if (info.eyePiv && G.eyes) ["eyeL", "eyeR"].forEach(function (n, i) { G[n] = new THREE.Group(); G[n].position.set(info.eyePiv[i][0], 0, info.eyePiv[i][1]); G.eyes.add(G[n]); });
     if (info.jaw) { G.jaw = new THREE.Group(); G.jaw.position.fromArray(info.jaw); G.head.add(G.jaw); }
     if (info.maw) { G.maw = new THREE.Group(); G.maw.position.fromArray(info.maw); G.head.add(G.maw); G.mawU = new THREE.Group(); G.mawD = new THREE.Group(); G.maw.add(G.mawU); G.maw.add(G.mawD); }
     if (info.crown) { G.crown = new THREE.Group(); G.crown.position.set(0, 0.44, -0.02); G.head.add(G.crown); }
@@ -2510,7 +2884,7 @@ Claudix.ready(function () {
       if (d.skinned) { var sm = new THREE.SkinnedMesh(geo, getMat(d.mat, true)); if (GFX.hi && d.mat !== "glow") sm.castShadow = true; body.add(sm); skinned.push(sm); return; }
       if (d.mat === "ghost") { geo = d.geo.clone(); ownGeo.push(geo); geo.userData.rest = Float32Array.from(geo.attributes.position.array); }
       var mesh = new THREE.Mesh(geo, getMat(d.mat)), parent = G[d.group] || G.torso;
-      if (GFX.hi && d.mat !== "eye" && d.mat !== "glow" && d.group !== "eyes") mesh.castShadow = true;
+      if (GFX.hi && d.mat !== "eye" && d.mat !== "glow" && d.mat !== "cornea" && d.group !== "eyes") mesh.castShadow = true;
       parent.add(mesh);
       if (d.mat === "ghost") G.ghostMesh = mesh;
     });
@@ -2520,7 +2894,7 @@ Claudix.ready(function () {
     if (skinned.length) { root.updateMatrixWorld(true); skeleton = new THREE.Skeleton(BONES.map(function (n) { return G[n]; })); skinned.forEach(function (sm) { sm.bind(skeleton); }); }
     // свечения: глаза, сферы, корона — мягкие ореолы
     var glows = [];
-    if (info.eyeGlow && G.eyes && !info.eyeSmall) glows.push(glowPoints(G.eyes, info.eyes.geo ? [[-0.066, 0, 0.17], [0.066, 0, 0.17]] : [], info.eyeGlow, kind === "abyss" ? 0.2 : 0.11));
+    if (info.eyeGlow && G.eyes && !info.eyeSmall) glows.push(glowPoints(G.eyes, info.eyePiv ? info.eyePiv.map(function (q) { return [q[0], 0, q[1] + info.rEye * 0.9]; }) : info.eyes.geo ? [[-0.066, 0, 0.17], [0.066, 0, 0.17]] : [], info.eyeGlow, kind === "abyss" ? 0.2 : 0.11));
     if (info.eyeSmall && G.eyes) glows.push(glowPoints(G.eyes, [[-0.066, 0, 0.13], [0.066, 0, 0.13]], info.eyeGlow, 0.16));
     if (info.ghostEyes) glows.push(glowPoints(G.torso, info.ghostEyes, 0x6a9aff, 0.07));
     Object.keys(info.glowPts).forEach(function (gk) { info.glowPts[gk].forEach(function (p) { glows.push(glowPoints(G[gk], [p], p[3], p[4])); }); });
@@ -2564,7 +2938,7 @@ Claudix.ready(function () {
     var sc = o.scale || 1; root.scale.setScalar(sc);
     var shadow = new THREE.Mesh(BLOB, BLOB_MAT); shadow.rotation.x = -Math.PI / 2; shadow.position.y = 0.03; shadow.scale.setScalar(K.body === "heavy" || K.body === "big" ? 1.2 : 1.0); root.add(shadow);
     var c = { root: root, lift: lift, body: body, hips: G.hips, torso: G.torso, legL: G.legL, legR: G.legR, shinL: G.shinL, shinR: G.shinR, armL: G.armL, armR: G.armR, foreL: G.foreL, foreR: G.foreR,
-      head: G.head, eyes: G.eyes || null, jaw: G.jaw || null, maw: G.maw || null, mawU: G.mawU, mawD: G.mawD, crown: G.crown || null, flame: G.flame || null, ghostMesh: G.ghostMesh || null,
+      head: G.head, eyes: G.eyes || null, eyeL: G.eyeL || null, eyeR: G.eyeR || null, jaw: G.jaw || null, maw: G.maw || null, mawU: G.mawU, mawD: G.mawD, crown: G.crown || null, flame: G.flame || null, ghostMesh: G.ghostMesh || null,
       cape: cape, mats: mats, M: M, ownGeo: ownGeo, glows: glows, skeleton: skeleton, shadow: shadow, phase: Math.random() * 6, armBusy: kind === "gunman", scale: sc, kind: kind, style: K.style, info: info,
       t: Math.random() * 10, blinkT: 1 + Math.random() * 3, blink: 0, gz: 0, gzT: 0, hy: 0, spd: 0, act: null, side: 1, spawnT: 0, spawnD: 1, hitT: 0, walked: false, dead: false, breathe: Math.random() * 6, mawOpen: 0.2 };
     c.starMats = starMats; c.starFx = starFx; c.v = v; CHARS.push(c);
@@ -2796,7 +3170,7 @@ Claudix.ready(function () {
         c.hy += (Math.max(-0.65, Math.min(0.65, want * 0.7)) - c.hy) * Math.min(1, dt * 6);
         c.head.rotation.y = c.hy;
         var eg = Math.max(-0.45, Math.min(0.45, want - c.hy)); c.gz += (eg - c.gz) * Math.min(1, dt * 14);
-        var em = c.M.eye; if (em && em.map) { em.map.offset.x = -c.gz / (Math.PI * 2); if (em.emissiveMap) em.emissiveMap.offset.x = em.map.offset.x; }
+        var em = c.M.eye; if (c.eyeL) { c.eyeL.rotation.y = c.eyeR.rotation.y = c.gz; } else if (em && em.map) { em.map.offset.x = -c.gz / (Math.PI * 2); if (em.emissiveMap) em.emissiveMap.offset.x = em.map.offset.x; }
         c.blinkT -= dt; if (c.blinkT <= 0) { c.blink = 0.15; c.blinkT = 2 + Math.random() * 3.5; }
         var by = c.info.eyeScale ? c.info.eyeScale[1] : 1;
         if (c.blink > 0) { c.blink -= dt; c.eyes.scale.y = by * (1 - Math.sin(Math.max(0, c.blink) / 0.15 * Math.PI) * 0.9); } else c.eyes.scale.y = by;
