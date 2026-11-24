@@ -989,7 +989,7 @@ Claudix.ready(function () {
     if (P.sc && Math.abs(lon) < 1.65 && lat < 0.75 && lat > -1.2) r += sculpt(lon, lat, P) * P.sc;
     x *= r; y *= r; z *= r;
     if (y < 0.12) { var t = Math.min(1, (0.12 - y) / 1.1); x *= 1 - ((P.sc ? 0.19 : 0.3) - 0.28 * (P.jaw - 1)) * Math.pow(t, 1.35); z *= 1 - (z < 0 ? 0.2 : 0.04) * Math.pow(t, 1.5); y *= 1 - 0.06 * t; }
-    if (z < 0 && y > -0.35) z *= 1 + 0.12 * P.skull;
+    if (z < 0 && (P.sc || y > -0.35)) z *= 1 + 0.12 * P.skull * (P.sc ? sstep(-0.62, -0.2, y) : 1);
     if (P.sc) { var fl = -0.86 + 0.32 * sstep(0.5, -0.4, z); if (y < fl) y = fl + (y - fl) * 0.12; }
     if (z > 0.52) z = 0.52 + (z - 0.52) * 0.72;
     if (y > 0.5) y = 0.5 + (y - 0.5) * 0.86;
@@ -1216,8 +1216,9 @@ Claudix.ready(function () {
     if (F.hair != null) {
       // у героев крупным планом край размыт: волосы у лба редеют постепенно
       var hsteps = F.P ? [[0.06, 0.16], [0.04, 0.16], [0.02, 0.18], [0, 0.2], [-0.015, 0.14], [-0.03, 0.1]] : [[0, 1]];
+      if (F.scalpA) hsteps = hsteps.concat([[0.05, F.scalpA]]);
       hsteps.forEach(function (hs) {
-        g.save(); g.fillStyle = rgbStr(F.hair, 0.8, hs[1]);
+        g.save(); g.fillStyle = F.scalpC != null ? rgbStr(F.scalpC, 1, hs[1]) : rgbStr(F.hair, 0.8, hs[1]);
         g.beginPath(); g.moveTo(0, Y(F.hairBack == null ? -0.5 : F.hairBack));
         for (var hl = -Math.PI; hl <= Math.PI + 0.001; hl += 0.05) { var la2 = hairline(hl, F) + hs[0]; g.lineTo(X(hl), Y(la2)); }
         g.lineTo(W, 0); g.lineTo(0, 0); g.closePath(); g.fill(); g.restore();
@@ -1241,7 +1242,7 @@ Claudix.ready(function () {
     var skinS = rgbStr(F.skin), noseC = new THREE.Color(F.skin).lerp(new THREE.Color(0xd06050), 0.12).getHex();
     sw(SW.skin, skinS); sw(SW.nose, rgbStr(noseC)); sw(SW.ear, rgbStr(new THREE.Color(F.skin).lerp(new THREE.Color(0xd05a50), 0.18).getHex()));
     sw(SW.neck, rgbStr(F.skin, 0.88)); sw(SW.lid, rgbStr(F.skin, 0.93)); sw(SW.lash, rgbStr(F.brow || 0x1a1410, 0.5)); sw(SW.knit, rgbStr(F.knit != null ? F.knit : 0x202024));
-    sw(SW.mask, rgbStr(F.mask != null ? F.mask : 0x1a1622)); sw(SW.lip, rgbStr(F.lip || 0xb05a50)); sw(SW.scalp, rgbStr(F.hair != null ? F.hair : F.skin, 0.8)); sw(SW.dark, "#0a0808"); sw(SW.hood, rgbStr(F.hood != null ? F.hood : 0x222));
+    sw(SW.mask, rgbStr(F.mask != null ? F.mask : 0x1a1622)); sw(SW.lip, rgbStr(F.lip || 0xb05a50)); sw(SW.scalp, F.scalpC != null ? rgbStr(F.scalpC) : rgbStr(F.hair != null ? F.hair : F.skin, 0.8)); sw(SW.dark, "#0a0808"); sw(SW.hood, rgbStr(F.hood != null ? F.hood : 0x222));
     if (F.P) sw(SW.lid, rgbStr(new THREE.Color(F.skin).lerp(new THREE.Color(0x9a5a50), 0.12).getHex(), 0.86));
     sw(SW.wet, rgbStr(new THREE.Color(F.skin).lerp(new THREE.Color(0xd8706a), 0.5).getHex(), 1.02)); sw(SW.lidc, rgbStr(new THREE.Color(F.skin).lerp(new THREE.Color(0x9a4a40), 0.18).getHex(), 0.78));
     if (F.knit != null) { sw(SW.nose, rgbStr(F.knit)); sw(SW.ear, rgbStr(F.knit)); sw(SW.neck, rgbStr(F.knit)); }
@@ -1612,8 +1613,8 @@ Claudix.ready(function () {
 
   // ---------- настоящие волосы: тысячи тонких прядей поверх тёмной подложки ----------
   // Нормали прядей смотрят наружу от центра головы — причёска освещается как объём, а сами пряди дают фактуру и неровный край.
-  function hairStrands(P, F, K) {
-    var style = K.hair, pos = [], nor = [], cols = [], idx = [], uvs = [], seed = 3;
+  function hairStrands(P, F, K, styleOver) {
+    var style = styleOver || K.hair, pos = [], nor = [], cols = [], idx = [], uvs = [], seed = 3;
     var rnd = function () { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; };
     var cBase = col(K.hairC != null ? K.hairC : F.hair), cTip = K.hairTip != null ? col(K.hairTip) : null, cRoot = cBase.clone().multiplyScalar(0.55);
     var SXs = 1 / (HW * P.w), SYs = 1 / (HH * P.h), SZs = 1 / (HD * P.d), tmp = new THREE.Vector3(), tmpN = new THREE.Vector3(), side = new THREE.Vector3(), dir = new THREE.Vector3(), out = new THREE.Vector3();
@@ -1670,6 +1671,40 @@ Claudix.ready(function () {
         for (var j2 = 0; j2 <= 3; j2++) { var u2 = j2 / 3; pts2.push(p0.clone().addScaledVector(n0, 0.002 + 0.004 * u2).addScaledVector(d0, l0 * u2)); }
         addStrand(pts2, 0.0009, 0.8, 0.6 + rnd() * 0.4);
       }
+    } else if (style === "mohawk") {
+      // ирокез: гребень по середине головы от лба до затылка, пучки торчат прямо вверх (не зачёсаны назад), виски выбриты под ёжик
+      var hf0 = hairline(0, F) + 0.05, phEnd = Math.PI - ((F.hairBack == null ? -0.5 : F.hairBack) + 0.18), NCm = 22, X1 = V().set(1, 0, 0);
+      var crest = function (u) { var ph = hf0 + u * (phEnd - hf0); return ph <= Math.PI / 2 ? [0, ph] : [Math.PI, Math.PI - ph]; };
+      for (var cm = 0; cm < NCm; cm++) {
+        var um = (cm + 0.5) / NCm, cr = crest(um), rootM = headPt(cr[0], cr[1], P), nm = headNormal(cr[0], cr[1], P);
+        rootM.addScaledVector(X1, (rnd() - 0.5) * 0.012); project(rootM, 0);
+        // направление: из кожи головы и вверх — спереди и на макушке почти вертикально, на затылке назад-вверх
+        var gm = nm.clone().addScaledVector(V().set(0, 1, 0), 0.9).normalize(), Lm = (0.15 + rnd() * 0.05) * (0.8 + 0.35 * Math.sin(um * Math.PI)) * (um > 0.8 ? 0.8 : 1);
+        var t1m = V().crossVectors(gm, X1).normalize(), t2m = V().crossVectors(gm, t1m).normalize();
+        for (var sm = 0; sm < 96; sm++) {
+          var am = rnd() * Math.PI * 2, rm = Math.sqrt(rnd()), oxm = Math.cos(am) * rm * 0.028, oym = Math.sin(am) * rm * 0.034, lkm = 0.7 + rnd() * 0.32, ptsM = [], wbm = (rnd() - 0.5) * 0.006;
+          for (var jm = 0; jm <= 5; jm++) {
+            var uu = jm / 5, cv = Math.pow(1 - uu, 1.25) * 0.93 + 0.07, pm = rootM.clone().addScaledVector(nm, -0.004);
+            pm.addScaledVector(t2m, oxm * cv).addScaledVector(t1m, oym * cv).addScaledVector(gm, Lm * lkm * uu).addScaledVector(t2m, wbm * Math.sin(uu * Math.PI));
+            ptsM.push(pm);
+          }
+          addStrand(ptsM, 0.0015 + rnd() * 0.0007, 0.55, 0.7 + rnd() * 0.5);
+        }
+      }
+      // основание гребня — густой короткий ворс между пучками
+      for (var cb2 = 0; cb2 < 1400; cb2++) {
+        var crb = crest(rnd()), pb = headPt(crb[0], crb[1], P); pb.addScaledVector(X1, (rnd() - 0.5) * 0.06); project(pb, 0.001);
+        var nb = pb.clone().normalize(), db = nb.clone().addScaledVector(V().set(0, 1, 0), 0.9).normalize(), lb = 0.02 + rnd() * 0.035, ptsB = [];
+        for (var jb = 0; jb <= 3; jb++) ptsB.push(pb.clone().addScaledVector(db, lb * jb / 3));
+        addStrand(ptsB, 0.0012, 0.75, 0.6 + rnd() * 0.4);
+      }
+      // выбритые виски и затылок: короткий ёжик, лежит по коже
+      for (var bz = 0; bz < 4200; bz++) {
+        var rz = rootAt(0.0), pz = headPt(rz[0], rz[1], P); if (Math.abs(pz.x) < 0.035) continue;
+        var nz = headNormal(rz[0], rz[1], P), dz = V().set(0, -0.6, -1); dz.addScaledVector(nz, -dz.dot(nz)).normalize();
+        var lz = 0.005 + rnd() * 0.004;
+        addStrand([pz.clone().addScaledVector(nz, 0.0008), pz.clone().addScaledVector(nz, 0.0018).addScaledVector(dz, lz * 0.5), pz.clone().addScaledVector(nz, 0.0022).addScaledVector(dz, lz)], 0.0006, 2, 0.55 + rnd() * 0.35);
+      }
     } else if (style === "slick") {
       // зачёсанные назад: каждая прядь ползёт по коже головы от линии роста к затылку, слои лежат друг на друге
       var NSL = 3400;
@@ -1689,7 +1724,7 @@ Claudix.ready(function () {
       }
     }
     // пушок у линии роста волос: короткие тонкие волоски растут от края вверх-назад, край не выглядит как шлем
-    for (var hi = 0; hi < 900; hi++) {
+    for (var hi = 0; hi < (style === "mohawk" ? 0 : 900); hi++) {
       var hlo = (rnd() * 2 - 1) * 1.45, hla = hairline(hlo, F) + 0.01 + rnd() * rnd() * 0.08, hp = headPt(hlo, hla, P), hn = headNormal(hlo, hla, P), hd = V().set(0, 1, style === "slick" ? -1.4 : -0.6);
       hd.addScaledVector(hn, -hd.dot(hn)).normalize(); var hlen = 0.012 + rnd() * 0.02, hpts = [];
       for (var hj = 0; hj <= 3; hj++) { var hu = hj / 3; hpts.push(hp.clone().addScaledVector(hn, 0.0015 + 0.003 * hu).addScaledVector(hd, hlen * hu)); }
@@ -2187,7 +2222,7 @@ Claudix.ready(function () {
       face: { skin: 0xd6a47c, brow: 0x101010, iris: 0x39ff88, irisGlow: true, hair: 0x0b0d0c, hairFront: 0.5, stubble: 0.35, angry: 0.75, smile: 0.35, socket: 0x0a1410, socketA: 0.45, scars: [[-0.3, 0.42, -0.42, 0.12, true]],
         paint: function (g, X, Y, R, sc) { g.strokeStyle = "rgba(20,60,40,0.55)"; g.lineWidth = 3 * sc; [[0.56, 0.42, 0.56, 0.25, 0.7, 0.25], [0.6, 0.06, 0.72, 0.06, 0.72, -0.2], [0.52, -0.16, 0.6, -0.16, 0.6, -0.4, 0.7, -0.4]].forEach(function (c) { g.beginPath(); g.moveTo(X(c[0]), Y(c[1])); for (var i = 2; i < c.length; i += 2) g.lineTo(X(c[i]), Y(c[i + 1])); g.stroke(); }); },
         glowPaint: function (g, X, Y, R, sc) { g.strokeStyle = "rgba(57,255,136,1)"; g.fillStyle = "rgba(57,255,136,1)"; g.lineWidth = 1.8 * sc; [[0.56, 0.42, 0.56, 0.25, 0.7, 0.25], [0.6, 0.06, 0.72, 0.06, 0.72, -0.2], [0.52, -0.16, 0.6, -0.16, 0.6, -0.4, 0.7, -0.4]].forEach(function (c) { g.beginPath(); g.moveTo(X(c[0]), Y(c[1])); for (var i = 2; i < c.length; i += 2) g.lineTo(X(c[i]), Y(c[i + 1])); g.stroke(); g.beginPath(); g.arc(X(c[c.length - 2]), Y(c[c.length - 1]), 2.6 * sc, 0, 7); g.fill(); g.beginPath(); g.arc(X(c[0]), Y(c[1]), 2 * sc, 0, 7); g.fill(); }); } },
-      hair: "spiky", hairC: 0x0b0d0c, hairTip: 0x39ff88,
+      hair: "spiky", realHair: "mohawk", hairC: 0x0b0d0c, hairTip: 0x39ff88,
       suit: { base: 0x0e1411, side: 0x18241d, yoke: 0x121a16, muscle: 0.6, belt: 0x0a0f0c, buckle: 0x39ff88, emblem: "virus", emblemS: 0.07, emblemC: [0x39ff88, 0x04140a], glow: true, collar: 0x18241d,
         paint: function (U) { circuits(U, 0x39ff88, 22, 11); } },
       sleeve: 0x0e1411, glove: 0x18241d, pants: 0x121a16, boot: 0x0a0f0c, bootTrim: 0x39ff88, wrist: 0x39ff88, implant: 0x39ff88, glitch: 0x39ff88
@@ -2728,7 +2763,7 @@ Claudix.ready(function () {
       info.jaw = [0, -0.09, 0.0];
       for (var nv2 = 0; nv2 < 3; nv2++) tb.add("head", "cloth", cyl(0.035, 0.04, 0.06, 8), M4(0, -0.2 - nv2 * 0.075, -0.04), 0xd8d2c0);
     } else {
-      if (P.sc) { F.P = P; P.age = F.age || 0; if (F.lipW == null) F.lipW = 0.225; }
+      if (P.sc) { F.P = P; P.age = F.age || 0; if (F.lipW == null) F.lipW = 0.225; if (K.realHair === "mohawk") { F.scalpC = new THREE.Color(F.skin).lerp(new THREE.Color(0x2a2e36), 0.7).getHex(); F.scalpA = 0.55; } }
       face = paintFace(F);
       var hopt = { noNose: K.noNose, noEars: K.noEars, lidDrop: K.style === "zombie" ? 0.25 : 0, noseSw: F.maskNose ? SW.mask : null, low: !big,
         lashC: new THREE.Color(F.brow != null ? F.brow : 0x1a1410).multiplyScalar(0.55).getHex(), browF: F.brow != null && !F.noBrow ? F : null };
@@ -2766,10 +2801,11 @@ Claudix.ready(function () {
           return 0.012 + 0.024 * top + n * 0.012;
         });
         if (P.sc && (K.hair === "spiky" || K.hair === "slick")) {
-          cap = shell(P, function (lon, lat) { return sstep(hairline(lon, hf) + 0.01, hairline(lon, hf) + 0.09, lat); }, function (lon, lat) { return 0.003 + 0.004 * Math.max(0, Math.sin(lat)); });
-          hairColorize(cap, new THREE.Color(hc).multiplyScalar(K.hair === "slick" ? 0.78 : 0.6).getHex(), null, P, 1);
-          tb.add("head", "hair", cap);
-          var strands = hairStrands(P, F, K); if (strands) tb.add("head", "strand", strands);
+          var hsty = K.realHair || K.hair, mohawk = hsty === "mohawk";
+          cap = shell(P, function (lon, lat) { return sstep(hairline(lon, hf) + (mohawk ? 0.0 : 0.01), hairline(lon, hf) + (mohawk ? 0.1 : 0.09), lat); }, function (lon, lat) { return (mohawk ? 0.0008 : 0.003) + (mohawk ? 0 : 0.004 * Math.max(0, Math.sin(lat))); });
+          hairColorize(cap, mohawk ? new THREE.Color(F.skin).lerp(new THREE.Color(0x23262c), 0.62).getHex() : new THREE.Color(hc).multiplyScalar(hsty === "slick" ? 0.78 : 0.6).getHex(), null, P, 1);
+          if (!mohawk) tb.add("head", "hair", cap);   // у ирокеза выбритая кожа нарисована прямо на голове — без края «шапочки»
+          var strands = hairStrands(P, F, K, hsty); if (strands) tb.add("head", "strand", strands);
         } else {
         hairColorize(cap, hc, null, P, K.hair === "slick" ? 3 : 1);
         tb.add("head", "hair", cap);
