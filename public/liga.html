@@ -988,22 +988,24 @@ Claudix.ready(function () {
     a = lon / 0.36; b = (lat + 0.83) / 0.16; r += 0.035 * P.chin * Math.exp(-(a * a + b * b));
     if (P.sc && Math.abs(lon) < 1.65 && lat < 0.75 && lat > -1.2) r += sculpt(lon, lat, P) * P.sc;
     x *= r; y *= r; z *= r;
+    var ov = P.oval || 0;
+    if (ov && y < 0.12 + 0.2 * ov) { var tx = Math.min(1, (0.12 + 0.2 * ov - y) / (1.1 + 0.2 * ov)); x *= 1 - 0.09 * ov * Math.pow(tx, 1.2); }   // овал: сужение к подбородку начинается от скул
     if (y < 0.12) { var t = Math.min(1, (0.12 - y) / 1.1); x *= 1 - ((P.sc ? 0.19 : 0.3) - 0.28 * (P.jaw - 1)) * Math.pow(t, 1.35); z *= 1 - (z < 0 ? 0.2 : 0.04) * Math.pow(t, 1.5); y *= 1 - 0.06 * t; }
     if (z < 0 && (P.sc || y > -0.35)) z *= 1 + 0.12 * P.skull * (P.sc ? sstep(-0.62, -0.2, y) : 1);
-    if (P.sc) { var fl = -0.86 + 0.32 * sstep(0.5, -0.4, z); if (y < fl) y = fl + (y - fl) * 0.12; }
+    if (P.sc) { var fl = -0.86 + (0.32 - 0.08 * ov) * sstep(0.5, -0.4, z); if (y < fl) y = fl + (y - fl) * (0.12 + 0.3 * ov); }   // низ челюсти; у овала без резкого угла
     if (z > 0.52) z = 0.52 + (z - 0.52) * 0.72;
     if (y > 0.5) y = 0.5 + (y - 0.5) * 0.86;
     out = out || new THREE.Vector3(); out.set(x * HW * P.w, y * HH * P.h, z * HD * P.d); return out;
   }
   // рельеф лица: спинка и кончик носа, крылья ноздрей, губы с ложбинкой над верхней, складки у носа, ямка подбородка
   function sculpt(lon, lat, P) {
-    var nk = P.nose, nw = P.noseW, r = 0, a, b, s, t, h, w, E = Math.exp, ag = P.age || 0;
+    var nk = P.nose, nw = P.noseW, r = 0, a, b, s, t, h, w, E = Math.exp, ag = P.age || 0, ov = P.oval || 0;
     // перед лица плоский и широкий: лоб вертикальнее, челюстная дуга и подбородок выдвинуты вперёд, как у живого человека
     var front = E(-Math.pow(lon / 0.72, 4));
     // взрослый мужчина: лоб покатый, надбровье выступает сплошным валиком, челюсть широкая с углами, подбородок квадратный
     b = (lat - 0.44) / 0.16; r += 0.018 * front * E(-b * b);                                   // лоб
     b = (lat + 0.46) / 0.2; r += 0.032 * E(-Math.pow(lon / 0.5, 4) - b * b);                     // челюстная дуга под губами
-    a = Math.pow(lon / 0.5, 4); b = (lat + 0.8) / 0.13; r += 0.13 * P.chin * E(-a - b * b);     // квадратный подбородок
+    a = (1 - ov) * Math.pow(lon / 0.5, 4) + ov * Math.pow(lon / 0.47, 2); b = (lat + 0.8) / 0.13; r += 0.13 * P.chin * E(-a - b * b);     // подбородок: квадратный, у овала округлый
     a = lon / 0.04; b = (lat + 0.84) / 0.05; r -= 0.006 * P.chin * E(-a * a - b * b);           // лёгкая ямочка на подбородке
     a = lon / 0.12; b = (lat - 0.19) / 0.05; r += 0.022 * E(-a * a - b * b);                    // межбровье
     for (s = -1; s <= 1; s += 2) {
@@ -1012,7 +1014,7 @@ Claudix.ready(function () {
       a = (lon - s * 0.74) / 0.2; b = (lat + 0.04) / 0.07; r += 0.04 * E(-a * a - b * b);      // скулы — выше и резче
       a = (lon - s * 0.66) / 0.2; b = (lat + 0.36) / 0.13; r -= (0.02 + 0.02 * ag) * E(-a * a - b * b); // впадины щёк под скулами: лицо сухое, без детской пухлости
       a = (lon - s * 1.08) / 0.17; b = (lat - 0.28) / 0.14; r -= (0.008 + 0.02 * ag) * E(-a * a - b * b); // виски
-      a = (lon - s * 1.14) / 0.15; b = (lat + 0.6) / 0.1; r += 0.055 * E(-a * a - b * b);       // углы нижней челюсти
+      a = (lon - s * 1.14) / 0.15; b = (lat + 0.6) / 0.1; r += 0.055 * (1 - ov) * E(-a * a - b * b);       // углы нижней челюсти (у овала их нет)
     }
     a = lon / 0.08; b = (lat - 0.12) / 0.05; r -= 0.015 * E(-a * a - b * b);                    // переносица
     // нос: прямая спинка от переносицы, кончик-долька, крылья, ноздри
@@ -1043,12 +1045,12 @@ Claudix.ready(function () {
       for (s = -1; s <= 1; s += 2) {
         a = (lon - s * 0.78) / 0.16; b = (lat + 0.02) / 0.06; r += 0.026 * sp * E(-a * a - b * b);      // скулы
         a = (lon - s * 0.72) / 0.17; b = (lat + 0.3) / 0.11; r -= 0.034 * sp * E(-a * a - b * b);       // впадины под скулами
-        a = (lon - s * 1.08) / 0.12; b = (lat + 0.47) / 0.1; r += 0.012 * sp * E(-a * a - b * b);       // жевательные мышцы
+        a = (lon - s * 1.08) / 0.12; b = (lat + 0.47) / 0.1; r += 0.012 * sp * (1 - 0.6 * ov) * E(-a * a - b * b);       // жевательные мышцы
         a = (lon - s * 1.04) / 0.18; b = (lat - 0.3) / 0.12; r -= 0.008 * sp * E(-a * a - b * b);       // сухие виски
-        a = (lon - s * 0.3) / 0.12; b = (lat + 0.66) / 0.07; r += 0.01 * sp * E(-a * a - b * b);        // чёткая линия челюсти к подбородку
+        a = (lon - s * 0.3) / 0.12; b = (lat + 0.66) / 0.07; r += 0.01 * sp * (1 - ov) * E(-a * a - b * b);        // чёткая линия челюсти к подбородку
       }
-      a = Math.pow(lon / 0.54, 4); b = (lat + 0.8) / 0.11; r += 0.024 * sp * E(-a - b * b);             // подбородок квадратный и чуть вперёд
-      for (s = -1; s <= 1; s += 2) { a = (lon - s * 0.42) / 0.12; b = (lat + 0.76) / 0.08; r += 0.012 * sp * E(-a * a - b * b); }   // углы подбородка
+      a = Math.pow(lon / 0.54, 4); b = (lat + 0.8) / 0.11; r += 0.024 * sp * (1 - ov) * E(-a - b * b);             // подбородок квадратный и чуть вперёд
+      for (s = -1; s <= 1; s += 2) { a = (lon - s * 0.42) / 0.12; b = (lat + 0.76) / 0.08; r += 0.012 * sp * (1 - ov) * E(-a * a - b * b); }   // углы подбородка
       a = lon / 0.06; b = (lat - 0.0) / 0.05; r += 0.01 * sp * E(-a * a - b * b);                        // крепкая спинка носа
     }
     return r;
@@ -2232,7 +2234,7 @@ Claudix.ready(function () {
         paint: function (g, X, Y, R, sc) { g.strokeStyle = "rgba(20,60,40,0.55)"; g.lineWidth = 3 * sc; [[0.56, 0.42, 0.56, 0.25, 0.7, 0.25], [0.6, 0.06, 0.72, 0.06, 0.72, -0.2], [0.52, -0.16, 0.6, -0.16, 0.6, -0.4, 0.7, -0.4]].forEach(function (c) { g.beginPath(); g.moveTo(X(c[0]), Y(c[1])); for (var i = 2; i < c.length; i += 2) g.lineTo(X(c[i]), Y(c[i + 1])); g.stroke(); }); },
         glowPaint: function (g, X, Y, R, sc) { g.strokeStyle = "rgba(57,255,136,1)"; g.fillStyle = "rgba(57,255,136,1)"; g.lineWidth = 1.8 * sc; [[0.56, 0.42, 0.56, 0.25, 0.7, 0.25], [0.6, 0.06, 0.72, 0.06, 0.72, -0.2], [0.52, -0.16, 0.6, -0.16, 0.6, -0.4, 0.7, -0.4]].forEach(function (c) { g.beginPath(); g.moveTo(X(c[0]), Y(c[1])); for (var i = 2; i < c.length; i += 2) g.lineTo(X(c[i]), Y(c[i + 1])); g.stroke(); g.beginPath(); g.arc(X(c[c.length - 2]), Y(c[c.length - 1]), 2.6 * sc, 0, 7); g.fill(); g.beginPath(); g.arc(X(c[0]), Y(c[1]), 2 * sc, 0, 7); g.fill(); }); } },
       hair: "spiky", realHair: "spikyUp", hairC: 0x0b0d0c, hairTip: 0x39ff88,
-      real: { face: { skin: 0xcc9a70, angry: 0.5, socketA: 0.2, blush: 1.25 }, head: { jaw: 0.98, chin: 1.2, cheek: 1.75, brow: 1.3, neck: 1.3, nose: 1.06, noseW: 1.12, w: 0.97, sport: 1 } },
+      real: { face: { skin: 0xcc9a70, angry: 0.5, socketA: 0.2, blush: 1.25 }, head: { jaw: 0.94, chin: 1.05, cheek: 1.25, brow: 1.2, neck: 1.22, nose: 1.04, noseW: 1.08, w: 0.95, h: 1.08, sport: 0.45, oval: 1 } },
       suit: { base: 0x0e1411, side: 0x18241d, yoke: 0x121a16, muscle: 0.6, belt: 0x0a0f0c, buckle: 0x39ff88, emblem: "virus", emblemS: 0.07, emblemC: [0x39ff88, 0x04140a], glow: true, collar: 0x18241d,
         paint: function (U) { circuits(U, 0x39ff88, 22, 11); } },
       sleeve: 0x0e1411, glove: 0x18241d, pants: 0x121a16, boot: 0x0a0f0c, bootTrim: 0x39ff88, wrist: 0x39ff88, implant: 0x39ff88, glitch: 0x39ff88
