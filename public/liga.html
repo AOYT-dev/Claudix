@@ -1152,8 +1152,8 @@ Claudix.ready(function () {
     }
     // щетина / борода тенью
     if (F.P && F.blush !== 0 && F.knit == null) {
-      // свежевыбритая щетина: сизая тень по форме бороды с мягким краем и редкие точки волосков — заметно только вблизи
-      var sv = F.stubble != null ? F.stubble : 0.3, sC = new THREE.Color(F.stubbleC || F.hair || 0x2a2622).lerp(new THREE.Color(0x5a6a7a), 0.35);
+      // короткая щетина: тёмная тень по форме бороды с мягким краем и густые волоски поверх — видна, но это ещё не борода
+      var sv = F.stubble != null ? F.stubble : 0.3, sC = new THREE.Color(F.stubbleC || F.hair || 0x2a2622).lerp(new THREE.Color(0x3a424e), 0.22);
       var beardW = function (lo3, la3) {
         var al3 = Math.abs(lo3), top3 = -0.26 + 0.32 * sstep(0.5, 1.35, al3), w3 = sstep(top3 + 0.03, top3 - 0.12, la3) * sstep(-1.3, -0.95, la3) * sstep(1.58, 1.28, al3);
         var lipD = Math.pow(lo3 / 0.27, 2) + Math.pow((la3 + 0.475) / 0.09, 2); if (lipD < 1) w3 *= sstep(0.55, 1, lipD);
@@ -1163,14 +1163,17 @@ Claudix.ready(function () {
       var mg = mc.getContext("2d"), mi = mg.createImageData(mw, mh), md = mi.data;
       for (var yy = 0; yy < mh; yy++) for (var xx = 0; xx < mw; xx++) {
         var w4 = beardW((xx + 0.5) / mw * Math.PI * 2 - Math.PI, (0.5 - (yy + 0.5) / mh) * Math.PI), o4 = (yy * mw + xx) * 4;
-        md[o4] = sC.r * 255; md[o4 + 1] = sC.g * 255; md[o4 + 2] = sC.b * 255; md[o4 + 3] = Math.round(w4 * (0.08 + 0.12 * sv) * 255);
+        md[o4] = sC.r * 255; md[o4 + 1] = sC.g * 255; md[o4 + 2] = sC.b * 255; md[o4 + 3] = Math.round(w4 * (0.12 + 0.17 * sv) * 255);
       }
       mg.putImageData(mi, 0, 0); g.save(); g.imageSmoothingEnabled = true; g.drawImage(mc, 0, 0, W, H); g.restore();
-      var dotA = [0.03, 0.05, 0.07].map(function (a) { return rgbStr(sC.getHex(), 0.7, a * (0.6 + sv)); });
-      for (var i3 = 0; i3 < 55000 * sv * sc * sc; i3++) {
-        var lo5 = (Math.random() - 0.5) * 3.2, la5 = 0.1 - Math.random() * 1.45;
-        if (Math.random() > beardW(lo5, la5)) continue;
-        g.fillStyle = dotA[i3 % 3]; g.fillRect(X(lo5), Y(la5), 1.2 * sc, 1.2 * sc);
+      // волоски: короткие чёрточки по направлению роста (на щеках вниз и к челюсти, на шее вниз), гуще всего на подбородке и над губой
+      var dotA = [0.06, 0.09, 0.12, 0.15].map(function (a) { return rgbStr(sC.getHex(), 0.42, a * (0.55 + sv)); });
+      for (var i3 = 0; i3 < 52000 * sv * sc * sc; i3++) {
+        var lo5 = (Math.random() - 0.5) * 3.2, la5 = 0.1 - Math.random() * 1.45, bw5 = beardW(lo5, la5);
+        if (Math.random() > bw5 * bw5) continue;
+        var hx = X(lo5), hy = Y(la5), hl = (1.1 + Math.random() * 1.3) * sc, hs = lo5 > 0 ? 1 : -1;
+        g.strokeStyle = dotA[i3 & 3]; g.lineWidth = 0.8 * sc;
+        g.beginPath(); g.moveTo(hx, hy); g.lineTo(hx + hs * hl * 0.35 * Math.min(1, Math.abs(lo5) * 1.5), hy + hl); g.stroke();
       }
     } else if (F.stubble) {
       var stc = [0, 1, 2, 3].map(function (q) { return rgbStr(F.stubbleC || 0x2a2622, 1, 0.18 + q * 0.07); });
@@ -2230,7 +2233,7 @@ Claudix.ready(function () {
     },
     virus: {
       body: "slim", style: "hero", head: { jaw: 1.05, chin: 1.1, cheek: 1.2, w: 0.98 },
-      face: { skin: 0xd6a47c, brow: 0x101010, iris: 0x39ff88, irisGlow: true, hair: 0x0b0d0c, hairFront: 0.5, stubble: 0.35, angry: 0.75, smile: 0.35, socket: 0x0a1410, socketA: 0.45, scars: [[-0.3, 0.42, -0.42, 0.12, true]],
+      face: { skin: 0xd6a47c, brow: 0x101010, iris: 0x39ff88, irisGlow: true, hair: 0x0b0d0c, hairFront: 0.5, stubble: 0.5, angry: 0.75, smile: 0.35, socket: 0x0a1410, socketA: 0.45, scars: [[-0.3, 0.42, -0.42, 0.12, true]],
         paint: function (g, X, Y, R, sc) { g.strokeStyle = "rgba(20,60,40,0.55)"; g.lineWidth = 3 * sc; [[0.56, 0.42, 0.56, 0.25, 0.7, 0.25], [0.6, 0.06, 0.72, 0.06, 0.72, -0.2], [0.52, -0.16, 0.6, -0.16, 0.6, -0.4, 0.7, -0.4]].forEach(function (c) { g.beginPath(); g.moveTo(X(c[0]), Y(c[1])); for (var i = 2; i < c.length; i += 2) g.lineTo(X(c[i]), Y(c[i + 1])); g.stroke(); }); },
         glowPaint: function (g, X, Y, R, sc) { g.strokeStyle = "rgba(57,255,136,1)"; g.fillStyle = "rgba(57,255,136,1)"; g.lineWidth = 1.8 * sc; [[0.56, 0.42, 0.56, 0.25, 0.7, 0.25], [0.6, 0.06, 0.72, 0.06, 0.72, -0.2], [0.52, -0.16, 0.6, -0.16, 0.6, -0.4, 0.7, -0.4]].forEach(function (c) { g.beginPath(); g.moveTo(X(c[0]), Y(c[1])); for (var i = 2; i < c.length; i += 2) g.lineTo(X(c[i]), Y(c[i + 1])); g.stroke(); g.beginPath(); g.arc(X(c[c.length - 2]), Y(c[c.length - 1]), 2.6 * sc, 0, 7); g.fill(); g.beginPath(); g.arc(X(c[0]), Y(c[1]), 2 * sc, 0, 7); g.fill(); }); } },
       hair: "spiky", realHair: "spikyUp", hairC: 0x0b0d0c, hairTip: 0x39ff88,
