@@ -346,7 +346,10 @@ h2 { margin: 0; font-family: var(--font-display); font-weight: 600; font-size: 1
 }
 
 /* кнопочные телефоны: лимон (SVG с цветами-переменными и aspect-ratio) там не рисуется — вместо него простой жёлтый куб, жмётся кнопкой 5 */
-.lemon .cube, .cube-hint { display: none; }
+.lemon .cube, .cube-hint, .cube-count { display: none; }
+.fp .cube-count { display: block; margin: 0 auto 8px; padding: 3px 8px 4px; max-width: 220px; background: #1b1d22; color: #ffd21f; font: bold 18px/1.15 Arial, sans-serif; text-align: center; white-space: nowrap; border-radius: 8px; }
+.cube-count span { display: block; font-size: 11px; color: #fff3b0; }
+.cube-count b { display: block; }
 .fp .lemon-wrap { width: 100px; margin: 0 auto; animation: none; }
 .fp .lemon { width: 100px; height: 100px; border-radius: 0; touch-action: manipulation; }
 .fp .lemon svg { display: none; }
@@ -354,6 +357,7 @@ h2 { margin: 0; font-family: var(--font-display); font-weight: 600; font-size: 1
 .fp .cube-hint { display: block; text-align: center; font-weight: bold; margin-top: 6px; }
 .fp .ground { display: none; }
 @media (max-width: 340px) and (max-height: 340px) {
+  .cube-count { display: block !important; margin: 0 auto 8px !important; padding: 3px 8px 4px !important; max-width: 220px !important; background: #1b1d22 !important; color: #ffd21f !important; font: bold 18px/1.15 Arial, sans-serif !important; text-align: center !important; white-space: nowrap !important; }
   .lemon-wrap { width: 100px !important; margin: 0 auto !important; animation: none !important; }
   .lemon { width: 100px !important; height: 100px !important; border-radius: 0 !important; touch-action: manipulation !important; }
   .lemon svg { display: none !important; }
@@ -422,6 +426,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
   <div class="grid">
     <section class="stage" id="stage" aria-label="Лимон">
+      <div class="cube-count" id="cubeCount" aria-hidden="true"><span>Лимонов</span><b id="cubeCountN">0</b></div>
       <div class="lemon-wrap">
         <button class="lemon" id="lemon" type="button" accesskey="5" aria-label="Лимон. Жми, чтобы собирать лимоны">
           <svg viewBox="0 0 240 240" aria-hidden="true">
@@ -742,9 +747,8 @@ Claudix.ready(function () {
   function tap(x, y) {
     var v = perClick();
     s.lemons = Math.min(LEMON_CAP, s.lemons + v);
-    floatNum(x, y, fmt(v));
-    squish();
-    buzz("light");
+    paintCount();
+    try { floatNum(x, y, fmt(v)); squish(); buzz("light"); } catch (e) { /* старый браузер: лимоны засчитаны, просто без эффектов */ }
   }
   // палец и мышь засчитываем сразу при нажатии (pointerdown), чтобы быстрые тапы не терялись.
   // Клик после такого нажатия пропускаем, а клик без нажатия засчитываем: это клавиатура, кнопка «ОК»
@@ -772,9 +776,10 @@ Claudix.ready(function () {
 
   // ---------- отрисовка ----------
   var lastCount = "";
+  var cubeCountEl = $("cubeCountN");
   function paintCount() {
     var t = fmt(s.lemons);
-    if (t !== lastCount) { countEl.textContent = t; lastCount = t; }
+    if (t !== lastCount) { countEl.textContent = t; if (cubeCountEl) cubeCountEl.textContent = t; lastCount = t; }
   }
   function updateShop() {
     var all = items.concat([infItem, autoItem, speedItem]);
@@ -809,6 +814,8 @@ Claudix.ready(function () {
     floatNum(r.left + r.width * (0.3 + Math.random() * 0.4), r.top + r.height * (0.25 + Math.random() * 0.4), fmt(perClick()));
     squish();
   }
+  // цикл игры; у старых браузеров кнопочных телефонов нет requestAnimationFrame — тогда кадр раз в 0,1 с по таймеру
+  var tick = window.requestAnimationFrame ? function (f) { window.requestAnimationFrame(f); } : function (f) { setTimeout(function () { f(window.performance && performance.now ? performance.now() : Date.now()); }, 100); };
   function frame(now) {
     var dt = (now - last) / 1000;
     last = now;
@@ -828,7 +835,7 @@ Claudix.ready(function () {
     paintCount();
     acc += dt;
     if (acc > 0.2) { acc = 0; updateShop(); }
-    requestAnimationFrame(frame);
+    tick(frame);
   }
 
   // ---------- сброс ----------
@@ -862,7 +869,7 @@ Claudix.ready(function () {
   setInterval(save, 4000);
   document.addEventListener("visibilitychange", function () { if (document.hidden) save(); });
   window.addEventListener("pagehide", save);
-  requestAnimationFrame(function (t) { last = t; requestAnimationFrame(frame); });
+  tick(function (t) { last = t; tick(frame); });
 });
 </script>
 
