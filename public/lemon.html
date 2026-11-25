@@ -2,6 +2,7 @@
 <html lang="ru">
 <head>
 <meta charset="utf-8">
+<script>try { var fpU = navigator.userAgent || "", fpS = Math.max(screen.width || 0, screen.height || 0); if (/[?&](cube|fp)\b/.test(location.search) || /Opera Mini|OPiOS|Series ?30|Series ?40|S40OviBrowser|MAUI|MIDP|CLDC|KAIOS|UCWEB|J2ME|Obigo|Teleca|NetFront|Spreadtrum|SPRD|MRE\//i.test(fpU) || (fpS && fpS <= 400 && !("ontouchstart" in window) && !/Android|iPhone|iPad|iPod|Windows NT|Macintosh|X11|CrOS/i.test(fpU))) document.documentElement.className += " fp"; } catch (e) { /* обычный режим */ }</script>
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="apple-touch-icon" href="/app-icons/icon-180.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -343,6 +344,23 @@ h2 { margin: 0; font-family: var(--font-display); font-weight: 600; font-size: 1
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
+
+/* кнопочные телефоны: лимон (SVG с цветами-переменными и aspect-ratio) там не рисуется — вместо него простой жёлтый куб, жмётся кнопкой 5 */
+.lemon .cube, .cube-hint { display: none; }
+.fp .lemon-wrap { width: 100px; margin: 0 auto; animation: none; }
+.fp .lemon { width: 100px; height: 100px; border-radius: 0; touch-action: manipulation; }
+.fp .lemon svg { display: none; }
+.fp .lemon .cube { display: block; width: 100px; height: 100px; box-sizing: border-box; background: #ffd21f; border: 10px solid #e0b000; border-color: #fff3a0 #c79600 #8f6b00 #ffe55a; }
+.fp .cube-hint { display: block; text-align: center; font-weight: bold; margin-top: 6px; }
+.fp .ground { display: none; }
+@media (max-width: 340px) and (max-height: 340px) {
+  .lemon-wrap { width: 100px !important; margin: 0 auto !important; animation: none !important; }
+  .lemon { width: 100px !important; height: 100px !important; border-radius: 0 !important; touch-action: manipulation !important; }
+  .lemon svg { display: none !important; }
+  .lemon .cube { display: block !important; width: 100px !important; height: 100px !important; box-sizing: border-box !important; background: #ffd21f !important; border: 10px solid #e0b000 !important; border-color: #fff3a0 #c79600 #8f6b00 #ffe55a !important; }
+  .cube-hint { display: block !important; text-align: center !important; font-weight: bold !important; margin-top: 6px !important; }
+  .ground { display: none !important; }
+}
 </style>
 
 <style>
@@ -405,7 +423,7 @@ document.addEventListener("DOMContentLoaded", function () {
   <div class="grid">
     <section class="stage" id="stage" aria-label="Лимон">
       <div class="lemon-wrap">
-        <button class="lemon" id="lemon" type="button" aria-label="Лимон. Жми, чтобы собирать лимоны">
+        <button class="lemon" id="lemon" type="button" accesskey="5" aria-label="Лимон. Жми, чтобы собирать лимоны">
           <svg viewBox="0 0 240 240" aria-hidden="true">
             <defs>
               <radialGradient id="lg" cx="38%" cy="32%" r="78%">
@@ -439,7 +457,9 @@ document.addEventListener("DOMContentLoaded", function () {
             <path d="M112 72 C110 54 114 40 126 30 L136 36 C128 46 126 58 128 72 Z" fill="#4a7a2a" stroke="#2f5a18" stroke-width="2.5" stroke-linejoin="round"></path>
             <path d="M128 50 C146 40 164 44 172 56" fill="none" stroke="#5f9a35" stroke-width="4" stroke-linecap="round"></path>
           </svg>
+          <span class="cube" aria-hidden="true"></span>
         </button>
+        <span class="cube-hint">Жми 5</span>
       </div>
       <button class="skinbtn" id="skinBtn" type="button">Тыква вместо лимона</button>
       <div class="ground"></div>
