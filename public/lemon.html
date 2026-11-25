@@ -515,7 +515,8 @@ Claudix.ready(function () {
   }
   var s = fresh();
 
-  function num(v) { return typeof v === "number" && isFinite(v) && v > 0 ? v : 0; }
+  var LEMON_CAP = 1e300; // выше браузер считать не умеет: дальше только «бесконечность»
+  function num(v) { return typeof v === "number" && v > 0 ? (isFinite(v) ? Math.min(v, LEMON_CAP) : LEMON_CAP) : 0; }
   function int(v) { return Math.floor(num(v)); }
 
   function load() {
@@ -720,23 +721,29 @@ Claudix.ready(function () {
   // ---------- клик ----------
   function tap(x, y) {
     var v = perClick();
-    s.lemons += v;
+    s.lemons = Math.min(LEMON_CAP, s.lemons + v);
     floatNum(x, y, fmt(v));
     squish();
     buzz("light");
   }
+  // палец и мышь засчитываем сразу при нажатии (pointerdown), чтобы быстрые тапы не терялись.
+  // Клик после такого нажатия пропускаем, а клик без нажатия засчитываем: это клавиатура, кнопка «ОК»
+  // на кнопочном телефоне и простые браузеры, которые не знают про pointerdown.
+  var downAt = 0;
   lemon.addEventListener("pointerdown", function (e) {
     if (e.pointerType === "mouse" && e.button !== 0) return;
+    downAt = Date.now();
     tap(e.clientX, e.clientY);
   });
-  lemon.addEventListener("click", function (e) {
-    if (e.detail !== 0) return; // мышь и тач уже обработаны в pointerdown
+  lemon.addEventListener("click", function () {
+    if (downAt && Date.now() - downAt < 2000) { downAt = 0; return; }
     var r = lemon.getBoundingClientRect();
     tap(r.left + r.width / 2, r.top + r.height / 2);
   });
-  // клавиша E (и «У» в русской раскладке) тоже кликает по лимону
+  // клавиша E (и «У» в русской раскладке) тоже кликает по лимону, на кнопочном телефоне — кнопка 5
   document.addEventListener("keydown", function (e) {
-    if (e.code !== "KeyE" || e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
+    var k5 = e.key === "5" || e.code === "Digit5" || e.code === "Numpad5" || e.keyCode === 53 || e.keyCode === 101;
+    if ((e.code !== "KeyE" && !k5) || e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
     var t = e.target && e.target.tagName;
     if (t === "INPUT" || t === "TEXTAREA" || t === "SELECT") return;
     var r = lemon.getBoundingClientRect();
@@ -789,7 +796,7 @@ Claudix.ready(function () {
       var p = perSec();
       var eff = Math.min(dt, 1800);
       if (p > 0) {
-        s.lemons += p * eff;
+        s.lemons = Math.min(LEMON_CAP, s.lemons + p * eff);
         if (dt > 5) toast(TR("Пока тебя не было: +") + fmt(p * eff) + TR(" лимонов"));
       }
     }
@@ -828,7 +835,7 @@ Claudix.ready(function () {
   var away = Math.min((Date.now() - s.t) / 1000, 1800);
   var p0 = perSec();
   if (away > 5 && p0 > 0) {
-    s.lemons += p0 * away;
+    s.lemons = Math.min(LEMON_CAP, s.lemons + p0 * away);
     toast(TR("Пока тебя не было: +") + fmt(p0 * away) + TR(" лимонов"));
   }
   updateAll();
