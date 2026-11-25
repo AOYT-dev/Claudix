@@ -726,18 +726,24 @@ Claudix.ready(function () {
     squish();
     buzz("light");
   }
+  // палец и мышь засчитываем сразу при нажатии (pointerdown), чтобы быстрые тапы не терялись.
+  // Клик после такого нажатия пропускаем, а клик без нажатия засчитываем: это клавиатура, кнопка «ОК»
+  // на кнопочном телефоне и простые браузеры, которые не знают про pointerdown.
+  var downAt = 0;
   lemon.addEventListener("pointerdown", function (e) {
     if (e.pointerType === "mouse" && e.button !== 0) return;
+    downAt = Date.now();
     tap(e.clientX, e.clientY);
   });
-  lemon.addEventListener("click", function (e) {
-    if (e.detail !== 0) return; // мышь и тач уже обработаны в pointerdown
+  lemon.addEventListener("click", function () {
+    if (downAt && Date.now() - downAt < 2000) { downAt = 0; return; }
     var r = lemon.getBoundingClientRect();
     tap(r.left + r.width / 2, r.top + r.height / 2);
   });
-  // клавиша E (и «У» в русской раскладке) тоже кликает по лимону
+  // клавиша E (и «У» в русской раскладке) тоже кликает по лимону, на кнопочном телефоне — кнопка 5
   document.addEventListener("keydown", function (e) {
-    if (e.code !== "KeyE" || e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
+    var k5 = e.key === "5" || e.code === "Digit5" || e.code === "Numpad5" || e.keyCode === 53 || e.keyCode === 101;
+    if ((e.code !== "KeyE" && !k5) || e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
     var t = e.target && e.target.tagName;
     if (t === "INPUT" || t === "TEXTAREA" || t === "SELECT") return;
     var r = lemon.getBoundingClientRect();
