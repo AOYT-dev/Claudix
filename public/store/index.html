@@ -119,6 +119,7 @@ a { color: var(--accent); }
 const SHOTS = [
   ["iphone-1-liga", "iPhone 1 · Лига Улиц"], ["iphone-2-viraj", "iPhone 2 · Вираж-9"], ["iphone-3-lemon", "iPhone 3 · Лимонный Икс"], ["iphone-4-books", "iPhone 4 · Книги"], ["iphone-5-offline", "iPhone 5 · Без интернета"],
   ["iphone63-1-liga", "iPhone 6,3″ 1 · Лига Улиц"], ["iphone63-2-viraj", "iPhone 6,3″ 2 · Вираж-9"], ["iphone63-3-lemon", "iPhone 6,3″ 3 · Лимонный Икс"], ["iphone63-4-books", "iPhone 6,3″ 4 · Книги"], ["iphone63-5-offline", "iPhone 6,3″ 5 · Без интернета"],
+  ["android-1-liga", "Android 1 · Лига Улиц"], ["android-2-viraj", "Android 2 · Вираж-9"], ["android-3-lemon", "Android 3 · Лимонный Икс"], ["android-4-books", "Android 4 · Книги"], ["android-5-offline", "Android 5 · Без интернета"],
   ["ipad-1-liga", "iPad 1 · Лига Улиц"], ["ipad-2-viraj", "iPad 2 · Вираж-9"], ["ipad-3-lemon", "iPad 3 · Лимонный Икс"], ["ipad-4-books", "iPad 4 · Книги"], ["ipad-5-offline", "iPad 5 · Без интернета"],
 ];
 document.getElementById("shots").innerHTML = SHOTS.map(([f, t]) => `<a href="${f}.jpg" download><img src="${f}.jpg" alt="${t}" loading="lazy">${t}</a>`).join("");
